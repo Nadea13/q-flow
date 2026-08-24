@@ -63,6 +63,11 @@ export default function DashboardPage({ params }: PageProps) {
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState<string | null>(null)
   const [verifyingPin, setVerifyingPin] = useState(false)
+  const [lineProfile, setLineProfile] = useState<{
+    displayName: string
+    pictureUrl?: string
+    userId: string
+  } | null>(null)
 
   const [merchant, setMerchant] = useState<Merchant | null>(null)
   const [services, setServices] = useState<Service[]>([])
@@ -111,6 +116,14 @@ export default function DashboardPage({ params }: PageProps) {
   // Check Authentication & Load initial data
   useEffect(() => {
     async function initAuthAndData() {
+      // 0. Load cached LINE profile if available
+      try {
+        const cachedProfile = localStorage.getItem('qflow_admin_line_profile')
+        if (cachedProfile) {
+          setLineProfile(JSON.parse(cachedProfile))
+        }
+      } catch {}
+
       // 1. Check if user has active session
       const authStatus = await checkMerchantAuthAction(slug)
       if (authStatus.isAuthenticated) {
@@ -124,6 +137,14 @@ export default function DashboardPage({ params }: PageProps) {
         const { initLiff } = await import('@/lib/liff')
         const liffRes = await initLiff()
         if (liffRes.success && liffRes.profile?.userId) {
+          const profileData = {
+            displayName: liffRes.profile.displayName,
+            pictureUrl: liffRes.profile.pictureUrl,
+            userId: liffRes.profile.userId,
+          }
+          setLineProfile(profileData)
+          localStorage.setItem('qflow_admin_line_profile', JSON.stringify(profileData))
+
           const liffAuth = await verifyMerchantLiffAction(slug, liffRes.profile.userId)
           if (liffAuth.success) {
             setIsAuthenticated(true)
@@ -476,6 +497,37 @@ export default function DashboardPage({ params }: PageProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* LINE Profile Chip */}
+            {lineProfile ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
+                {lineProfile.pictureUrl ? (
+                  <img
+                    src={lineProfile.pictureUrl}
+                    alt={lineProfile.displayName}
+                    className="w-5 h-5 rounded-full object-cover border border-emerald-500/50"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-[#06C755] flex items-center justify-center text-[10px] font-bold text-white">
+                    L
+                  </div>
+                )}
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 max-w-[100px] truncate leading-tight">
+                    {lineProfile.displayName}
+                  </span>
+                  <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 leading-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                    LINE Connected
+                  </span>
+                </div>
+              </div>
+            ) : merchant.line_user_id ? (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                <span>LINE Admin Linked</span>
+              </div>
+            ) : null}
+
             <NavbarControls />
             <Link
               href={`/${slug}/book`}
@@ -490,6 +542,7 @@ export default function DashboardPage({ params }: PageProps) {
               type="button"
               aria-label="Logout"
               className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl border border-slate-200 dark:border-slate-800 transition active:scale-95"
+              title="ออกจากระบบ"
             >
               <LogOut className="w-4 h-4" />
             </button>

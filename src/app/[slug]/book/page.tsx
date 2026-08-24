@@ -56,6 +56,11 @@ export default function BookingPage({ params }: PageProps) {
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerLineId, setCustomerLineId] = useState('')
   const [customerNotes, setCustomerNotes] = useState('')
+  const [lineCustomerProfile, setLineCustomerProfile] = useState<{
+    displayName: string
+    pictureUrl?: string
+    userId: string
+  } | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -97,10 +102,11 @@ export default function BookingPage({ params }: PageProps) {
         const { initLiff } = await import('@/lib/liff')
         const res = await initLiff()
         if (res.success && res.profile) {
+          setLineCustomerProfile(res.profile)
           if (res.profile.displayName) setCustomerName(res.profile.displayName)
           if (res.profile.userId) setCustomerLineId(res.profile.userId)
         }
-      } catch (err) {
+      } catch {
         // LIFF fallback
       }
     }
@@ -461,6 +467,35 @@ export default function BookingPage({ params }: PageProps) {
                 <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {/* LINE Profile Auto-Fill Indicator */}
+              {lineCustomerProfile && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    {lineCustomerProfile.pictureUrl ? (
+                      <img
+                        src={lineCustomerProfile.pictureUrl}
+                        alt={lineCustomerProfile.displayName}
+                        className="w-8 h-8 rounded-full object-cover border border-emerald-500/40"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#06C755] text-white font-bold text-xs flex items-center justify-center">
+                        L
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                        <span>{lineCustomerProfile.displayName}</span>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">(LINE Profile)</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {lang === 'th' ? 'ดึงข้อมูลและเชื่อมต่อตั๋วคิวเข้า LINE อัตโนมัติ' : 'Linked for instant LINE booking passes'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
               )}
 
