@@ -87,7 +87,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     // 2. Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       ...(customerId ? { customer: customerId } : {}),
-      payment_method_types: ['card', 'promptpay'],
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {

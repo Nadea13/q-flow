@@ -202,8 +202,8 @@ export default function PricingPage() {
     {
       q: lang === 'th' ? 'รองรับการชำระเงินผ่านช่องทางใดบ้าง?' : 'What payment methods are supported for subscription?',
       a: lang === 'th'
-        ? 'รองรับการชำระเงินผ่าน Stripe ครบทุกช่องทาง ทั้งบัตรเครดิต, บัตรเดบิต (Visa, Mastercard, JCB) และพร้อมเพย์ (PromptPay)'
-        : 'All standard Stripe payment methods are supported including Credit/Debit cards (Visa, Mastercard, JCB) and PromptPay.',
+        ? 'รองรับการชำระเงินรายเดือนผ่านบัตรเครดิตและบัตรเดบิตทุกธนาคาร (Visa, Mastercard, JCB, American Express) ระบบจะตัดยอดอัตโนมัติทุก 30 วัน'
+        : 'All major Credit and Debit cards are supported (Visa, Mastercard, JCB, AMEX) with automatic monthly billing.',
     },
   ]
 

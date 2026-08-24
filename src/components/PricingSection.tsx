@@ -183,7 +183,7 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
       <div className="text-center pt-2">
         <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
           <Shield className="w-3.5 h-3.5 text-emerald-500" />
-          <span>{lang === 'th' ? 'ชำระเงินปลอดภัยผ่าน Stripe • รองรับบัตรเครดิต/เดบิต และพร้อมเพย์ • ยกเลิกได้ตลอดเวลา' : 'Secured with Stripe • Card & PromptPay accepted • Cancel anytime'}</span>
+          <span>{lang === 'th' ? 'ชำระเงินรายเดือนปลอดภัยผ่าน Stripe • รองรับบัตรเครดิต/เดบิต ทุกธนาคาร • ยกเลิกได้ตลอดเวลา' : 'Secured monthly billing via Stripe • Credit/Debit Cards accepted • Cancel anytime'}</span>
         </p>
       </div>
     </div>
