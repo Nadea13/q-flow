@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, use, useMemo } from 'react'
 import Link from 'next/link'
 import { 
   Calendar as CalendarIcon, 
@@ -58,9 +58,10 @@ import {
 import { createStripeCustomerPortalAction } from '@/app/actions/stripe'
 import { PricingSection } from '@/components/PricingSection'
 import { ThaiAddressSelector } from '@/components/ThaiAddressSelector'
+import { computeAvailableSlots } from '@/lib/slot-engine'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
-import type { Booking, Merchant, Service, Slot, BookingStatus } from '@/types/database'
+import type { Booking, Merchant, Service, Slot, BookingStatus, TimeSlotOption } from '@/types/database'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -108,10 +109,8 @@ export default function DashboardPage({ params }: PageProps) {
   const [manualBookingForm, setManualBookingForm] = useState({
     service_id: '',
     date: format(today, 'yyyy-MM-dd'),
-    start_time: '10:00',
+    selectedSlot: null as TimeSlotOption | null,
     customer_name: '',
-    customer_phone: '',
-    customer_line_id: '',
     notes: 'ลูกค้าโทรจอง / หน้าร้าน',
     deposit_amount: '0',
     status: 'confirmed' as BookingStatus,
@@ -337,31 +336,26 @@ export default function DashboardPage({ params }: PageProps) {
       return
     }
 
+    if (!manualBookingForm.selectedSlot) {
+      toast.error('กรุณาเลือกรอบเวลาที่ต้องการลงคิว')
+      return
+    }
+
     if (!manualBookingForm.customer_name.trim()) {
       toast.error('กรุณากรอกชื่อลูกค้า')
       return
     }
 
-    const selectedSvc = services.find((s) => s.id === manualBookingForm.service_id)
-    const duration = selectedSvc?.duration_min || 60
-
-    const [y, m, d] = manualBookingForm.date.split('-').map(Number)
-    const [h, min] = manualBookingForm.start_time.split(':').map(Number)
-    const startDate = new Date(y, m - 1, d, h, min, 0)
-    const endDate = new Date(startDate.getTime() + duration * 60000)
-
     const res = await createManualBookingAction({
       merchantId: merchant.id,
       merchantSlug: slug,
       serviceId: manualBookingForm.service_id,
-      startTime: startDate.toISOString(),
-      endTime: endDate.toISOString(),
+      startTime: manualBookingForm.selectedSlot.startTime,
+      endTime: manualBookingForm.selectedSlot.endTime,
       customerName: manualBookingForm.customer_name,
-      customerPhone: manualBookingForm.customer_phone,
-      customerLineId: manualBookingForm.customer_line_id,
       notes: manualBookingForm.notes,
       depositAmount: Number(manualBookingForm.deposit_amount) || 0,
-      status: manualBookingForm.status,
+      status: 'confirmed',
     })
 
     if (res.success) {
@@ -370,10 +364,8 @@ export default function DashboardPage({ params }: PageProps) {
       setManualBookingForm({
         service_id: '',
         date: selectedDate,
-        start_time: '10:00',
+        selectedSlot: null,
         customer_name: '',
-        customer_phone: '',
-        customer_line_id: '',
         notes: 'ลูกค้าโทรจอง / หน้าร้าน',
         deposit_amount: '0',
         status: 'confirmed',
@@ -591,6 +583,20 @@ export default function DashboardPage({ params }: PageProps) {
     const matchStatus = statusFilter === 'all' || b.status === statusFilter
     return matchDate && matchStatus
   })
+
+  // Available Slots for Manual Booking Modal
+  const selectedManualService = services.find((s) => s.id === manualBookingForm.service_id) || services[0]
+  const manualSlots = useMemo(() => {
+    if (!merchant || !manualBookingForm.date) return []
+    const duration = selectedManualService?.duration_min || 30
+    return computeAvailableSlots({
+      merchant,
+      dateStr: manualBookingForm.date,
+      durationMin: duration,
+      existingBookings: bookings,
+      blockedSlots: slots,
+    })
+  }, [merchant, manualBookingForm.date, selectedManualService, bookings, slots])
 
   // 4. MAIN AUTHENTICATED DASHBOARD
   return (
@@ -825,10 +831,8 @@ export default function DashboardPage({ params }: PageProps) {
                     setManualBookingForm({
                       service_id: firstSvc?.id || '',
                       date: selectedDate,
-                      start_time: '10:00',
+                      selectedSlot: null,
                       customer_name: '',
-                      customer_phone: '',
-                      customer_line_id: '',
                       notes: 'ลูกค้าโทรจอง / หน้าร้าน',
                       deposit_amount: String(firstSvc?.deposit_amount ?? merchant.default_deposit ?? 100),
                       status: 'confirmed',
@@ -1691,33 +1695,84 @@ export default function DashboardPage({ params }: PageProps) {
                 </select>
               </div>
 
-              {/* Date and Start Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('bookingDate')} *
+              {/* Date Selection */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  {t('bookingDate')} *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={manualBookingForm.date}
+                  onChange={(e) => setManualBookingForm({ ...manualBookingForm, date: e.target.value, selectedSlot: null })}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                />
+              </div>
+
+              {/* Time Slot Selection Grid (Matching Screenshot) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      {lang === 'th'
+                        ? `เลือกรอบเวลาว่าง (${selectedManualService?.duration_min || 30} นาที)`
+                        : `Select Available Slot (${selectedManualService?.duration_min || 30} mins)`} *
+                    </span>
                   </label>
-                  <input
-                    type="date"
-                    required
-                    value={manualBookingForm.date}
-                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, date: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-                  />
+                  {manualBookingForm.selectedSlot && (
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                      ✓ {manualBookingForm.selectedSlot.displayTime}
+                    </span>
+                  )}
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('bookingStartTime')} *
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={manualBookingForm.start_time}
-                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, start_time: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
-                  />
-                </div>
+                {manualSlots.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-rose-500 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-200 dark:border-rose-900/60">
+                    {merchant.closed_days?.includes(new Date(manualBookingForm.date).getDay())
+                      ? 'ร้านปิดทำการในวันนี้ (วันหยุดประจำสัปดาห์)'
+                      : 'ไม่มีรอบเวลาว่างในวันที่เลือก'}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40">
+                    {manualSlots.map((slot) => {
+                      const isSelected = manualBookingForm.selectedSlot?.startTime === slot.startTime
+
+                      if (!slot.isAvailable) {
+                        return (
+                          <div
+                            key={slot.startTime}
+                            className="p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40 text-center opacity-40 cursor-not-allowed select-none flex flex-col items-center justify-center min-h-[48px]"
+                          >
+                            <p className="text-xs font-semibold text-slate-400 dark:text-slate-600 line-through">
+                              {slot.displayTime}
+                            </p>
+                            {slot.reason && (
+                              <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-full">
+                                {slot.reason}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <button
+                          key={slot.startTime}
+                          type="button"
+                          onClick={() => setManualBookingForm({ ...manualBookingForm, selectedSlot: slot })}
+                          className={`p-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center min-h-[48px] ${
+                            isSelected
+                              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/20'
+                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30'
+                          }`}
+                        >
+                          <span className="text-xs font-semibold">{slot.displayTime}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Customer Name */}
