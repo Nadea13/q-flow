@@ -15,6 +15,13 @@ export interface ThaiAddress {
   zipcode: string
 }
 
+export interface ZipcodeLocation {
+  province: string
+  district: string
+  subdistrict: string
+  zipcode: string
+}
+
 type GeoHierarchyType = Record<
   string,
   {
@@ -23,6 +30,27 @@ type GeoHierarchyType = Record<
 >
 
 const data = geoHierarchyData as unknown as GeoHierarchyType
+
+// Pre-build index for instant O(1) Zipcode lookups
+const zipcodeMap = new Map<string, ZipcodeLocation[]>()
+
+for (const province of Object.keys(data)) {
+  const districts = data[province].districts || {}
+  for (const district of Object.keys(districts)) {
+    for (const sub of districts[district]) {
+      if (sub.zipcode) {
+        const list = zipcodeMap.get(sub.zipcode) || []
+        list.push({
+          province,
+          district,
+          subdistrict: sub.subdistrict,
+          zipcode: sub.zipcode,
+        })
+        zipcodeMap.set(sub.zipcode, list)
+      }
+    }
+  }
+}
 
 /**
  * Returns all 77 Thai provinces sorted.
@@ -54,6 +82,15 @@ export function getZipcode(province: string, district: string, subdistrict: stri
   const subs = getSubdistricts(province, district)
   const found = subs.find((s) => s.subdistrict === subdistrict)
   return found?.zipcode || ''
+}
+
+/**
+ * Look up all locations (province, district, subdistrict) for a given 5-digit zipcode.
+ */
+export function lookupByZipcode(zipcode: string): ZipcodeLocation[] {
+  const cleanZip = zipcode.trim()
+  if (cleanZip.length !== 5) return []
+  return zipcodeMap.get(cleanZip) || []
 }
 
 /**
