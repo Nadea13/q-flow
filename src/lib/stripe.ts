@@ -13,7 +13,6 @@ export interface PricingPlan {
   priceTHB: number
   quota: number
   popular?: boolean
-  costEstimate: string
   features: string[]
 }
 
@@ -24,7 +23,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
     tagline: 'เหมาะสำหรับร้านเริ่มต้น หรือสตูดิโอขนาดกะทัดรัด',
     priceTHB: 390,
     quota: 150,
-    costEstimate: 'ต้นทุนสลิป ~60 บ.',
     features: [
       'โควตาสลิปตรวจอัตโนมัติ 150 สลิป/เดือน',
       'ระบบปฏิทินจองคิว 24 ชม. ไม่จำกัดจำนวนคิว',
@@ -41,7 +39,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
     priceTHB: 790,
     quota: 500,
     popular: true,
-    costEstimate: 'ต้นทุนสลิป ~200 บ.',
     features: [
       'โควตาสลิปตรวจอัตโนมัติ 500 สลิป/เดือน',
       'ทุกฟีเจอร์ในแพ็กเกจ Starter',
@@ -58,7 +55,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
     tagline: 'สำหรับร้านสาขา ยอดจองสูง หรือต้องการการดูแลระดับ VIP',
     priceTHB: 1490,
     quota: 1500,
-    costEstimate: 'ต้นทุนสลิป ~600 บ.',
     features: [
       'โควตาสลิปตรวจอัตโนมัติ 1,500 สลิป/เดือน',
       'ทุกฟีเจอร์ในแพ็กเกจ Growth',

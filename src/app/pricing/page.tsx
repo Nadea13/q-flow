@@ -66,12 +66,6 @@ export default function PricingPage() {
           highlight: true,
         },
         {
-          name: lang === 'th' ? 'ประมาณการต้นทุนสลิป' : 'Slip Verification Cost',
-          starter: '~60 บาท',
-          growth: '~200 บาท',
-          pro: '~600 บาท',
-        },
-        {
           name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และสลิปไม่ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
           starter: true,
           growth: true,
@@ -331,9 +325,8 @@ export default function PricingPage() {
                     </div>
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
                       <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                        ⚡ {p.quota.toLocaleString()} สลิป/เดือน
+                        ⚡ โควตา {p.quota.toLocaleString()} สลิป/เดือน
                       </span>
-                      <span className="text-slate-400 dark:text-slate-500">({p.costEstimate})</span>
                     </div>
                   </div>
 

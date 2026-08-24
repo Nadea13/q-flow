@@ -117,9 +117,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                   </div>
                   <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-[11px]">
                     <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                      ⚡ {p.quota.toLocaleString()} สลิป/เดือน
+                      ⚡ โควตา {p.quota.toLocaleString()} สลิป/เดือน
                     </span>
-                    <span className="text-slate-400 dark:text-slate-500">({p.costEstimate})</span>
                   </div>
                 </div>
 
