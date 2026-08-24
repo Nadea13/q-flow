@@ -1,5 +1,6 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
@@ -8,6 +9,7 @@ interface CreateMerchantInput {
   promptpay_id: string
   promptpay_name?: string
   default_deposit: number
+  admin_pin?: string
   phone?: string
   open_time?: string
   close_time?: string
@@ -30,6 +32,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
   const supabase = await createClient()
 
   const slug = input.customSlug?.trim() || generateSlug(input.name)
+  const pin = input.admin_pin?.trim() || '1234'
 
   // 1. Insert merchant
   const { data: merchant, error: mError } = await supabase
@@ -40,6 +43,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || input.name.trim(),
       default_deposit: Number(input.default_deposit) || 100,
+      admin_pin: pin,
       phone: input.phone?.trim() || input.promptpay_id.trim(),
       open_time: input.open_time || '10:00:00',
       close_time: input.close_time || '20:00:00',
@@ -55,6 +59,16 @@ export async function createMerchantAction(input: CreateMerchantInput) {
     }
     return { success: false, error: mError.message }
   }
+
+  // Automatically authorize creator on this device
+  const cookieStore = await cookies()
+  cookieStore.set(`qflow_auth_${slug}`, 'authenticated', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30,
+    path: '/',
+  })
 
   // 2. Insert default sample service
   await supabase.from('services').insert({

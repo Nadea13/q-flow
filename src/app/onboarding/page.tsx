@@ -12,7 +12,8 @@ import {
   DollarSign, 
   Copy, 
   ExternalLink,
-  Check
+  Check,
+  Lock
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createMerchantAction } from '@/app/actions/merchant'
@@ -21,7 +22,7 @@ import { NavbarControls } from '@/components/NavbarControls'
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [createdMerchant, setCreatedMerchant] = useState<{
@@ -34,6 +35,7 @@ export default function OnboardingPage() {
     name: '',
     promptpay_id: '',
     default_deposit: '200',
+    admin_pin: '1234',
     slug: '',
   })
 
@@ -46,6 +48,7 @@ export default function OnboardingPage() {
       name: formData.name,
       promptpay_id: formData.promptpay_id,
       default_deposit: Number(formData.default_deposit) || 100,
+      admin_pin: formData.admin_pin || '1234',
       customSlug: formData.slug || undefined,
     })
 
@@ -255,6 +258,30 @@ export default function OnboardingPage() {
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                   {t('depositHint')}
+                </p>
+              </div>
+
+              {/* Field 4: Admin PIN */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                  {lang === 'th' ? '4. รหัส Admin PIN เข้าจัดการหลังบ้าน (4-6 หลัก)' : '4. Admin PIN Code (4-6 digits)'} <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    maxLength={6}
+                    placeholder="1234"
+                    value={formData.admin_pin}
+                    onChange={(e) => setFormData({ ...formData, admin_pin: e.target.value })}
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono tracking-widest"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  {lang === 'th' ? 'ใช้สำหรับปลดล็อกเข้าดูหน้า Dashboard จัดการคิว (เริ่มต้น: 1234)' : 'Used to unlock and access your management Dashboard (Default: 1234)'}
                 </p>
               </div>
 

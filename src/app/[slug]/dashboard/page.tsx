@@ -18,10 +18,13 @@ import {
   Settings, 
   Image as ImageIcon,
   Sparkles,
-  Phone,
-  MessageSquare,
   Coffee,
-  X
+  X,
+  KeyRound,
+  LogOut,
+  ShieldCheck,
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react'
 import { format, startOfToday, addDays } from 'date-fns'
 import { th, enUS } from 'date-fns/locale'
@@ -36,6 +39,12 @@ import {
   deleteServiceAction,
   updateMerchantSettingsAction
 } from '@/app/actions/dashboard'
+import { 
+  checkMerchantAuthAction, 
+  verifyMerchantPinAction, 
+  verifyMerchantLiffAction, 
+  logoutMerchantAction 
+} from '@/app/actions/auth'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import type { Booking, Merchant, Service, Slot, BookingStatus } from '@/types/database'
@@ -48,6 +57,12 @@ export default function DashboardPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const slug = resolvedParams.slug
   const { t, lang } = useLanguage()
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [pinInput, setPinInput] = useState('')
+  const [pinError, setPinError] = useState<string | null>(null)
+  const [verifyingPin, setVerifyingPin] = useState(false)
 
   const [merchant, setMerchant] = useState<Merchant | null>(null)
   const [services, setServices] = useState<Service[]>([])
@@ -93,8 +108,43 @@ export default function DashboardPage({ params }: PageProps) {
 
   const dateLocale = lang === 'th' ? th : enUS
 
-  // Fetch initial data
+  // Check Authentication & Load initial data
+  useEffect(() => {
+    async function initAuthAndData() {
+      // 1. Check if user has active session
+      const authStatus = await checkMerchantAuthAction(slug)
+      if (authStatus.isAuthenticated) {
+        setIsAuthenticated(true)
+        await loadDashboardData()
+        return
+      }
+
+      // 2. If inside LINE LIFF, try automatic LINE verification
+      try {
+        const { initLiff } = await import('@/lib/liff')
+        const liffRes = await initLiff()
+        if (liffRes.success && liffRes.profile?.userId) {
+          const liffAuth = await verifyMerchantLiffAction(slug, liffRes.profile.userId)
+          if (liffAuth.success) {
+            setIsAuthenticated(true)
+            await loadDashboardData()
+            return
+          }
+        }
+      } catch {
+        // LIFF fallback
+      }
+
+      // 3. Fallback: Require PIN
+      setIsAuthenticated(false)
+      setLoading(false)
+    }
+
+    initAuthAndData()
+  }, [slug])
+
   async function loadDashboardData() {
+    setLoading(true)
     const supabase = createClient()
     
     // 1. Merchant
@@ -154,9 +204,31 @@ export default function DashboardPage({ params }: PageProps) {
     setLoading(false)
   }
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [slug])
+  // Handle PIN Login
+  async function handleVerifyPin(e: React.FormEvent) {
+    e.preventDefault()
+    setVerifyingPin(true)
+    setPinError(null)
+
+    const res = await verifyMerchantPinAction(slug, pinInput)
+    setVerifyingPin(false)
+
+    if (!res.success) {
+      setPinError(res.error || 'รหัส PIN ไม่ถูกต้อง')
+      return
+    }
+
+    setIsAuthenticated(true)
+    await loadDashboardData()
+  }
+
+  // Handle Logout
+  async function handleLogout() {
+    await logoutMerchantAction(slug)
+    setIsAuthenticated(false)
+    setPinInput('')
+    toast.success('ออกจากระบบเรียบร้อยแล้ว')
+  }
 
   // Handle status update
   async function handleStatusChange(bookingId: string, newStatus: BookingStatus) {
@@ -263,7 +335,8 @@ export default function DashboardPage({ params }: PageProps) {
     }
   }
 
-  if (loading) {
+  // 1. Loading State
+  if (loading && isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
         <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -271,6 +344,92 @@ export default function DashboardPage({ params }: PageProps) {
     )
   }
 
+  // 2. AUTHENTICATION GATE SCREEN (PIN / LINE LOGIN)
+  if (isAuthenticated === false) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 transition-colors">
+        <div className="flex justify-between items-center max-w-md w-full mx-auto">
+          <Link href="/" className="inline-flex items-center gap-2 group">
+            <div className="h-8 w-8 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-base shadow-xs group-hover:scale-105 transition-transform">
+              Q
+            </div>
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">QFlow</span>
+          </Link>
+          <NavbarControls />
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-sm w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6"
+        >
+          <div className="text-center">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-2xs">
+              <KeyRound className="w-6 h-6" />
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {lang === 'th' ? 'ยืนยันตัวตนเจ้าของร้าน' : 'Merchant Authentication'}
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {lang === 'th' ? `ร้าน: ${slug}` : `Shop: ${slug}`}
+            </p>
+          </div>
+
+          <form onSubmit={handleVerifyPin} className="space-y-4">
+            {pinError && (
+              <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{pinError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5 text-center">
+                {lang === 'th' ? 'กรอกรหัส Admin PIN (ค่าเริ่มต้น: 1234)' : 'Enter Admin PIN (Default: 1234)'}
+              </label>
+              <input
+                type="password"
+                required
+                maxLength={6}
+                autoFocus
+                placeholder="••••"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                className="w-full text-center tracking-[0.5em] text-2xl font-bold py-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={verifyingPin || !pinInput}
+              className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
+            >
+              {verifyingPin ? (
+                <span>{t('loading')}</span>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{lang === 'th' ? 'เข้าสู่ระบบ Dashboard' : 'Unlock Dashboard'}</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              💡 {lang === 'th' ? 'หากเปิดผ่าน LINE LIFF ของบัญชีเจ้าของร้าน ระบบจะล็อกอินให้อัตโนมัติ' : 'Opening via LINE LIFF will auto-authenticate linked merchants.'}
+            </p>
+          </div>
+        </motion.div>
+
+        <div className="text-center text-xs text-slate-400 dark:text-slate-600">
+          QFlow Security Gateway • PIN & LINE LIFF Protected
+        </div>
+      </div>
+    )
+  }
+
+  // 3. Shop Not Found
   if (!merchant) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 text-center">
@@ -295,6 +454,7 @@ export default function DashboardPage({ params }: PageProps) {
     return matchDate && matchStatus
   })
 
+  // 4. MAIN AUTHENTICATED DASHBOARD
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-20 transition-colors font-sans antialiased">
       {/* Top Navbar */}
@@ -315,7 +475,7 @@ export default function DashboardPage({ params }: PageProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <NavbarControls />
             <Link
               href={`/${slug}/book`}
@@ -325,6 +485,14 @@ export default function DashboardPage({ params }: PageProps) {
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t('openCustomerBooking')}</span>
             </Link>
+            <button
+              onClick={handleLogout}
+              type="button"
+              aria-label="Logout"
+              className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl border border-slate-200 dark:border-slate-800 transition active:scale-95"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
