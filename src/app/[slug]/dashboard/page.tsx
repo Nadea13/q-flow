@@ -1720,75 +1720,29 @@ export default function DashboardPage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Customer Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('customer')} (ชื่อลูกค้า) *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="เช่น คุณสมศรี (โทรจอง)"
-                    value={manualBookingForm.customer_name}
-                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_name: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('phone')} (เบอร์โทรติดต่อ)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น 081-234-5678"
-                    value={manualBookingForm.customer_phone}
-                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_phone: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* Status and Deposit Amount */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('bookingStatusLabel')}
-                  </label>
-                  <select
-                    value={manualBookingForm.status}
-                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, status: e.target.value as BookingStatus })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-semibold"
-                  >
-                    <option value="confirmed">✅ {t('statusConfirmedPay')}</option>
-                    <option value="pending_payment">⏳ {t('statusPendingPay')}</option>
-                    <option value="completed">🎉 {t('statusCompleted')}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('depositAmount')} (บาท)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={manualBookingForm.deposit_amount}
-                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, deposit_amount: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
-                  />
-                </div>
+              {/* Customer Name */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  {t('customer')} (ชื่อลูกค้า) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="เช่น คุณสมศรี (โทรจอง)"
+                  value={manualBookingForm.customer_name}
+                  onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_name: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
               </div>
 
               {/* Notes */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {t('notes')} / รายละเอียดเพิ่มเติม
+                  {t('notes')} / บันทึกเพิ่มเติม (ถ้ามี)
                 </label>
                 <input
                   type="text"
-                  placeholder="เช่น ช่างประจำพี่เอก, ชำระเงินสดหน้าร้านแล้ว"
+                  placeholder="เช่น ลูกค้าโทรจอง, ขอช่างพี่เอก, ชำระเงินสดหน้าร้าน"
                   value={manualBookingForm.notes}
                   onChange={(e) => setManualBookingForm({ ...manualBookingForm, notes: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
