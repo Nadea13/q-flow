@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   Sparkles, 
@@ -21,7 +20,6 @@ import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 
 export default function OnboardingPage() {
-  const router = useRouter()
   const { t, lang } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +29,13 @@ export default function OnboardingPage() {
   } | null>(null)
   const [copied, setCopied] = useState(false)
 
+  // LINE Profile State
+  const [lineAdminProfile, setLineAdminProfile] = useState<{
+    displayName: string
+    pictureUrl?: string
+    userId: string
+  } | null>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     promptpay_id: '',
@@ -38,6 +43,35 @@ export default function OnboardingPage() {
     admin_pin: '1234',
     slug: '',
   })
+
+  // Detect LINE LIFF on mount
+  useEffect(() => {
+    async function checkLiff() {
+      try {
+        const { initLiff } = await import('@/lib/liff')
+        const res = await initLiff()
+        if (res.success && res.profile) {
+          const profileData = {
+            displayName: res.profile.displayName,
+            pictureUrl: res.profile.pictureUrl,
+            userId: res.profile.userId,
+          }
+          setLineAdminProfile(profileData)
+          localStorage.setItem('qflow_admin_line_profile', JSON.stringify(profileData))
+
+          // Auto-fill shop name if empty
+          setFormData((prev) => ({
+            ...prev,
+            name: prev.name ? prev.name : `${res.profile?.displayName || 'Shop'}'s Studio`,
+          }))
+        }
+      } catch {
+        // LIFF fallback
+      }
+    }
+
+    checkLiff()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -49,6 +83,7 @@ export default function OnboardingPage() {
       promptpay_id: formData.promptpay_id,
       default_deposit: Number(formData.default_deposit) || 100,
       admin_pin: formData.admin_pin || '1234',
+      line_user_id: lineAdminProfile?.userId,
       customSlug: formData.slug || undefined,
     })
 
@@ -187,6 +222,35 @@ export default function OnboardingPage() {
               onSubmit={handleSubmit}
               className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4"
             >
+              {/* LINE Account Link Card */}
+              {lineAdminProfile && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    {lineAdminProfile.pictureUrl ? (
+                      <img
+                        src={lineAdminProfile.pictureUrl}
+                        alt={lineAdminProfile.displayName}
+                        className="w-9 h-9 rounded-full object-cover border border-emerald-500/40"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-[#06C755] text-white font-bold text-xs flex items-center justify-center">
+                        L
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                        <span>{lineAdminProfile.displayName}</span>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">(LINE Owner)</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {lang === 'th' ? 'เชื่อมต่อบัญชี LINE เป็นเจ้าของร้านอัตโนมัติ' : 'Linked as Merchant Admin'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+              )}
+
               {error && (
                 <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
                   {error}
