@@ -1,0 +1,454 @@
+'use client'
+
+import { useEffect, useState, use } from 'react'
+import Link from 'next/link'
+import { 
+  CheckCircle2, 
+  Copy, 
+  Download, 
+  UploadCloud, 
+  AlertCircle, 
+  Store, 
+  Check,
+  ShieldCheck,
+  MessageSquare,
+  QrCode
+} from 'lucide-react'
+import { format } from 'date-fns'
+import { th, enUS } from 'date-fns/locale'
+import { motion } from 'framer-motion'
+import { createClient } from '@/lib/supabase/client'
+import { generatePromptPayQR } from '@/lib/promptpay'
+import { verifyAndConfirmBookingAction } from '@/app/actions/booking'
+import { useLanguage } from '@/context/LanguageContext'
+import { NavbarControls } from '@/components/NavbarControls'
+import type { Booking, Merchant, Service } from '@/types/database'
+
+interface PageProps {
+  params: Promise<{ slug: string; bookingId: string }>
+}
+
+export default function BookingDetailPage({ params }: PageProps) {
+  const resolvedParams = use(params)
+  const { slug, bookingId } = resolvedParams
+  const { t, lang } = useLanguage()
+
+  const [booking, setBooking] = useState<Booking | null>(null)
+  const [merchant, setMerchant] = useState<Merchant | null>(null)
+  const [service, setService] = useState<Service | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // PromptPay QR state
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  const [copiedPayId, setCopiedPayId] = useState(false)
+
+  // Slip upload state
+  const [slipFile, setSlipFile] = useState<File | null>(null)
+  const [slipPreview, setSlipPreview] = useState<string | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+
+  const dateLocale = lang === 'th' ? th : enUS
+
+  // Load Booking Data
+  useEffect(() => {
+    async function loadData() {
+      const supabase = createClient()
+      const { data: bData, error } = await supabase
+        .from('bookings')
+        .select('*, merchants(*), services(*)')
+        .eq('id', bookingId)
+        .single()
+
+      if (error || !bData) {
+        setLoading(false)
+        return
+      }
+
+      setBooking(bData)
+      setMerchant(bData.merchants)
+      setService(bData.services)
+
+      // Generate PromptPay QR if pending
+      if (bData.status === 'pending_payment' && bData.merchants) {
+        try {
+          const qrRes = await generatePromptPayQR(
+            bData.merchants.promptpay_id,
+            Number(bData.deposit_amount)
+          )
+          setQrDataUrl(qrRes.qrDataUrl)
+        } catch (qrErr) {
+          console.error('Failed to generate QR', qrErr)
+        }
+      }
+
+      setLoading(false)
+    }
+
+    loadData()
+  }, [bookingId])
+
+  // Handle Slip file selection
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSlipFile(file)
+      setSlipPreview(URL.createObjectURL(file))
+      setVerifyError(null)
+    }
+  }
+
+  // Handle Verify Slip
+  async function handleVerifySlip() {
+    if (!slipFile) return
+
+    setVerifying(true)
+    setVerifyError(null)
+
+    const formData = new FormData()
+    formData.append('slip', slipFile)
+
+    const res = await verifyAndConfirmBookingAction(bookingId, formData)
+    setVerifying(false)
+
+    if (!res.success) {
+      setVerifyError(res.error || t('errorOccurred'))
+      return
+    }
+
+    setBooking((prev) => (prev ? { ...prev, status: 'confirmed' } : null))
+
+    // Designer Touch: Trigger Confetti!
+    try {
+      const confetti = (await import('canvas-confetti')).default
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#4F46E5', '#10B981', '#38BDF8', '#F59E0B'],
+      })
+    } catch {
+      // Optional fallback
+    }
+  }
+
+  function copyPromptPay() {
+    if (merchant?.promptpay_id) {
+      navigator.clipboard.writeText(merchant.promptpay_id)
+      setCopiedPayId(true)
+      setTimeout(() => setCopiedPayId(false), 2000)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!booking || !merchant || !service) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 text-center">
+        <div className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xs">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">ไม่พบข้อมูลการจอง</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+            Booking not found.
+          </p>
+          <Link
+            href={`/${slug}/book`}
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold inline-block shadow-xs"
+          >
+            {t('back')}
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const isConfirmed = booking.status === 'confirmed'
+  const startTime = new Date(booking.start_time)
+  const endTime = new Date(booking.end_time)
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 transition-colors">
+      {/* Top Header */}
+      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800/80 sticky top-0 z-40">
+        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <h1 className="text-sm font-bold text-slate-900 dark:text-white">{merchant.name}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <NavbarControls />
+            <span
+              className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                isConfirmed
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
+                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
+              }`}
+            >
+              {isConfirmed ? t('confirmedBooking') : t('pendingPayment')}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-xl mx-auto px-4 pt-6 space-y-5">
+        {/* SUCCESS CONFIRMED STATE (BOARDING PASS VOUCHER AESTHETIC) */}
+        {isConfirmed ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6"
+          >
+            <div className="text-center">
+              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {t('bookingSuccessTitle')}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('bookingSuccessSubtitle')}
+              </p>
+            </div>
+
+            {/* Voucher Card */}
+            <div className="bg-slate-50/80 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3.5 relative overflow-hidden">
+              <div className="border-b border-slate-200 dark:border-slate-800 pb-3 flex justify-between items-center">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('bookingId')}
+                </span>
+                <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-extrabold bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/60">
+                  #{booking.id.slice(0, 8).toUpperCase()}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-right">{service.title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {format(startTime, 'EEEE d MMMM yyyy', { locale: dateLocale })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">{t('selectTimeSlot')}:</span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                    {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} ({service.duration_min} {t('minutes')})
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{booking.customer_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">{t('phone')}:</span>
+                  <span className="font-mono text-slate-800 dark:text-slate-200">{booking.customer_phone}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-2.5 font-bold text-sm">
+                  <span className="text-emerald-600 dark:text-emerald-400">{t('depositAmount')}:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <a
+                href={`https://line.me/R/msg/text/?${encodeURIComponent(
+                  `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'd MMMM yyyy HH:mm', { locale: dateLocale })} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs transition active:scale-98"
+              >
+                <MessageSquare className="w-4 h-4 fill-white" />
+                แชร์ตั๋วคิวเข้า LINE
+              </a>
+
+              <Link
+                href={`/${slug}/book`}
+                className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold text-center transition border border-slate-200 dark:border-slate-700 shadow-2xs active:scale-98"
+              >
+                {t('bookMoreBtn')}
+              </Link>
+            </div>
+          </motion.div>
+        ) : (
+          /* PAYMENT & SLIP UPLOAD FLOW */
+          <div className="space-y-4">
+            {/* Booking Recap */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 shadow-2xs">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
+                <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                  {format(startTime, 'd MMM yyyy', { locale: dateLocale })} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')})
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
+                <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.customer_name} ({booking.customer_phone})</span>
+              </div>
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
+                <span className="text-amber-600 dark:text-amber-400">{t('depositToPay')}:</span>
+                <span className="text-amber-600 dark:text-amber-400">
+                  ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
+                </span>
+              </div>
+            </div>
+
+            {/* PromptPay QR Code Box */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-2xs">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4" />
+                {t('scanPromptPay')}
+              </div>
+
+              {qrDataUrl ? (
+                <div className="inline-block p-4 bg-white border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+                  <img
+                    src={qrDataUrl}
+                    alt="PromptPay QR Code"
+                    className="w-52 h-52 mx-auto"
+                  />
+                  <div className="text-slate-800 font-bold text-xs mt-2">
+                    {t('depositPrice')}: ฿{Number(booking.deposit_amount).toLocaleString()}
+                  </div>
+                </div>
+              ) : (
+                <div className="w-52 h-52 bg-slate-100 dark:bg-slate-800 rounded-2xl mx-auto flex items-center justify-center">
+                  <span className="text-xs text-slate-500">{t('loading')}</span>
+                </div>
+              )}
+
+              {/* PromptPay Details */}
+              <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
+                <div className="text-left">
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                    {t('promptpayNumber')} ({merchant.promptpay_name || merchant.name})
+                  </div>
+                  <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{merchant.promptpay_id}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyPromptPay}
+                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95"
+                >
+                  {copiedPayId ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      <span>{t('copied')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3 text-slate-500" />
+                      <span>{t('copy')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {qrDataUrl && (
+                <a
+                  href={qrDataUrl}
+                  download={`promptpay-deposit-${booking.id.slice(0, 6)}.png`}
+                  className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {t('saveQrImage')}
+                </a>
+              )}
+            </div>
+
+            {/* Slip Upload & SlipOK Verification Section */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <UploadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  {t('attachSlipTitle')}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {t('attachSlipSubtitle')}
+                </p>
+              </div>
+
+              {verifyError && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{verifyError}</span>
+                </div>
+              )}
+
+              {/* Upload Input Zone */}
+              <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-slate-50/60 dark:bg-slate-950/40 hover:bg-slate-100/80 dark:hover:bg-slate-950/80 transition relative overflow-hidden">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {slipPreview ? (
+                  <div className="space-y-2 text-center">
+                    <img
+                      src={slipPreview}
+                      alt="Slip Preview"
+                      className="max-h-44 rounded-lg mx-auto shadow-sm border border-slate-200 dark:border-slate-800"
+                    />
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold block">
+                      {t('changeSlipImage')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-2">
+                    <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto">
+                      <UploadCloud className="w-4 h-4" />
+                    </div>
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {t('chooseSlipImage')}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-500">
+                      {t('supportedFiles')}
+                    </div>
+                  </div>
+                )}
+              </label>
+
+              <button
+                type="button"
+                disabled={!slipFile || verifying}
+                onClick={handleVerifySlip}
+                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
+              >
+                {verifying ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {t('verifyingSlip')}
+                  </span>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{t('verifySlipBtn')}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
