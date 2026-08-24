@@ -60,8 +60,8 @@ export default function PricingPage() {
       features: [
         {
           name: lang === 'th' ? 'โควตาสลิปตรวจอัตโนมัติ (SlipOK API)' : 'Monthly Auto-verified Slips',
-          starter: '300 สลิป/เดือน (เฉลี่ย ~10 คิว/วัน)',
-          growth: '1,000 สลิป/เดือน (เฉลี่ย ~33+ คิว/วัน)',
+          starter: '500 สลิป/เดือน (เฉลี่ย ~16 คิว/วัน)',
+          growth: '1,500 สลิป/เดือน (เฉลี่ย ~50 คิว/วัน)',
           highlight: true,
         },
         {
