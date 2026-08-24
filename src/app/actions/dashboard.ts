@@ -24,6 +24,46 @@ export async function updateBookingStatusAction(
   return { success: true }
 }
 
+export async function createManualBookingAction(input: {
+  merchantId: string
+  merchantSlug: string
+  serviceId: string
+  startTime: string
+  endTime: string
+  customerName: string
+  customerPhone?: string
+  customerLineId?: string
+  notes?: string
+  depositAmount: number
+  status: BookingStatus
+}) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .insert({
+      merchant_id: input.merchantId,
+      service_id: input.serviceId,
+      start_time: input.startTime,
+      end_time: input.endTime,
+      customer_name: input.customerName.trim(),
+      customer_phone: input.customerPhone?.trim() || null,
+      customer_line_id: input.customerLineId?.trim() || null,
+      notes: input.notes?.trim() || 'โทรจอง / ลงคิวหน้าร้านโดยแอดมิน',
+      deposit_amount: Number(input.depositAmount) || 0,
+      status: input.status,
+    })
+    .select('*, services(*)')
+    .single()
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/${input.merchantSlug}/dashboard`)
+  return { success: true, booking: data }
+}
+
 export async function createBlockedSlotAction(input: {
   merchantId: string
   merchantSlug: string

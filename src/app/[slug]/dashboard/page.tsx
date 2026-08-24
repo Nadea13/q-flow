@@ -30,7 +30,9 @@ import {
   Building2,
   MapPin,
   Phone,
-  CalendarDays
+  CalendarDays,
+  PhoneCall,
+  UserPlus
 } from 'lucide-react'
 import { format, startOfToday, addDays } from 'date-fns'
 import { th, enUS } from 'date-fns/locale'
@@ -44,7 +46,8 @@ import {
   saveServiceAction,
   deleteServiceAction,
   updateMerchantSettingsAction,
-  updateMerchantBranchAction
+  updateMerchantBranchAction,
+  createManualBookingAction
 } from '@/app/actions/dashboard'
 import { 
   checkMerchantAuthAction, 
@@ -99,6 +102,20 @@ export default function DashboardPage({ params }: PageProps) {
   // Service Edit/New Modal state
   const [editingService, setEditingService] = useState<Partial<Service> | null>(null)
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+
+  // Manual Booking Modal state
+  const [isManualBookingModalOpen, setIsManualBookingModalOpen] = useState(false)
+  const [manualBookingForm, setManualBookingForm] = useState({
+    service_id: '',
+    date: format(today, 'yyyy-MM-dd'),
+    start_time: '10:00',
+    customer_name: '',
+    customer_phone: '',
+    customer_line_id: '',
+    notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+    deposit_amount: '0',
+    status: 'confirmed' as BookingStatus,
+  })
 
   // Quick Block Slot form state
   const [blockStartTime, setBlockStartTime] = useState('12:00')
@@ -307,6 +324,63 @@ export default function DashboardPage({ params }: PageProps) {
     if (res.success) {
       toast.success(t('delete'))
       loadDashboardData()
+    }
+  }
+
+  // Handle Manual Booking (Phone / Walk-in)
+  async function handleCreateManualBooking(e: React.FormEvent) {
+    e.preventDefault()
+    if (!merchant) return
+
+    if (!manualBookingForm.service_id) {
+      toast.error('กรุณาเลือกบริการ')
+      return
+    }
+
+    if (!manualBookingForm.customer_name.trim()) {
+      toast.error('กรุณากรอกชื่อลูกค้า')
+      return
+    }
+
+    const selectedSvc = services.find((s) => s.id === manualBookingForm.service_id)
+    const duration = selectedSvc?.duration_min || 60
+
+    const [y, m, d] = manualBookingForm.date.split('-').map(Number)
+    const [h, min] = manualBookingForm.start_time.split(':').map(Number)
+    const startDate = new Date(y, m - 1, d, h, min, 0)
+    const endDate = new Date(startDate.getTime() + duration * 60000)
+
+    const res = await createManualBookingAction({
+      merchantId: merchant.id,
+      merchantSlug: slug,
+      serviceId: manualBookingForm.service_id,
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      customerName: manualBookingForm.customer_name,
+      customerPhone: manualBookingForm.customer_phone,
+      customerLineId: manualBookingForm.customer_line_id,
+      notes: manualBookingForm.notes,
+      depositAmount: Number(manualBookingForm.deposit_amount) || 0,
+      status: manualBookingForm.status,
+    })
+
+    if (res.success) {
+      toast.success(t('bookingCreatedSuccess'))
+      setIsManualBookingModalOpen(false)
+      setManualBookingForm({
+        service_id: '',
+        date: selectedDate,
+        start_time: '10:00',
+        customer_name: '',
+        customer_phone: '',
+        customer_line_id: '',
+        notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+        deposit_amount: '0',
+        status: 'confirmed',
+      })
+      loadDashboardData()
+    } else {
+      toast.error(res.error || 'เกิดข้อผิดพลาดในการลงคิว')
     }
   }
 
@@ -701,7 +775,7 @@ export default function DashboardPage({ params }: PageProps) {
           <div className="space-y-4">
             {/* Filters Bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-2xl shadow-2xs">
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <input
                   type="date"
                   value={selectedDate}
@@ -722,26 +796,50 @@ export default function DashboardPage({ params }: PageProps) {
                 </button>
               </div>
 
-              <div className="flex items-center gap-1">
-                {[
-                  { id: 'all', label: t('all') },
-                  { id: 'confirmed', label: t('statusConfirmed') },
-                  { id: 'pending_payment', label: t('statusPending') },
-                  { id: 'completed', label: t('statusCompleted') },
-                  { id: 'cancelled', label: t('statusCancelled') },
-                ].map((st) => (
-                  <button
-                    key={st.id}
-                    onClick={() => setStatusFilter(st.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                      statusFilter === st.id
-                        ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    {st.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 overflow-x-auto">
+                  {[
+                    { id: 'all', label: t('all') },
+                    { id: 'confirmed', label: t('statusConfirmed') },
+                    { id: 'pending_payment', label: t('statusPending') },
+                    { id: 'completed', label: t('statusCompleted') },
+                    { id: 'cancelled', label: t('statusCancelled') },
+                  ].map((st) => (
+                    <button
+                      key={st.id}
+                      onClick={() => setStatusFilter(st.id)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition shrink-0 ${
+                        statusFilter === st.id
+                          ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => {
+                    const firstSvc = services[0]
+                    setManualBookingForm({
+                      service_id: firstSvc?.id || '',
+                      date: selectedDate,
+                      start_time: '10:00',
+                      customer_name: '',
+                      customer_phone: '',
+                      customer_line_id: '',
+                      notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+                      deposit_amount: String(firstSvc?.deposit_amount ?? merchant.default_deposit ?? 100),
+                      status: 'confirmed',
+                    })
+                    setIsManualBookingModalOpen(true)
+                  }}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-2xs active:scale-98 shrink-0"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>{t('addManualBookingBtn')}</span>
+                </button>
               </div>
             </div>
 
@@ -1525,6 +1623,193 @@ export default function DashboardPage({ params }: PageProps) {
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 shadow-2xs"
                 >
                   {t('save')}
+                </button>
+              </div>
+            </motion.form>
+          </motion.div>
+        )}
+
+        {/* MANUAL BOOKING MODAL (Phone / Walk-in) */}
+        {isManualBookingModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.form
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              onSubmit={handleCreateManualBooking}
+              className="max-w-lg w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl my-8"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <PhoneCall className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('manualBookingTitle')}</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">ลงตารางนัดหมายสำหรับลูกค้าที่โทรจอง หรือจองหน้าร้าน</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsManualBookingModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Service Selection */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  {t('selectService')} *
+                </label>
+                <select
+                  required
+                  value={manualBookingForm.service_id}
+                  onChange={(e) => {
+                    const svcId = e.target.value
+                    const s = services.find((x) => x.id === svcId)
+                    setManualBookingForm({
+                      ...manualBookingForm,
+                      service_id: svcId,
+                      deposit_amount: String(s?.deposit_amount ?? merchant.default_deposit ?? 100),
+                    })
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                >
+                  <option value="">-- {t('selectService')} --</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title} ({s.duration_min} นาที - ฿{s.price})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date and Start Time */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('bookingDate')} *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={manualBookingForm.date}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, date: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('bookingStartTime')} *
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={manualBookingForm.start_time}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, start_time: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('customer')} (ชื่อลูกค้า) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="เช่น คุณสมศรี (โทรจอง)"
+                    value={manualBookingForm.customer_name}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_name: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('phone')} (เบอร์โทรติดต่อ)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="เช่น 081-234-5678"
+                    value={manualBookingForm.customer_phone}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_phone: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Status and Deposit Amount */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('bookingStatusLabel')}
+                  </label>
+                  <select
+                    value={manualBookingForm.status}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, status: e.target.value as BookingStatus })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-semibold"
+                  >
+                    <option value="confirmed">✅ {t('statusConfirmedPay')}</option>
+                    <option value="pending_payment">⏳ {t('statusPendingPay')}</option>
+                    <option value="completed">🎉 {t('statusCompleted')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('depositAmount')} (บาท)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={manualBookingForm.deposit_amount}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, deposit_amount: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  {t('notes')} / รายละเอียดเพิ่มเติม
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น ช่างประจำพี่เอก, ชำระเงินสดหน้าร้านแล้ว"
+                  value={manualBookingForm.notes}
+                  onChange={(e) => setManualBookingForm({ ...manualBookingForm, notes: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsManualBookingModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-95 transition"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs transition flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{t('createBookingBtn')}</span>
                 </button>
               </div>
             </motion.form>
