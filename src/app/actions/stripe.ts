@@ -5,7 +5,7 @@ import { stripe, PRICING_PLANS } from '@/lib/stripe'
 import type { PlanType } from '@/types/database'
 
 interface CreateCheckoutInput {
-  merchantSlug: string
+  merchantSlug?: string
   planId: PlanType
   returnUrl?: string
 }
@@ -14,50 +14,62 @@ interface CreateCheckoutInput {
  * Creates a Stripe Checkout Session for subscribing to a plan
  */
 export async function createStripeCheckoutSessionAction(input: CreateCheckoutInput) {
-  const supabase = await createClient()
-
-  const { data: merchant, error } = await supabase
-    .from('merchants')
-    .select('id, slug, name, stripe_customer_id, plan')
-    .eq('slug', input.merchantSlug)
-    .single()
-
-  if (error || !merchant) {
-    return { success: false, error: 'ไม่พบร้านค้านี้ในระบบ' }
-  }
-
   const plan = PRICING_PLANS[input.planId]
   if (!plan) {
     return { success: false, error: 'ไม่พบแพ็กเกจที่เลือก' }
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const successUrl = `${siteUrl}/${merchant.slug}/dashboard?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
-  const cancelUrl = `${siteUrl}/${merchant.slug}/dashboard?tab=billing`
+  const supabase = await createClient()
+
+  let merchant = null
+  if (input.merchantSlug && input.merchantSlug !== 'public') {
+    const { data: mData } = await supabase
+      .from('merchants')
+      .select('id, slug, name, stripe_customer_id, plan')
+      .eq('slug', input.merchantSlug)
+      .single()
+    merchant = mData
+  }
+
+  const successUrl = merchant
+    ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
+    : `${siteUrl}/onboarding?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}`
+  
+  const cancelUrl = merchant
+    ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing`
+    : `${siteUrl}/pricing`
 
   // If Stripe Secret Key is not configured or in mock test, perform instant simulated upgrade
   if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('mock')) {
-    // Instant test upgrade
-    await supabase
-      .from('merchants')
-      .update({
-        plan: plan.id,
-        subscription_status: 'active',
-        monthly_slip_quota: plan.quota,
-      })
-      .eq('id', merchant.id)
+    if (merchant) {
+      await supabase
+        .from('merchants')
+        .update({
+          plan: plan.id,
+          subscription_status: 'active',
+          monthly_slip_quota: plan.quota,
+        })
+        .eq('id', merchant.id)
+
+      return {
+        success: true,
+        url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing&upgraded=${plan.id}`,
+        simulated: true,
+      }
+    }
 
     return {
       success: true,
-      url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing&upgraded=${plan.id}`,
+      url: `${siteUrl}/onboarding?plan=${plan.id}`,
       simulated: true,
     }
   }
 
   try {
-    // 1. Get or create Stripe Customer
-    let customerId = merchant.stripe_customer_id
-    if (!customerId) {
+    // 1. Get or create Stripe Customer if merchant exists
+    let customerId = merchant?.stripe_customer_id
+    if (merchant && !customerId) {
       const customer = await stripe.customers.create({
         name: merchant.name,
         metadata: {
@@ -74,7 +86,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
 
     // 2. Create Checkout Session
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+      ...(customerId ? { customer: customerId } : {}),
       payment_method_types: ['card', 'promptpay'],
       line_items: [
         {
@@ -96,8 +108,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
-        merchant_id: merchant.id,
-        merchant_slug: merchant.slug,
+        ...(merchant ? { merchant_id: merchant.id, merchant_slug: merchant.slug } : {}),
         plan_id: plan.id,
         slip_quota: String(plan.quota),
       },
