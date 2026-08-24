@@ -12,14 +12,17 @@ import {
   Check,
   ShieldCheck,
   MessageSquare,
-  QrCode
+  QrCode,
+  Clock,
+  Hourglass,
+  RefreshCw
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { th, enUS } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { generatePromptPayQR } from '@/lib/promptpay'
-import { verifyAndConfirmBookingAction } from '@/app/actions/booking'
+import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import type { Booking, Merchant, Service } from '@/types/database'
@@ -37,6 +40,10 @@ export default function BookingDetailPage({ params }: PageProps) {
   const [merchant, setMerchant] = useState<Merchant | null>(null)
   const [service, setService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // 10-Minute Expiry Countdown Timer state
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
+  const [isExpired, setIsExpired] = useState(false)
 
   // PromptPay QR state
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
@@ -69,8 +76,20 @@ export default function BookingDetailPage({ params }: PageProps) {
       setMerchant(bData.merchants)
       setService(bData.services)
 
-      // Generate PromptPay QR if pending
-      if (bData.status === 'pending_payment' && bData.merchants) {
+      // Check if already expired or cancelled
+      const createdAt = new Date(bData.created_at).getTime()
+      const diff = Math.max(0, Math.floor((createdAt + 10 * 60 * 1000 - Date.now()) / 1000))
+
+      if (bData.status === 'cancelled' || (bData.status === 'pending_payment' && diff <= 0)) {
+        setIsExpired(true)
+        if (bData.status === 'pending_payment') {
+          expireBookingAction(bookingId)
+          bData.status = 'cancelled'
+        }
+      }
+
+      // Generate PromptPay QR if pending and not expired
+      if (bData.status === 'pending_payment' && bData.merchants && diff > 0) {
         try {
           const qrRes = await generatePromptPayQR(
             bData.merchants.promptpay_id,
@@ -87,6 +106,30 @@ export default function BookingDetailPage({ params }: PageProps) {
 
     loadData()
   }, [bookingId])
+
+  // 10-Minute Live Countdown Interval
+  useEffect(() => {
+    if (!booking || booking.status !== 'pending_payment' || isExpired) return
+
+    const createdAt = new Date(booking.created_at).getTime()
+    const expiresAt = createdAt + 10 * 60 * 1000 // 10 minutes
+
+    function updateTimer() {
+      const now = Date.now()
+      const remainingSecs = Math.max(0, Math.floor((expiresAt - now) / 1000))
+      setSecondsLeft(remainingSecs)
+
+      if (remainingSecs <= 0) {
+        setIsExpired(true)
+        setBooking((prev) => (prev ? { ...prev, status: 'cancelled' } : null))
+        expireBookingAction(bookingId)
+      }
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [booking?.created_at, booking?.status, isExpired, bookingId])
 
   // Handle Slip file selection
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -118,7 +161,7 @@ export default function BookingDetailPage({ params }: PageProps) {
 
     setBooking((prev) => (prev ? { ...prev, status: 'confirmed' } : null))
 
-    // Designer Touch: Trigger Confetti!
+    // Trigger Confetti Celebration
     try {
       const confetti = (await import('canvas-confetti')).default
       confetti({
@@ -128,7 +171,7 @@ export default function BookingDetailPage({ params }: PageProps) {
         colors: ['#4F46E5', '#10B981', '#38BDF8', '#F59E0B'],
       })
     } catch {
-      // Optional fallback
+      // Fallback
     }
   }
 
@@ -169,8 +212,15 @@ export default function BookingDetailPage({ params }: PageProps) {
   }
 
   const isConfirmed = booking.status === 'confirmed'
+  const isCancelledOrExpired = isExpired || booking.status === 'cancelled'
   const startTime = new Date(booking.start_time)
   const endTime = new Date(booking.end_time)
+
+  // Timer formatting
+  const minutes = secondsLeft !== null ? Math.floor(secondsLeft / 60) : 0
+  const seconds = secondsLeft !== null ? secondsLeft % 60 : 0
+  const formattedTimer = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 transition-colors">
@@ -187,17 +237,23 @@ export default function BookingDetailPage({ params }: PageProps) {
               className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                 isConfirmed
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
+                  : isCancelledOrExpired
+                  ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80'
                   : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
               }`}
             >
-              {isConfirmed ? t('confirmedBooking') : t('pendingPayment')}
+              {isConfirmed
+                ? t('confirmedBooking')
+                : isCancelledOrExpired
+                ? 'หลุดจอง / ยกเลิก'
+                : t('pendingPayment')}
             </span>
           </div>
         </div>
       </header>
 
       <main className="max-w-xl mx-auto px-4 pt-6 space-y-5">
-        {/* SUCCESS CONFIRMED STATE (BOARDING PASS VOUCHER AESTHETIC) */}
+        {/* 1. SUCCESS CONFIRMED STATE */}
         {isConfirmed ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.96 }}
@@ -283,9 +339,83 @@ export default function BookingDetailPage({ params }: PageProps) {
               </Link>
             </div>
           </motion.div>
+        ) : isCancelledOrExpired ? (
+          /* 2. EXPIRED / CANCELLED STATE */
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 text-center"
+          >
+            <div className="w-14 h-14 bg-rose-50 dark:bg-rose-950/60 text-rose-500 rounded-2xl flex items-center justify-center mx-auto shadow-2xs">
+              <Hourglass className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {t('bookingExpiredTitle')}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                {t('bookingExpiredDesc')}
+              </p>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs space-y-2 max-w-sm mx-auto text-left">
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
+                <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {format(startTime, 'd MMM yyyy HH:mm', { locale: dateLocale })} น.
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{booking.customer_name}</span>
+              </div>
+            </div>
+
+            <Link
+              href={`/${slug}/book`}
+              className="w-full max-w-sm mx-auto py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition active:scale-98"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>{t('bookAgainBtn')}</span>
+            </Link>
+          </motion.div>
         ) : (
-          /* PAYMENT & SLIP UPLOAD FLOW */
+          /* 3. PENDING PAYMENT & SLIP UPLOAD WITH 10-MIN COUNTDOWN */
           <div className="space-y-4">
+            {/* 10-MINUTE COUNTDOWN URGENCY BANNER */}
+            <div className={`p-4 rounded-2xl border transition-colors flex items-center justify-between gap-3 shadow-2xs ${
+              isUrgent
+                ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
+                : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  isUrgent
+                    ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 animate-pulse'
+                    : 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400'
+                }`}>
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold">{t('payWithin10Min')}</p>
+                  <p className="text-[11px] opacity-80 mt-0.5">{t('expiredWarning')}</p>
+                </div>
+              </div>
+
+              <div className={`px-3 py-1.5 rounded-xl font-mono text-sm font-extrabold tracking-wider shrink-0 border ${
+                isUrgent
+                  ? 'bg-rose-600 text-white border-rose-700 animate-bounce'
+                  : 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 shadow-2xs'
+              }`}>
+                {formattedTimer}
+              </div>
+            </div>
+
             {/* Booking Recap */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 shadow-2xs">
               <div className="flex justify-between text-xs">

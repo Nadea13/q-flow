@@ -124,6 +124,12 @@ export const translations = {
     bookingSuccessSubtitle: 'ระบบได้ตรวจสลิปและล็อกคิวของคุณเรียบร้อยแล้ว',
     bookingId: 'รหัสคิว (Booking ID)',
     bookMoreBtn: 'จองคิวใหม่ / จองเพิ่ม',
+    payWithin10Min: 'กรุณาชำระเงินและแนบสลิปภายใน 10 นาที',
+    countdownRemaining: 'เหลือเวลาทำรายการ',
+    expiredWarning: 'หากไม่แนบสลิปภายในเวลา ระบบจะยกเลิกคิวเพื่อเปิดให้ผู้อื่นจอง',
+    bookingExpiredTitle: 'หมดเวลาการชำระเงินมัดจำ (หลุดจอง)',
+    bookingExpiredDesc: 'รายการจองนี้ถูกยกเลิกแล้ว เนื่องจากไม่ได้รับการแนบสลิปภายในเวลา 10 นาที เพื่อเปิดโอกาสให้ผู้อื่นสามารถจองรอบเวลานี้ได้',
+    bookAgainBtn: 'เลือกจองคิวใหม่',
 
     // Dashboard
     dashboardTitle: 'Merchant Admin Center',
@@ -327,6 +333,12 @@ export const translations = {
     bookingSuccessSubtitle: 'Your slip has been verified and your appointment is locked.',
     bookingId: 'Booking ID',
     bookMoreBtn: 'Book Another Slot',
+    payWithin10Min: 'Please pay deposit & attach slip within 10 mins',
+    countdownRemaining: 'Time Remaining',
+    expiredWarning: 'If slip is not attached in time, this slot will be released for others',
+    bookingExpiredTitle: 'Deposit Payment Expired',
+    bookingExpiredDesc: 'This reservation has been cancelled because no payment slip was uploaded within 10 minutes.',
+    bookAgainBtn: 'Book Again',
 
     // Dashboard
     dashboardTitle: 'Merchant Admin Center',

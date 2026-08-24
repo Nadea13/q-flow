@@ -103,6 +103,22 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
     return { success: true, message: 'คิวนี้ได้รับการยืนยันเรียบร้อยแล้ว' }
   }
 
+  if (booking.status === 'cancelled') {
+    return { success: false, error: 'รายการจองนี้ถูกยกเลิกเนื่องจากเกินเวลา 10 นาทีแล้ว กรุณาทำรายการจองใหม่' }
+  }
+
+  // 1.1 Check 10-minute timeout for pending payment
+  const createdAtTime = new Date(booking.created_at).getTime()
+  const isExpired = Date.now() - createdAtTime > 10 * 60 * 1000
+  if (isExpired && booking.status === 'pending_payment') {
+    await supabase
+      .from('bookings')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', bookingId)
+
+    return { success: false, error: 'หมดเวลาชำระเงินมัดจำ (เกิน 10 นาที) คิวจองนี้ถูกยกเลิกแล้ว กรุณาทำการจองใหม่' }
+  }
+
   const file = formData.get('slip') as File
   if (!file || file.size === 0) {
     return { success: false, error: 'กรุณาเลือกไฟล์สลิปการโอนเงิน' }
@@ -207,4 +223,23 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
     message: verification.message,
     transRef: verification.transRef,
   }
+}
+
+export async function expireBookingAction(bookingId: string) {
+  const supabase = await createClient()
+
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, status')
+    .eq('id', bookingId)
+    .single()
+
+  if (booking && booking.status === 'pending_payment') {
+    await supabase
+      .from('bookings')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', bookingId)
+  }
+
+  return { success: true }
 }
