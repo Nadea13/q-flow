@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.merchants (
     subscription_status VARCHAR(50) NOT NULL DEFAULT 'active',
     stripe_customer_id TEXT,
     stripe_subscription_id TEXT,
-    monthly_slip_quota INT NOT NULL DEFAULT 500,
+    monthly_slip_quota INT NOT NULL DEFAULT 1000,
     used_slips_this_month INT NOT NULL DEFAULT 0,
     current_period_end TIMESTAMPTZ,
     is_active BOOLEAN NOT NULL DEFAULT true,
