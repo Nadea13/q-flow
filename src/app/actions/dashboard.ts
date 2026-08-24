@@ -47,9 +47,9 @@ export async function createManualBookingAction(input: {
       start_time: input.startTime,
       end_time: input.endTime,
       customer_name: input.customerName.trim(),
-      customer_phone: input.customerPhone?.trim() || null,
+      customer_phone: input.customerPhone?.trim() || '-',
       customer_line_id: input.customerLineId?.trim() || null,
-      notes: input.notes?.trim() || 'โทรจอง / ลงคิวหน้าร้านโดยแอดมิน',
+      customer_notes: input.notes?.trim() || 'โทรจอง / ลงคิวหน้าร้านโดยแอดมิน',
       deposit_amount: Number(input.depositAmount) || 0,
       status: input.status,
     })
