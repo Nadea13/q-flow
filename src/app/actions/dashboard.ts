@@ -128,6 +128,33 @@ export async function deleteServiceAction(serviceId: string, merchantSlug: strin
   return { success: true }
 }
 
+export async function updateMerchantBranchAction(input: {
+  merchantId: string
+  merchantSlug: string
+  branch_name: string
+  branch_address?: string
+  branch_phone?: string
+}) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('merchants')
+    .update({
+      branch_name: input.branch_name.trim(),
+      branch_address: input.branch_address?.trim() || null,
+      branch_phone: input.branch_phone?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.merchantId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/${input.merchantSlug}/dashboard`)
+  return { success: true }
+}
+
 export async function updateMerchantSettingsAction(input: {
   merchantId: string
   merchantSlug: string
@@ -141,6 +168,10 @@ export async function updateMerchantSettingsAction(input: {
   has_break?: boolean
   break_start_time?: string | null
   break_end_time?: string | null
+  closed_days?: number[]
+  branch_name?: string
+  branch_address?: string
+  branch_phone?: string
   slot_interval_min: number
   line_notify_token?: string
 }) {
@@ -159,6 +190,10 @@ export async function updateMerchantSettingsAction(input: {
       has_break: input.has_break ?? false,
       break_start_time: input.has_break && input.break_start_time ? input.break_start_time : null,
       break_end_time: input.has_break && input.break_end_time ? input.break_end_time : null,
+      closed_days: input.closed_days ?? [],
+      branch_name: input.branch_name?.trim() || null,
+      branch_address: input.branch_address?.trim() || null,
+      branch_phone: input.branch_phone?.trim() || null,
       slot_interval_min: Number(input.slot_interval_min) || 30,
       line_notify_token: input.line_notify_token?.trim() || null,
       updated_at: new Date().toISOString(),

@@ -32,6 +32,14 @@ export function computeAvailableSlots({
 
   // Base start and end times for the selected date
   const [year, month, day] = dateStr.split('-').map(Number)
+  const selectedDateObj = new Date(year, month - 1, day)
+  const dayOfWeek = selectedDateObj.getDay()
+
+  // If the shop is closed on this day of the week, return empty slots
+  if (merchant.closed_days && merchant.closed_days.includes(dayOfWeek)) {
+    return []
+  }
+
   let currentSlotStart = new Date(year, month - 1, day, openHours, openMinutes, 0)
   const dayCloseTime = new Date(year, month - 1, day, closeHours, closeMinutes, 0)
 

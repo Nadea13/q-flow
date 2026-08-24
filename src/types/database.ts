@@ -15,6 +15,10 @@ export interface Merchant {
   has_break?: boolean
   break_start_time?: string | null
   break_end_time?: string | null
+  closed_days?: number[]
+  branch_name?: string | null
+  branch_address?: string | null
+  branch_phone?: string | null
   slot_interval_min: number
   line_user_id: string | null
   line_notify_token: string | null

@@ -20,12 +20,14 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-reac
 interface BookingCalendarProps {
   selectedDate: string // "YYYY-MM-DD"
   onSelectDate: (dateStr: string) => void
+  closedDays?: number[] // Array of closed day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
   lang: 'th' | 'en'
 }
 
 export function BookingCalendar({
   selectedDate,
   onSelectDate,
+  closedDays = [],
   lang,
 }: BookingCalendarProps) {
   const today = startOfToday()
@@ -110,12 +112,19 @@ export function BookingCalendar({
           <div
             key={idx}
             className={`text-[11px] font-semibold py-1 ${
-              idx === 0 || idx === 6
+              closedDays.includes(idx)
+                ? 'text-rose-500/80 dark:text-rose-400/80 font-bold'
+                : idx === 0 || idx === 6
                 ? 'text-rose-500/90 dark:text-rose-400/90'
                 : 'text-slate-400 dark:text-slate-500'
             }`}
           >
             {w}
+            {closedDays.includes(idx) && (
+              <span className="block text-[8px] text-rose-500 font-normal leading-none mt-0.5">
+                {lang === 'th' ? 'ปิด' : 'Off'}
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -128,6 +137,9 @@ export function BookingCalendar({
 
         {daysInMonth.map((dayDate) => {
           const isPast = isBefore(dayDate, today)
+          const dayOfWeek = getDay(dayDate)
+          const isClosedDay = closedDays.includes(dayOfWeek)
+          const isDisabled = isPast || isClosedDay
           const isSelected = isSameDay(dayDate, selectedDateObj)
           const isCurrentDay = isSameDay(dayDate, today)
           const dayNum = format(dayDate, 'd')
@@ -136,10 +148,13 @@ export function BookingCalendar({
             <button
               key={dayDate.toISOString()}
               type="button"
-              disabled={isPast}
+              disabled={isDisabled}
               onClick={() => onSelectDate(format(dayDate, 'yyyy-MM-dd'))}
+              title={isClosedDay ? (lang === 'th' ? 'ร้านปิดทำการในวันนี้' : 'Shop closed on this day') : undefined}
               className={`h-10 sm:h-11 rounded-xl text-xs font-semibold flex flex-col items-center justify-center transition-all relative ${
-                isPast
+                isClosedDay
+                  ? 'text-rose-400/70 dark:text-rose-500/50 bg-rose-50/30 dark:bg-rose-950/20 cursor-not-allowed border border-dashed border-rose-200/60 dark:border-rose-900/40 select-none'
+                  : isPast
                   ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed line-through opacity-40 select-none'
                   : isSelected
                   ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm ring-2 ring-indigo-500/30 font-bold scale-[1.03]'
@@ -149,9 +164,13 @@ export function BookingCalendar({
               }`}
             >
               <span>{dayNum}</span>
-              {isCurrentDay && !isSelected && (
+              {isClosedDay ? (
+                <span className="text-[8px] text-rose-500 font-normal scale-90 leading-none">
+                  {lang === 'th' ? 'ปิด' : 'Closed'}
+                </span>
+              ) : isCurrentDay && !isSelected ? (
                 <span className="w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-0.5" />
-              )}
+              ) : null}
             </button>
           )
         })}

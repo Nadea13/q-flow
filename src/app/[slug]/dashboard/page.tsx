@@ -26,7 +26,11 @@ import {
   ArrowRight,
   MessageSquare,
   CreditCard,
-  Zap
+  Zap,
+  Building2,
+  MapPin,
+  Phone,
+  CalendarDays
 } from 'lucide-react'
 import { format, startOfToday, addDays } from 'date-fns'
 import { th, enUS } from 'date-fns/locale'
@@ -39,7 +43,8 @@ import {
   deleteBlockedSlotAction,
   saveServiceAction,
   deleteServiceAction,
-  updateMerchantSettingsAction
+  updateMerchantSettingsAction,
+  updateMerchantBranchAction
 } from '@/app/actions/dashboard'
 import { 
   checkMerchantAuthAction, 
@@ -111,6 +116,10 @@ export default function DashboardPage({ params }: PageProps) {
     has_break: true,
     break_start_time: '12:00',
     break_end_time: '13:00',
+    closed_days: [] as number[],
+    branch_name: '',
+    branch_address: '',
+    branch_phone: '',
     slot_interval_min: '30',
     line_notify_token: '',
   })
@@ -196,6 +205,10 @@ export default function DashboardPage({ params }: PageProps) {
       has_break: mData.has_break ?? true,
       break_start_time: mData.break_start_time?.slice(0, 5) || '12:00',
       break_end_time: mData.break_end_time?.slice(0, 5) || '13:00',
+      closed_days: mData.closed_days || [],
+      branch_name: mData.branch_name || 'สาขาหลัก (Main Branch)',
+      branch_address: mData.branch_address || '',
+      branch_phone: mData.branch_phone || '',
       slot_interval_min: String(mData.slot_interval_min || 30),
       line_notify_token: mData.line_notify_token || '',
     })
@@ -332,6 +345,27 @@ export default function DashboardPage({ params }: PageProps) {
     }
   }
 
+  // Handle Branch Info Submit
+  async function handleSaveBranch(e: React.FormEvent) {
+    e.preventDefault()
+    if (!merchant) return
+
+    const res = await updateMerchantBranchAction({
+      merchantId: merchant.id,
+      merchantSlug: slug,
+      branch_name: settingsForm.branch_name,
+      branch_address: settingsForm.branch_address,
+      branch_phone: settingsForm.branch_phone,
+    })
+
+    if (res.success) {
+      toast.success(lang === 'th' ? 'บันทึกข้อมูลสาขาเรียบร้อยแล้ว' : 'Branch information saved')
+      loadDashboardData()
+    } else {
+      toast.error(res.error || (lang === 'th' ? 'เกิดข้อผิดพลาดในการบันทึก' : 'Failed to save branch'))
+    }
+  }
+
   // Handle Settings Submit
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault()
@@ -350,6 +384,10 @@ export default function DashboardPage({ params }: PageProps) {
       has_break: settingsForm.has_break,
       break_start_time: settingsForm.has_break ? `${settingsForm.break_start_time}:00` : null,
       break_end_time: settingsForm.has_break ? `${settingsForm.break_end_time}:00` : null,
+      closed_days: settingsForm.closed_days,
+      branch_name: settingsForm.branch_name,
+      branch_address: settingsForm.branch_address,
+      branch_phone: settingsForm.branch_phone,
       slot_interval_min: Number(settingsForm.slot_interval_min),
       line_notify_token: settingsForm.line_notify_token,
     })
@@ -630,8 +668,8 @@ export default function DashboardPage({ params }: PageProps) {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-850'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            {t('tabServices')} ({services.length})
+            <Building2 className="w-3.5 h-3.5" />
+            {t('tabBranchesAndServices')} ({services.length})
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -931,73 +969,141 @@ export default function DashboardPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* TAB 3: MANAGE SERVICES */}
+        {/* TAB 3: MANAGE BRANCHES & SERVICES */}
         {activeTab === 'services' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('allServicesTitle')}</h3>
-              <button
-                onClick={() => {
-                  setEditingService({ duration_min: 60, price: 500, deposit_amount: 100, is_active: true })
-                  setIsServiceModalOpen(true)
-                }}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs active:scale-98"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                {t('addNewServiceBtn')}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {services.map((svc) => (
-                <div
-                  key={svc.id}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-3"
-                >
-                  <div>
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{svc.title}</h4>
-                      <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                        ฿{Number(svc.price).toLocaleString()}
-                      </span>
-                    </div>
-                    {svc.description && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{svc.description}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-3 text-xs text-slate-700 dark:text-slate-300">
-                      <span className="bg-slate-50 dark:bg-slate-950 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 font-medium">
-                        ⏱️ {svc.duration_min} {t('minutes')}
-                      </span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                        {t('depositAmount')} ฿{Number(svc.deposit_amount ?? merchant.default_deposit).toLocaleString()}
-                      </span>
-                    </div>
+          <div className="space-y-6 max-w-4xl">
+            {/* Branch Profile Section */}
+            <form onSubmit={handleSaveBranch} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                    <Building2 className="w-4 h-4" />
                   </div>
-
-                  <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                    <button
-                      onClick={() => {
-                        setEditingService(svc)
-                        setIsServiceModalOpen(true)
-                      }}
-                      className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteService(svc.id)}
-                      className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('branchInfoTitle')}</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">กำหนดชื่อสาขา ที่ตั้ง และเบอร์ติดต่อสำหรับให้บริการ</p>
                   </div>
                 </div>
-              ))}
+                <button
+                  type="submit"
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs active:scale-98"
+                >
+                  <span>{t('save')}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('branchName')}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="เช่น สาขาหลัก (Main Branch)"
+                    value={settingsForm.branch_name}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, branch_name: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('branchPhone')}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="เช่น 081-234-5678"
+                    value={settingsForm.branch_phone}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, branch_phone: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('branchAddress')}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="เช่น สยามสแควร์ ซอย 3 เขตปทุมวัน"
+                    value={settingsForm.branch_address}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, branch_address: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+            </form>
+
+            {/* Services List Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('allServicesTitle')}</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">รายการเมนูบริการ ราคา และระยะเวลาที่ลูกค้าสามารถเลือกจอง</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingService({ duration_min: 60, price: 500, deposit_amount: 100, is_active: true })
+                    setIsServiceModalOpen(true)
+                  }}
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs active:scale-98"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {t('addNewServiceBtn')}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {services.map((svc) => (
+                  <div
+                    key={svc.id}
+                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-3"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{svc.title}</h4>
+                        <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                          ฿{Number(svc.price).toLocaleString()}
+                        </span>
+                      </div>
+                      {svc.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{svc.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-3 text-xs text-slate-700 dark:text-slate-300">
+                        <span className="bg-slate-50 dark:bg-slate-950 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 font-medium">
+                          ⏱️ {svc.duration_min} {t('minutes')}
+                        </span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                          {t('depositAmount')} ฿{Number(svc.deposit_amount ?? merchant.default_deposit).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                      <button
+                        onClick={() => {
+                          setEditingService(svc)
+                          setIsServiceModalOpen(true)
+                        }}
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteService(svc.id)}
+                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 4: SETTINGS & LINE NOTIFY */}
+        {/* TAB 4: SETTINGS & LINE NOTIFY & CLOSED DAYS */}
         {activeTab === 'settings' && (
           <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5 max-w-2xl shadow-2xs">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1068,6 +1174,55 @@ export default function DashboardPage({ params }: PageProps) {
                   onChange={(e) => setSettingsForm({ ...settingsForm, close_time: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
                 />
+              </div>
+
+              {/* WEEKLY CLOSED DAYS SECTION */}
+              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <CalendarDays className="w-4 h-4 text-rose-500" />
+                    {t('closedDaysTitle')}
+                  </label>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t('closedDaysDesc')}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-7 gap-1.5 pt-1">
+                  {[
+                    { day: 0, label: 'อา', full: 'อาทิตย์', en: 'Sun' },
+                    { day: 1, label: 'จ', full: 'จันทร์', en: 'Mon' },
+                    { day: 2, label: 'อ', full: 'อังคาร', en: 'Tue' },
+                    { day: 3, label: 'พ', full: 'พุธ', en: 'Wed' },
+                    { day: 4, label: 'พฤ', full: 'พฤหัสฯ', en: 'Thu' },
+                    { day: 5, label: 'ศ', full: 'ศุกร์', en: 'Fri' },
+                    { day: 6, label: 'ส', full: 'เสาร์', en: 'Sat' },
+                  ].map((item) => {
+                    const isClosed = settingsForm.closed_days.includes(item.day)
+                    return (
+                      <button
+                        key={item.day}
+                        type="button"
+                        onClick={() => {
+                          const nextClosedDays = isClosed
+                            ? settingsForm.closed_days.filter((d) => d !== item.day)
+                            : [...settingsForm.closed_days, item.day]
+                          setSettingsForm({ ...settingsForm, closed_days: nextClosedDays })
+                        }}
+                        className={`py-2.5 px-1 rounded-xl text-xs font-semibold flex flex-col items-center justify-center transition border active:scale-95 ${
+                          isClosed
+                            ? 'bg-rose-500 text-white border-rose-600 shadow-xs font-bold'
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <span>{lang === 'th' ? item.label : item.en}</span>
+                        <span className={`text-[9px] mt-0.5 font-normal ${isClosed ? 'text-rose-100 font-bold' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                          {isClosed ? (lang === 'th' ? 'ปิด' : 'Off') : (lang === 'th' ? 'เปิด' : 'Open')}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* LUNCH BREAK SECTION */}

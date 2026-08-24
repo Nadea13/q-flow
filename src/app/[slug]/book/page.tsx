@@ -356,6 +356,7 @@ export default function BookingPage({ params }: PageProps) {
                 <BookingCalendar
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
+                  closedDays={merchant.closed_days || []}
                   lang={lang}
                 />
               </div>
