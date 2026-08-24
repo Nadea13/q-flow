@@ -34,6 +34,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sonner": "^2.0.8",
+    "stripe": "^22.5.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

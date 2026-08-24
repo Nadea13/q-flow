@@ -4,19 +4,24 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { 
   Sparkles, 
-  Calendar, 
+  CheckCircle2, 
+  ArrowRight, 
   Smartphone, 
   ShieldCheck, 
-  ArrowRight, 
+  Calendar, 
   Zap, 
-  Store,
-  CheckCircle2,
-  Clock,
+  CreditCard, 
+  Bell, 
+  BarChart3, 
+  Clock, 
+  Check, 
+  Lock, 
+  HelpCircle,
   QrCode,
+  Store,
   Layers,
   ChevronRight,
   MessageSquare,
-  HelpCircle,
   Scissors,
   Camera,
   Heart,
@@ -25,6 +30,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { PricingSection } from '@/components/PricingSection'
 
 export default function Home() {
   const { t, lang } = useLanguage()
@@ -179,6 +185,9 @@ export default function Home() {
             </a>
             <a href="#audiences" className="hover:text-slate-900 dark:hover:text-white transition">
               {lang === 'th' ? 'เหมาะกับใคร' : 'For Who'}
+            </a>
+            <a href="#pricing" className="hover:text-slate-900 dark:hover:text-white transition font-bold text-indigo-600 dark:text-indigo-400">
+              {lang === 'th' ? 'แพ็กเกจราคา' : 'Pricing'}
             </a>
             <a href="#faq" className="hover:text-slate-900 dark:hover:text-white transition">
               {lang === 'th' ? 'คำถามที่พบบ่อย' : 'FAQ'}
@@ -488,6 +497,11 @@ export default function Home() {
             })}
           </div>
         </div>
+      </section>
+
+      {/* SECTION: PRICING PLANS */}
+      <section id="pricing" className="py-16 sm:py-24 max-w-6xl mx-auto px-4 sm:px-6">
+        <PricingSection />
       </section>
 
       {/* SECTION: FAQ */}

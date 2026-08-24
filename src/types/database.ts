@@ -1,4 +1,6 @@
 export type BookingStatus = 'pending_payment' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
+export type PlanType = 'starter' | 'growth' | 'pro'
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
 export interface Merchant {
   id: string
@@ -16,6 +18,14 @@ export interface Merchant {
   slot_interval_min: number
   line_user_id: string | null
   line_notify_token: string | null
+  admin_pin?: string
+  plan?: PlanType
+  subscription_status?: SubscriptionStatus
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
+  monthly_slip_quota?: number
+  used_slips_this_month?: number
+  current_period_end?: string | null
   is_active: boolean
   created_at: string
   updated_at: string

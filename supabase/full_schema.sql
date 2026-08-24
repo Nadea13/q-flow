@@ -24,6 +24,13 @@ CREATE TABLE IF NOT EXISTS public.merchants (
     line_user_id TEXT,
     line_notify_token TEXT,
     admin_pin TEXT DEFAULT '1234',
+    plan VARCHAR(50) NOT NULL DEFAULT 'growth',
+    subscription_status VARCHAR(50) NOT NULL DEFAULT 'active',
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    monthly_slip_quota INT NOT NULL DEFAULT 500,
+    used_slips_this_month INT NOT NULL DEFAULT 0,
+    current_period_end TIMESTAMPTZ,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
