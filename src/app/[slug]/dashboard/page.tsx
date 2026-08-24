@@ -143,6 +143,20 @@ export default function DashboardPage({ params }: PageProps) {
 
   const dateLocale = lang === 'th' ? th : enUS
 
+  // Available Slots for Manual Booking Modal (Must be declared at top level)
+  const selectedManualService = services.find((s) => s.id === manualBookingForm.service_id) || services[0]
+  const manualSlots = useMemo(() => {
+    if (!merchant || !manualBookingForm.date) return []
+    const duration = selectedManualService?.duration_min || 30
+    return computeAvailableSlots({
+      merchant,
+      dateStr: manualBookingForm.date,
+      durationMin: duration,
+      existingBookings: bookings,
+      blockedSlots: slots,
+    })
+  }, [merchant, manualBookingForm.date, selectedManualService, bookings, slots])
+
   // Check Authentication & Load initial data
   useEffect(() => {
     async function initAuthAndData() {
@@ -583,20 +597,6 @@ export default function DashboardPage({ params }: PageProps) {
     const matchStatus = statusFilter === 'all' || b.status === statusFilter
     return matchDate && matchStatus
   })
-
-  // Available Slots for Manual Booking Modal
-  const selectedManualService = services.find((s) => s.id === manualBookingForm.service_id) || services[0]
-  const manualSlots = useMemo(() => {
-    if (!merchant || !manualBookingForm.date) return []
-    const duration = selectedManualService?.duration_min || 30
-    return computeAvailableSlots({
-      merchant,
-      dateStr: manualBookingForm.date,
-      durationMin: duration,
-      existingBookings: bookings,
-      blockedSlots: slots,
-    })
-  }, [merchant, manualBookingForm.date, selectedManualService, bookings, slots])
 
   // 4. MAIN AUTHENTICATED DASHBOARD
   return (
