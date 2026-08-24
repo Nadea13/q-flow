@@ -181,7 +181,7 @@ export function BookingCalendar({
         <span>
           {lang === 'th' ? 'วันที่เลือก:' : 'Selected:'}{' '}
           <strong className="text-slate-900 dark:text-white font-semibold">
-            {format(selectedDateObj, lang === 'th' ? 'EEEEที่ d MMMM yyyy' : 'EEEE, MMMM d, yyyy', { locale: dateLocale })}
+            {format(selectedDateObj, 'dd/MM/yyyy')}
           </strong>
         </span>
         <button

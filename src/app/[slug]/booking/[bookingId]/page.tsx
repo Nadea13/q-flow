@@ -292,13 +292,13 @@ export default function BookingDetailPage({ params }: PageProps) {
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    {format(startTime, 'EEEE d MMMM yyyy', { locale: dateLocale })}
+                    {format(startTime, 'dd/MM/yyyy')}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">{t('selectTimeSlot')}:</span>
                   <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                    {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} ({service.duration_min} {t('minutes')})
+                    {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น. ({service.duration_min} {t('minutes')})
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -321,7 +321,7 @@ export default function BookingDetailPage({ params }: PageProps) {
             <div className="flex flex-col gap-2.5">
               <a
                 href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                  `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'd MMMM yyyy HH:mm', { locale: dateLocale })} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                  `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -367,7 +367,7 @@ export default function BookingDetailPage({ params }: PageProps) {
               <div className="flex justify-between">
                 <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                 <span className="font-semibold text-slate-700 dark:text-slate-300">
-                  {format(startTime, 'd MMM yyyy HH:mm', { locale: dateLocale })} น.
+                  {format(startTime, 'dd/MM/yyyy HH:mm')} น.
                 </span>
               </div>
               <div className="flex justify-between">
@@ -425,7 +425,7 @@ export default function BookingDetailPage({ params }: PageProps) {
               <div className="flex justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                  {format(startTime, 'd MMM yyyy', { locale: dateLocale })} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')})
+                  {format(startTime, 'dd/MM/yyyy')} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.)
                 </span>
               </div>
               <div className="flex justify-between text-xs">

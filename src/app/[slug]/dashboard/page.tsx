@@ -868,7 +868,7 @@ export default function DashboardPage({ params }: PageProps) {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-base font-bold text-slate-900 dark:text-white">
-                              {format(sTime, 'HH:mm')} - {format(eTime, 'HH:mm')}
+                              {format(sTime, 'HH:mm')} - {format(eTime, 'HH:mm')} น.
                             </span>
                             <span
                               className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
@@ -1052,7 +1052,7 @@ export default function DashboardPage({ params }: PageProps) {
                     >
                       <div>
                         <div className="text-xs font-bold text-slate-900 dark:text-white">
-                          {format(new Date(s.start_time), 'd MMM yyyy HH:mm', { locale: dateLocale })} - {format(new Date(s.end_time), 'HH:mm', { locale: dateLocale })}
+                          {format(new Date(s.start_time), 'dd/MM/yyyy HH:mm')} - {format(new Date(s.end_time), 'HH:mm')} น.
                         </div>
                         <div className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-0.5">
                           {s.reason || 'Blocked'}

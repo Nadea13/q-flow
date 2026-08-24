@@ -14,7 +14,7 @@ export function buildBookingSuccessFlex(
 ) {
   const startTime = new Date(booking.start_time)
   const endTime = new Date(booking.end_time)
-  const dateFormatted = format(startTime, 'EEEEที่ d MMMM yyyy', { locale: th })
+  const dateFormatted = format(startTime, 'dd/MM/yyyy')
   const timeFormatted = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')} น.`
 
   const bookingUrl = `${SITE_URL}/${merchant.slug}/booking/${booking.id}`
@@ -240,7 +240,7 @@ export function buildMerchantAlertFlex(
   service: Service
 ) {
   const startTime = new Date(booking.start_time)
-  const dateFormatted = format(startTime, 'd MMM yyyy HH:mm', { locale: th })
+  const dateFormatted = `${format(startTime, 'dd/MM/yyyy HH:mm')} น.`
   const dashboardUrl = `${SITE_URL}/${merchant.slug}/dashboard`
 
   return {

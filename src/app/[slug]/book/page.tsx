@@ -449,7 +449,7 @@ export default function BookingPage({ params }: PageProps) {
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-600 dark:text-slate-400">{t('dateTime')}:</span>
                   <span className="font-bold text-indigo-600 dark:text-indigo-300">
-                    {format(new Date(selectedSlot.startTime), 'd MMMM yyyy', { locale: dateLocale })} ({selectedSlot.displayTime})
+                    {format(new Date(selectedSlot.startTime), 'dd/MM/yyyy')} ({selectedSlot.displayTime} น.)
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
