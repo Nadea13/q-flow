@@ -69,7 +69,7 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
       </div>
 
       {/* Pricing Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 max-w-6xl mx-auto items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
         {plans.map((p) => {
           const isPopular = p.popular
           const isCurrent = currentPlan === p.id

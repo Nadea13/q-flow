@@ -59,29 +59,25 @@ export default function PricingPage() {
       category: lang === 'th' ? 'โควตาสลิป & ระบบชำระเงิน' : 'Slip Quota & Payment',
       features: [
         {
-          name: lang === 'th' ? 'โควตาสลิปตรวจอัตโนมัติ (SlipOK)' : 'Monthly Auto-verified Slips',
+          name: lang === 'th' ? 'โควตาสลิปตรวจอัตโนมัติ (SlipOK API)' : 'Monthly Auto-verified Slips',
           starter: '150 สลิป/เดือน',
           growth: '500 สลิป/เดือน',
-          pro: '1,500 สลิป/เดือน',
           highlight: true,
         },
         {
-          name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และสลิปไม่ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
+          name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และป้องกันสลิปใช้ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'QR Code พร้อมเพย์สร้างอัตโนมัติ' : 'Dynamic PromptPay QR Code',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'จัดเก็บรูปสลิปบนคลาวด์ความเร็วสูง (Cloudflare R2)' : 'Cloudflare R2 Slip Storage',
           starter: true,
           growth: true,
-          pro: true,
         },
       ],
     },
@@ -92,31 +88,26 @@ export default function PricingPage() {
           name: lang === 'th' ? 'ระบบปฏิทินจองคิว 24 ชม. ไม่จำกัดจำนวนคิว' : '24/7 Unlimited Bookings Calendar',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'บล็อกวันย้อนหลัง & ป้องกันรอบชนอัตโนมัติ' : 'Past Dates Disabled & Conflict Free',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'ระบบล็อกเวลาพักเที่ยงรายวัน (Lunch Break)' : 'Daily Lunch Break Filter',
           starter: false,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'Quick Block ปิดรับคิวกะทันหันใน 1 คลิก' : 'Quick Block Slots in 1-Click',
           starter: false,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'กำหนดช่วงความถี่รอบจอง (15, 30, 60 นาที)' : 'Configurable Slot Intervals',
           starter: true,
           growth: true,
-          pro: true,
         },
       ],
     },
@@ -127,25 +118,21 @@ export default function PricingPage() {
           name: lang === 'th' ? 'LINE LIFF ดึงชื่อและโปรไฟล์ผู้จองอัตโนมัติ' : 'LINE LIFF Auto Profile Pre-fill',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'ส่งตั๋วคิว Boarding Pass เข้าแชท LINE ลูกค้า' : 'LINE Flex Message Booking Pass',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'LINE OA Webhook ตอบกลับอัตโนมัติ' : 'LINE OA Webhook Auto-responder',
           starter: true,
           growth: true,
-          pro: true,
         },
         {
           name: lang === 'th' ? 'LINE Notify แจ้งเตือนสลิปเข้าเจ้าของร้าน' : 'Instant LINE Notify for Merchant',
           starter: false,
           growth: true,
-          pro: true,
         },
       ],
     },
@@ -153,28 +140,24 @@ export default function PricingPage() {
       category: lang === 'th' ? 'การบริหารจัดการ & การดูแล' : 'Management & Support',
       features: [
         {
-          name: lang === 'th' ? 'จำนวนสาขาที่รองรับ' : 'Supported Branches',
-          starter: '1 สาขา',
-          growth: '1 สาขา',
-          pro: 'หลายสาขา (Multi-Branch)',
-        },
-        {
           name: lang === 'th' ? 'จำนวนบริการที่สร้างได้' : 'Maximum Services',
           starter: '5 บริการ',
           growth: 'ไม่จำกัด',
-          pro: 'ไม่จำกัด',
         },
         {
           name: lang === 'th' ? 'ระบบวิเคราะห์ยอดมัดจำและสถิติคิวเชิงลึก' : 'Advanced Analytics & Deposit Trends',
           starter: false,
           growth: true,
-          pro: true,
+        },
+        {
+          name: lang === 'th' ? 'ระบบรักษาความปลอดภัย Admin PIN Code' : 'Admin PIN Code Security',
+          starter: true,
+          growth: true,
         },
         {
           name: lang === 'th' ? 'ระดับการดูแลและซัพพอร์ต' : 'Support SLA',
-          starter: 'มาตรฐาน (Email/Chat)',
-          growth: 'ซัพพอร์ตด่วน (Priority)',
-          pro: 'VIP 24/7 Dedicated Support',
+          starter: 'มาตรฐาน (Standard)',
+          growth: 'ซัพพอร์ตด่วนพิเศษ (Priority Support)',
         },
       ],
     },
@@ -190,7 +173,7 @@ export default function PricingPage() {
     {
       q: lang === 'th' ? 'ถ้าใช้โควตาสลิปหมดระหว่างเดือน จะเกิดอะไรขึ้น?' : 'What happens if I exceed my monthly slip quota?',
       a: lang === 'th'
-        ? 'ร้านค้าสามารถกดอัปเกรดแพ็กเกจผ่านแถบ "บิลลิ่ง" ใน Dashboard เพื่อเพิ่มโควตาได้ทันทีตลอดเวลา หรือซื้อแพ็กเกจโควตาสลิปเสริม โดยระบบจะยังคงเปิดรับคิวต่อเนื่องไม่สะดุด'
+        ? 'ร้านค้าสามารถกดอัปเกรดแพ็กเกจผ่านแถบ "บิลลิ่ง" ใน Dashboard เพื่อเพิ่มโควตาได้ทันทีตลอดเวลา โดยระบบจะยังคงเปิดรับคิวต่อเนื่องไม่สะดุด'
         : 'You can upgrade your plan instantly from your Dashboard Billing tab anytime to increase your quota without interrupting bookings.',
     },
     {
@@ -281,9 +264,9 @@ export default function PricingPage() {
         </motion.p>
       </section>
 
-      {/* 3 PRICING CARDS */}
-      <section className="pb-16 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+      {/* 2 PRICING CARDS */}
+      <section className="pb-16 px-4 sm:px-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {Object.values(PRICING_PLANS).map((p) => {
             const isPopular = p.popular
 
@@ -369,7 +352,7 @@ export default function PricingPage() {
                     )}
                   </button>
                   <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 mt-2">
-                    {lang === 'th' ? 'ชำระเงินปลอดภัยผ่าน Stripe Checkout' : 'Secure payment via Stripe Checkout'}
+                    {lang === 'th' ? 'ชำระเงินรายเดือนปลอดภัยผ่าน Stripe Checkout' : 'Secure monthly billing via Stripe Checkout'}
                   </p>
                 </div>
               </motion.div>
@@ -380,7 +363,7 @@ export default function PricingPage() {
 
       {/* DETAILED FEATURE COMPARISON TABLE */}
       <section className="py-16 bg-white dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {lang === 'th' ? 'ตารางเปรียบเทียบฟีเจอร์อย่างละเอียด' : 'Detailed Feature Breakdown'}
@@ -394,20 +377,16 @@ export default function PricingPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80">
-                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-700 dark:text-slate-300 w-2/5">
+                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-700 dark:text-slate-300 w-1/2">
                     {lang === 'th' ? 'ฟังก์ชันการทำงาน' : 'Capabilities'}
                   </th>
-                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-900 dark:text-white text-center w-1/5">
+                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-900 dark:text-white text-center w-1/4">
                     Starter <br />
-                    <span className="font-normal text-[11px] text-slate-500">฿390/ด.</span>
+                    <span className="font-normal text-[11px] text-slate-500">฿590/ด.</span>
                   </th>
-                  <th className="p-4 sm:p-5 text-xs font-bold text-indigo-600 dark:text-indigo-400 text-center w-1/5 bg-indigo-50/50 dark:bg-indigo-950/20">
+                  <th className="p-4 sm:p-5 text-xs font-bold text-indigo-600 dark:text-indigo-400 text-center w-1/4 bg-indigo-50/50 dark:bg-indigo-950/20">
                     Growth (แนะนำ) <br />
-                    <span className="font-normal text-[11px] text-indigo-500">฿790/ด.</span>
-                  </th>
-                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-900 dark:text-white text-center w-1/5">
-                    Pro / Multi-Branch <br />
-                    <span className="font-normal text-[11px] text-slate-500">฿1,490/ด.</span>
+                    <span className="font-normal text-[11px] text-indigo-500">฿1,290/ด.</span>
                   </th>
                 </tr>
               </thead>
@@ -415,7 +394,7 @@ export default function PricingPage() {
                 {comparisonCategories.map((cat, cIdx) => (
                   <tr key={cIdx} className="contents">
                     <tr className="bg-slate-100/60 dark:bg-slate-800/40">
-                      <td colSpan={4} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider">
+                      <td colSpan={3} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider">
                         {cat.category}
                       </td>
                     </tr>
@@ -450,19 +429,6 @@ export default function PricingPage() {
                             <span className="font-bold text-indigo-600 dark:text-indigo-400">{feat.growth}</span>
                           )}
                         </td>
-
-                        {/* Pro Column */}
-                        <td className="p-4 text-center">
-                          {typeof feat.pro === 'boolean' ? (
-                            feat.pro ? (
-                              <Check className="w-4 h-4 text-emerald-500 mx-auto stroke-[2.5]" />
-                            ) : (
-                              <X className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
-                            )
-                          ) : (
-                            <span className="font-bold text-slate-700 dark:text-slate-300">{feat.pro}</span>
-                          )}
-                        </td>
                       </tr>
                     ))}
                   </tr>
@@ -474,11 +440,11 @@ export default function PricingPage() {
       </section>
 
       {/* ROI & COST BREAKDOWN */}
-      <section className="py-16 px-4 sm:px-6 max-w-5xl mx-auto">
+      <section className="py-16 px-4 sm:px-6 max-w-4xl mx-auto">
         <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-indigo-800/60">
           <div className="max-w-2xl">
             <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-indigo-300 text-xs font-semibold inline-block mb-3">
-              ⚡ ROI Analysis & Cost Transparency
+              ⚡ ROI Analysis & Value
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               {lang === 'th' ? 'ทำไม QFlow ถึงคุ้มค่าตั้งแต่วันแรก?' : 'Why QFlow pays for itself on Day 1'}
