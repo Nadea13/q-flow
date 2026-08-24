@@ -53,7 +53,7 @@ export async function verifySlipWithSlipOK(
       const amountPaid = Number(slipData.amount)
       const transRef = slipData.transRef
 
-      // Check amount
+      // 1. Check amount
       if (Math.abs(amountPaid - expectedAmount) > 0.01) {
         return {
           success: false,
@@ -61,6 +61,31 @@ export async function verifySlipWithSlipOK(
           transRef,
           amount: amountPaid,
           rawResponse: json,
+        }
+      }
+
+      // 2. Check Receiver Account / PromptPay ID match
+      const receiverAccountRaw = 
+        slipData.receiver?.account?.value || 
+        slipData.receiver?.account?.proxy?.value || 
+        slipData.receiver?.account?.bank?.account || ''
+      
+      const cleanExpected = expectedPromptPayId.replace(/\D/g, '')
+      const cleanReceiver = String(receiverAccountRaw).replace(/\D/g, '')
+
+      if (cleanExpected && cleanReceiver && cleanReceiver.length >= 4) {
+        // If cleanReceiver is masked (e.g. xxx-xxx1234), check suffix match
+        const matchesSuffix = cleanExpected.endsWith(cleanReceiver.slice(-4))
+        const matchesExact = cleanExpected === cleanReceiver
+
+        if (!matchesExact && !matchesSuffix) {
+          return {
+            success: false,
+            message: `บัญชีผู้รับเงินในสลิป (${receiverAccountRaw}) ไม่ตรงกับบัญชีพร้อมเพย์ของร้านค้านี้`,
+            transRef,
+            amount: amountPaid,
+            rawResponse: json,
+          }
         }
       }
 
@@ -72,7 +97,7 @@ export async function verifySlipWithSlipOK(
         paidAt: slipData.transDate || slipData.dateTime,
         senderName: slipData.sender?.name?.displayName,
         receiverName: slipData.receiver?.name?.displayName,
-        receiverAccount: slipData.receiver?.account?.value,
+        receiverAccount: receiverAccountRaw,
         rawResponse: json,
       }
     } catch (err: unknown) {
