@@ -59,6 +59,7 @@ import { createStripeCustomerPortalAction } from '@/app/actions/stripe'
 import { PricingSection } from '@/components/PricingSection'
 import { ThaiAddressSelector } from '@/components/ThaiAddressSelector'
 import { FormattedDateInput } from '@/components/FormattedDateInput'
+import { TimePicker24h } from '@/components/TimePicker24h'
 import { computeAvailableSlots } from '@/lib/slot-engine'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
@@ -989,23 +990,17 @@ export default function DashboardPage({ params }: PageProps) {
 
                 <div>
                   <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">{t('startTime')}</label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker24h
                     value={blockStartTime}
-                    onChange={(e) => setBlockStartTime(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                    onChange={(val) => setBlockStartTime(val)}
                   />
                 </div>
 
                 <div>
                   <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">{t('endTime')}</label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker24h
                     value={blockEndTime}
-                    onChange={(e) => setBlockEndTime(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                    onChange={(val) => setBlockEndTime(val)}
                   />
                 </div>
 
@@ -1250,23 +1245,17 @@ export default function DashboardPage({ params }: PageProps) {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('openTime')}</label>
-                <input
-                  type="time"
-                  required
+                <TimePicker24h
                   value={settingsForm.open_time}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, open_time: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                  onChange={(val) => setSettingsForm({ ...settingsForm, open_time: val })}
                 />
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('closeTime')}</label>
-                <input
-                  type="time"
-                  required
+                <TimePicker24h
                   value={settingsForm.close_time}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, close_time: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                  onChange={(val) => setSettingsForm({ ...settingsForm, close_time: val })}
                 />
               </div>
 
@@ -1339,20 +1328,16 @@ export default function DashboardPage({ params }: PageProps) {
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block mb-1">{t('breakStartTime')}</label>
-                      <input
-                        type="time"
-                        value={settingsForm.break_start_time}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, break_start_time: e.target.value })}
-                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                      <TimePicker24h
+                        value={settingsForm.break_start_time || '12:00'}
+                        onChange={(val) => setSettingsForm({ ...settingsForm, break_start_time: val })}
                       />
                     </div>
                     <div>
                       <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block mb-1">{t('breakEndTime')}</label>
-                      <input
-                        type="time"
-                        value={settingsForm.break_end_time}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, break_end_time: e.target.value })}
-                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                      <TimePicker24h
+                        value={settingsForm.break_end_time || '13:00'}
+                        onChange={(val) => setSettingsForm({ ...settingsForm, break_end_time: val })}
                       />
                     </div>
                   </div>
