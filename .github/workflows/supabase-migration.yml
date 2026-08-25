@@ -29,6 +29,20 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
+      - name: Repair Existing Base Migrations
+        run: |
+          supabase migration repair --status applied 20260824000000 || true
+          supabase migration repair --status applied 20260824000001 || true
+          supabase migration repair --status applied 20260824000002 || true
+          supabase migration repair --status applied 20260824000003 || true
+          supabase migration repair --status applied 20260825000000 || true
+          supabase migration repair --status applied 20260825000001 || true
+          supabase migration repair --status applied 20260825000002 || true
+          supabase migration repair --status applied 20260825000003 || true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
       - name: Push Database Migrations
         run: |
           supabase db push
