@@ -97,7 +97,7 @@ export async function sendLineBookingNotification({
   if (notifyToken) {
     try {
       const message = `
-🎉 [QFlow] มีคิวจองใหม่ & ยืนยันสลิปแล้ว!
+🎉 [Q Flow] มีคิวจองใหม่ & ยืนยันสลิปแล้ว!
 ----------------------------------
 🏢 ร้าน: ${merchant.name}
 🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}

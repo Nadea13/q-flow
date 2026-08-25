@@ -28,6 +28,8 @@ export async function createManualBookingAction(input: {
   merchantId: string
   merchantSlug: string
   serviceId: string
+  branchId?: string
+  staffId?: string
   startTime: string
   endTime: string
   customerName: string
@@ -39,11 +41,39 @@ export async function createManualBookingAction(input: {
 }) {
   const supabase = await createClient()
 
+  // Resolve branch_id from input, staff's branch, or first branch
+  let resolvedBranchId = input.branchId || null
+  if (!resolvedBranchId && input.staffId) {
+    const { data: staffData } = await supabase
+      .from('staff')
+      .select('branch_id')
+      .eq('id', input.staffId)
+      .single()
+    if (staffData?.branch_id) {
+      resolvedBranchId = staffData.branch_id
+    }
+  }
+
+  if (!resolvedBranchId) {
+    const { data: firstBranch } = await supabase
+      .from('branches')
+      .select('id')
+      .eq('merchant_id', input.merchantId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+    if (firstBranch) {
+      resolvedBranchId = firstBranch.id
+    }
+  }
+
   const { data, error } = await supabase
     .from('bookings')
     .insert({
       merchant_id: input.merchantId,
       service_id: input.serviceId,
+      branch_id: resolvedBranchId,
+      staff_id: input.staffId || null,
       start_time: input.startTime,
       end_time: input.endTime,
       customer_name: input.customerName.trim(),
@@ -247,3 +277,198 @@ export async function updateMerchantSettingsAction(input: {
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   return { success: true }
 }
+
+// -------------------------------------------------------------
+// BRANCH CRUD ACTIONS
+// -------------------------------------------------------------
+export async function saveBranchAction(input: {
+  id?: string
+  merchantId: string
+  merchantSlug: string
+  name: string
+  address?: string
+  phone?: string
+  promptpay_id?: string
+  promptpay_name?: string
+  open_time?: string
+  close_time?: string
+  has_break?: boolean
+  break_start_time?: string | null
+  break_end_time?: string | null
+  closed_days?: number[]
+  is_active?: boolean
+}) {
+  const supabase = await createClient()
+
+  // Enforce branch limit based on merchant plan
+  if (!input.id) {
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('plan')
+      .eq('id', input.merchantId)
+      .single()
+
+    const plan = merchant?.plan || 'professional'
+    const maxBranches = plan === 'professional' ? 2 : plan === 'business' ? 5 : Infinity
+
+    const { count } = await supabase
+      .from('branches')
+      .select('*', { count: 'exact', head: true })
+      .eq('merchant_id', input.merchantId)
+
+    if (count !== null && count >= maxBranches) {
+      return {
+        success: false,
+        error: `แพ็กเกจ ${plan === 'professional' ? 'Professional' : 'Business'} รองรับสูงสุด ${maxBranches} สาขา (กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มสาขา)`
+      }
+    }
+  }
+
+  const payload = {
+    merchant_id: input.merchantId,
+    name: input.name.trim(),
+    address: input.address?.trim() || null,
+    phone: input.phone?.trim() || null,
+    promptpay_id: input.promptpay_id?.trim() || null,
+    promptpay_name: input.promptpay_name?.trim() || null,
+    open_time: input.open_time || '10:00:00',
+    close_time: input.close_time || '20:00:00',
+    has_break: input.has_break ?? true,
+    break_start_time: input.has_break && input.break_start_time ? input.break_start_time : null,
+    break_end_time: input.has_break && input.break_end_time ? input.break_end_time : null,
+    closed_days: input.closed_days || [],
+    is_active: input.is_active ?? true,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (input.id) {
+    const { error } = await supabase
+      .from('branches')
+      .update(payload)
+      .eq('id', input.id)
+
+    if (error) return { success: false, error: error.message }
+  } else {
+    const { error } = await supabase.from('branches').insert(payload)
+    if (error) return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/${input.merchantSlug}/dashboard`)
+  revalidatePath(`/${input.merchantSlug}/book`)
+  return { success: true }
+}
+
+export async function deleteBranchAction(branchId: string, merchantSlug: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('branches').delete().eq('id', branchId)
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath(`/${merchantSlug}/dashboard`)
+  revalidatePath(`/${merchantSlug}/book`)
+  return { success: true }
+}
+
+// -------------------------------------------------------------
+// STAFF & PROVIDER CRUD ACTIONS
+// -------------------------------------------------------------
+export async function saveStaffAction(input: {
+  id?: string
+  merchantId: string
+  merchantSlug: string
+  branchId?: string | null
+  name: string
+  nickname?: string
+  role_title?: string
+  avatar_url?: string
+  is_active?: boolean
+  serviceIds?: string[] // Array of service IDs this staff provides
+}) {
+  const supabase = await createClient()
+
+  // Enforce staff limit based on merchant plan
+  if (!input.id) {
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('plan')
+      .eq('id', input.merchantId)
+      .single()
+
+    const plan = merchant?.plan || 'professional'
+    const maxStaff = plan === 'professional' ? 5 : plan === 'business' ? 20 : Infinity
+
+    const { count } = await supabase
+      .from('staff')
+      .select('*', { count: 'exact', head: true })
+      .eq('merchant_id', input.merchantId)
+
+    if (count !== null && count >= maxStaff) {
+      return {
+        success: false,
+        error: `แพ็กเกจ ${plan === 'professional' ? 'Professional' : 'Business'} รองรับช่างสูงสุด ${maxStaff} ท่าน (กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มช่าง)`
+      }
+    }
+  }
+
+  const payload = {
+    merchant_id: input.merchantId,
+    branch_id: input.branchId || null,
+    name: input.name.trim(),
+    nickname: input.nickname?.trim() || null,
+    role_title: input.role_title?.trim() || 'ช่างผู้ให้บริการ',
+    avatar_url: input.avatar_url?.trim() || null,
+    is_active: input.is_active ?? true,
+    updated_at: new Date().toISOString(),
+  }
+
+  let staffId = input.id
+
+  if (staffId) {
+    const { error } = await supabase
+      .from('staff')
+      .update(payload)
+      .eq('id', staffId)
+
+    if (error) return { success: false, error: error.message }
+  } else {
+    const { data: newStaff, error } = await supabase
+      .from('staff')
+      .insert(payload)
+      .select('id')
+      .single()
+
+    if (error || !newStaff) return { success: false, error: error?.message || 'Failed to create staff' }
+    staffId = newStaff.id
+  }
+
+  // Update staff_services associations if serviceIds provided
+  if (input.serviceIds !== undefined && staffId) {
+    // Delete existing
+    await supabase.from('staff_services').delete().eq('staff_id', staffId)
+
+    // Insert selected
+    if (input.serviceIds.length > 0) {
+      const inserts = input.serviceIds.map((svcId) => ({
+        staff_id: staffId as string,
+        service_id: svcId,
+      }))
+      await supabase.from('staff_services').insert(inserts)
+    }
+  }
+
+  revalidatePath(`/${input.merchantSlug}/dashboard`)
+  revalidatePath(`/${input.merchantSlug}/book`)
+  return { success: true, staffId }
+}
+
+export async function deleteStaffAction(staffId: string, merchantSlug: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('staff').delete().eq('id', staffId)
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath(`/${merchantSlug}/dashboard`)
+  revalidatePath(`/${merchantSlug}/book`)
+  return { success: true }
+}
+

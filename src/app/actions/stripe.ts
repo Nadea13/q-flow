@@ -7,6 +7,7 @@ import type { PlanType } from '@/types/database'
 interface CreateCheckoutInput {
   merchantSlug?: string
   planId: PlanType
+  billingCycle?: 'monthly' | 'yearly'
   returnUrl?: string
 }
 
@@ -66,52 +67,58 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     }
   }
 
-  try {
-    // 1. Get or create Stripe Customer if merchant exists
-    let customerId = merchant?.stripe_customer_id
-    if (merchant && !customerId) {
-      const customer = await stripe.customers.create({
-        name: merchant.name,
-        metadata: {
-          merchant_id: merchant.id,
-          merchant_slug: merchant.slug,
-        },
-      })
-      customerId = customer.id
-      await supabase
-        .from('merchants')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', merchant.id)
-    }
+  // 1. Get or create Stripe Customer if merchant exists
+  let customerId = merchant?.stripe_customer_id
+  if (merchant && !customerId) {
+    const customer = await stripe.customers.create({
+      name: merchant.name,
+      metadata: {
+        merchant_id: merchant.id,
+        merchant_slug: merchant.slug,
+      },
+    })
+    customerId = customer.id
+    await supabase
+      .from('merchants')
+      .update({ stripe_customer_id: customerId })
+      .eq('id', merchant.id)
+  }
 
-    // 2. Create Checkout Session
+  // 2. Create Checkout Session
+  const isYearly = input.billingCycle === 'yearly'
+  const unitAmount = isYearly ? plan.priceYearlyTHB * 100 : plan.priceTHB * 100
+  const interval = isYearly ? 'year' : 'month'
+
+  try {
     const session = await stripe.checkout.sessions.create({
-      ...(customerId ? { customer: customerId } : {}),
       payment_method_types: ['card'],
+      mode: 'subscription',
       line_items: [
         {
           price_data: {
             currency: 'thb',
             product_data: {
-              name: `QFlow ${plan.name} Plan`,
-              description: `${plan.tagline} (โควตา ${plan.quota} สลิป/เดือน)`,
+              name: `${plan.name} (${isYearly ? 'รายปี / Yearly' : 'รายเดือน / Monthly'})`,
+              description: `${plan.tagline} • ตรวจสลิป ${plan.quota.toLocaleString()} สลิป/เดือน`,
             },
-            unit_amount: plan.priceTHB * 100, // THB in Satang
+            unit_amount: unitAmount,
             recurring: {
-              interval: 'month',
+              interval: interval,
             },
           },
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      customer: customerId || undefined,
+      customer_email: undefined,
+      metadata: {
+        merchant_id: merchant?.id || '',
+        merchant_slug: input.merchantSlug || '',
+        plan_id: plan.id,
+        billing_cycle: input.billingCycle || 'monthly',
+      },
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: {
-        ...(merchant ? { merchant_id: merchant.id, merchant_slug: merchant.slug } : {}),
-        plan_id: plan.id,
-        slip_quota: String(plan.quota),
-      },
     })
 
     return { success: true, url: session.url }
@@ -129,19 +136,47 @@ export async function createStripeCustomerPortalAction(merchantSlug: string) {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('stripe_customer_id, slug')
+    .select('id, name, stripe_customer_id, slug, phone')
     .eq('slug', merchantSlug)
     .single()
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
-  if (!merchant?.stripe_customer_id || !process.env.STRIPE_SECRET_KEY) {
-    return { success: false, error: 'ยังไม่มีประวัติการสมัครสมาชิกผ่าน Stripe' }
+  if (!merchant) {
+    return { success: false, error: 'ไม่พบข้อมูลร้านค้า' }
+  }
+
+  // If secret key is not configured or in mock test mode
+  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('mock')) {
+    return { 
+      success: false, 
+      error: 'โหมดทดสอบ Local: สามารถดูใบเสร็จจริงได้เมื่อเชื่อมต่อ Stripe Live/Test Key' 
+    }
   }
 
   try {
+    let customerId = merchant.stripe_customer_id
+
+    // If merchant does not have a Stripe customer ID yet, create one
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        name: merchant.name,
+        phone: merchant.phone || undefined,
+        metadata: {
+          merchant_id: merchant.id,
+          merchant_slug: merchant.slug,
+        },
+      })
+      customerId = customer.id
+      await supabase
+        .from('merchants')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', merchant.id)
+    }
+
+    // Create billing portal session pointing directly to invoices and payment methods
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: merchant.stripe_customer_id,
+      customer: customerId,
       return_url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing`,
     })
 

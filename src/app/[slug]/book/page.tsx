@@ -2,7 +2,6 @@
 
 import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { 
   Clock, 
   ChevronRight, 
@@ -14,17 +13,19 @@ import {
   FileText,
   AlertCircle,
   ArrowLeft,
-  Calendar as CalendarIcon
+  Building2,
+  Users,
+  Sparkles
 } from 'lucide-react'
 import { format, startOfToday } from 'date-fns'
-import { th, enUS } from 'date-fns/locale'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { createBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import { BookingCalendar } from '@/components/BookingCalendar'
-import type { Merchant, Service, TimeSlotOption } from '@/types/database'
+import { TurnstileWidget } from '@/components/TurnstileWidget'
+import type { Merchant, Service, TimeSlotOption, Branch, Staff } from '@/types/database'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -37,12 +38,18 @@ export default function BookingPage({ params }: PageProps) {
   const { t, lang } = useLanguage()
 
   const [merchant, setMerchant] = useState<Merchant | null>(null)
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [staffList, setStaffList] = useState<Staff[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [loadingShop, setLoadingShop] = useState(true)
 
-  // Step state (1: Service, 2: Slot, 3: Customer Info)
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  // Selection states
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
+
+  // Step state (1: Branch/Staff/Service, 2: Slot, 3: Customer Info)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   
   // Date & Slot state
   const today = startOfToday()
@@ -50,6 +57,7 @@ export default function BookingPage({ params }: PageProps) {
   const [slots, setSlots] = useState<TimeSlotOption[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<TimeSlotOption | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string>('')
 
   // Customer form state
   const [customerName, setCustomerName] = useState('')
@@ -64,9 +72,7 @@ export default function BookingPage({ params }: PageProps) {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const dateLocale = lang === 'th' ? th : enUS
-
-  // 1. Load Merchant & Services
+  // 1. Load Merchant, Branches, Staff & Services
   useEffect(() => {
     async function loadShop() {
       const supabase = createClient()
@@ -83,6 +89,31 @@ export default function BookingPage({ params }: PageProps) {
 
       setMerchant(mData)
 
+      // Fetch branches
+      const { data: bData } = await supabase
+        .from('branches')
+        .select('*')
+        .eq('merchant_id', mData.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+
+      const loadedBranches = bData || []
+      setBranches(loadedBranches)
+      if (loadedBranches.length > 0) {
+        setSelectedBranch(loadedBranches[0])
+      }
+
+      // Fetch staff with assigned services
+      const { data: stData } = await supabase
+        .from('staff')
+        .select('*, branch:branches(*), staff_services(*, service:services(*))')
+        .eq('merchant_id', mData.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+
+      setStaffList((stData as unknown as Staff[]) || [])
+
+      // Fetch services
       const { data: sData } = await supabase
         .from('services')
         .select('*')
@@ -113,7 +144,7 @@ export default function BookingPage({ params }: PageProps) {
     checkLiff()
   }, [slug])
 
-  // 2. Fetch Slots whenever date or service changes
+  // 2. Fetch Slots whenever date, service, branch, or staff changes
   useEffect(() => {
     if (!selectedService || !slug) return
 
@@ -121,9 +152,15 @@ export default function BookingPage({ params }: PageProps) {
       setLoadingSlots(true)
       setSelectedSlot(null)
       try {
-        const res = await fetch(
-          `/api/slots?merchantSlug=${slug}&date=${selectedDate}&duration=${selectedService?.duration_min || 60}`
-        )
+        let url = `/api/slots?merchantSlug=${slug}&date=${selectedDate}&duration=${selectedService?.duration_min || 60}`
+        if (selectedBranch) {
+          url += `&branchId=${selectedBranch.id}`
+        }
+        if (selectedStaff) {
+          url += `&staffId=${selectedStaff.id}`
+        }
+
+        const res = await fetch(url)
         const json = await res.json()
         setSlots(json.slots || [])
       } catch (err) {
@@ -134,7 +171,7 @@ export default function BookingPage({ params }: PageProps) {
     }
 
     loadSlots()
-  }, [slug, selectedDate, selectedService])
+  }, [slug, selectedDate, selectedService, selectedBranch, selectedStaff])
 
   // Handle Booking Submit
   async function handleSubmitBooking(e: React.FormEvent) {
@@ -147,12 +184,15 @@ export default function BookingPage({ params }: PageProps) {
     const res = await createBookingAction({
       merchantSlug: slug,
       serviceId: selectedService.id,
+      branchId: selectedBranch?.id || undefined,
+      staffId: selectedStaff?.id || undefined,
       startTime: selectedSlot.startTime,
       endTime: selectedSlot.endTime,
       customerName,
       customerPhone,
       customerLineId: customerLineId || undefined,
       customerNotes: customerNotes || undefined,
+      turnstileToken: turnstileToken || undefined,
     })
 
     setSubmitting(false)
@@ -253,7 +293,7 @@ export default function BookingPage({ params }: PageProps) {
         </div>
 
         <AnimatePresence mode="wait">
-          {/* STEP 1: SERVICE SELECTION */}
+          {/* STEP 1: BRANCH, STAFF & SERVICE SELECTION */}
           {step === 1 && (
             <motion.div 
               key="step1"
@@ -261,64 +301,164 @@ export default function BookingPage({ params }: PageProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.2 }}
-              className="space-y-3"
+              className="space-y-4"
             >
-              {services.map((service) => {
-                const isSelected = selectedService?.id === service.id
-                const deposit = service.deposit_amount ?? merchant.default_deposit
-
-                return (
-                  <div
-                    key={service.id}
-                    onClick={() => {
-                      setSelectedService(service)
-                      setStep(2)
-                    }}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer relative active:scale-[0.99] ${
-                      isSelected
-                        ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                            {service.title}
-                          </h3>
-                          {isSelected && (
-                            <span className="w-5 h-5 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center">
-                              <Check className="w-3 h-3 stroke-[3]" />
-                            </span>
-                          )}
-                        </div>
-                        {service.description && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                            {service.description}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-3 mt-3 text-xs">
-                          <span className="flex items-center gap-1 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800/60 font-semibold">
-                            <Clock className="w-3 h-3" />
-                            {service.duration_min} {t('minutes')}
-                          </span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">
-                            ฿{Number(service.price).toLocaleString()}
-                          </span>
-                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                            ({t('depositAmount')} ฿{Number(deposit).toLocaleString()})
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="self-center text-slate-400 dark:text-slate-500">
-                        <ChevronRight className="w-5 h-5" />
-                      </div>
-                    </div>
+              {/* Branch Selector (Directly from branches table) */}
+              {branches.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>{t('selectBranch')}</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {branches.map((b) => {
+                      const isSel = (selectedBranch ? selectedBranch.id === b.id : branches[0]?.id === b.id)
+                      return (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedBranch(b)
+                            setSelectedStaff(null)
+                          }}
+                          className={`p-2.5 rounded-xl border text-left text-xs transition active:scale-98 ${
+                            isSel
+                              ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="font-semibold">{b.name}</div>
+                          {b.address && <div className="text-[10px] text-slate-400 mt-0.5 truncate">{b.address}</div>}
+                        </button>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                </div>
+              )}
+
+              {/* Staff / Provider Selector (if staff exist) */}
+              {staffList.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>{t('selectStaff')}</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStaff(null)}
+                      className={`p-2.5 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${
+                        selectedStaff === null
+                          ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                      }`}
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-500 mb-1" />
+                      <span>{t('anyStaff')}</span>
+                    </button>
+                    {staffList
+                      .filter((stf) => !selectedBranch || stf.branch_id === selectedBranch.id)
+                      .map((stf) => {
+                        const isSel = selectedStaff?.id === stf.id
+                        return (
+                          <button
+                            key={stf.id}
+                            type="button"
+                            onClick={() => setSelectedStaff(stf)}
+                            className={`p-2 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${
+                              isSel
+                                ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px] mb-1">
+                              {stf.nickname ? stf.nickname.charAt(0) : stf.name.charAt(0)}
+                            </div>
+                            <span className="font-semibold truncate max-w-full">
+                              {stf.nickname || stf.name}
+                            </span>
+                            <span className="text-[9px] text-slate-400 truncate max-w-full">
+                              {stf.role_title || 'ช่าง'}
+                            </span>
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Service list (filtered by selected staff if any) */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-slate-900 dark:text-white block px-1">
+                  {t('selectService')} ({
+                    services.filter((s) => {
+                      if (!selectedStaff) return true
+                      return selectedStaff.staff_services?.some((ss) => ss.service_id === s.id)
+                    }).length
+                  })
+                </label>
+                {services
+                  .filter((service) => {
+                    if (!selectedStaff) return true
+                    return selectedStaff.staff_services?.some((ss) => ss.service_id === service.id)
+                  })
+                  .map((service) => {
+                    const isSelected = selectedService?.id === service.id
+                    const deposit = service.deposit_amount ?? merchant.default_deposit
+
+                    return (
+                      <div
+                        key={service.id}
+                        onClick={() => {
+                          setSelectedService(service)
+                          setStep(2)
+                        }}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative active:scale-[0.99] ${
+                          isSelected
+                            ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                                {service.title}
+                              </h3>
+                              {isSelected && (
+                                <span className="w-5 h-5 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center">
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                </span>
+                              )}
+                            </div>
+                            {service.description && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                {service.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center gap-3 mt-3 text-xs">
+                              <span className="flex items-center gap-1 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800/60 font-semibold">
+                                <Clock className="w-3 h-3" />
+                                {service.duration_min} {t('minutes')}
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                ฿{Number(service.price).toLocaleString()}
+                              </span>
+                              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                ({t('depositAmount')} ฿{Number(deposit).toLocaleString()})
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="self-center text-slate-400 dark:text-slate-500">
+                            <ChevronRight className="w-5 h-5" />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
             </motion.div>
           )}
 
@@ -339,6 +479,13 @@ export default function BookingPage({ params }: PageProps) {
                     {t('selectedService')}
                   </span>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedService.title}</p>
+                  {(selectedBranch || selectedStaff) && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedBranch ? `สาขา: ${selectedBranch.name}` : ''}
+                      {selectedBranch && selectedStaff ? ' • ' : ''}
+                      {selectedStaff ? `ช่าง: ${selectedStaff.nickname || selectedStaff.name}` : ''}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setStep(1)}
@@ -446,6 +593,20 @@ export default function BookingPage({ params }: PageProps) {
                   <span className="text-slate-600 dark:text-slate-400">{t('service')}:</span>
                   <span className="font-bold text-slate-900 dark:text-white">{selectedService.title}</span>
                 </div>
+                {selectedBranch && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">{t('selectBranch')}:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedBranch.name}</span>
+                  </div>
+                )}
+                {selectedStaff && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">{t('selectStaff')}:</span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                      {selectedStaff.nickname || selectedStaff.name} ({selectedStaff.role_title})
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-600 dark:text-slate-400">{t('dateTime')}:</span>
                   <span className="font-bold text-indigo-600 dark:text-indigo-300">
@@ -576,6 +737,12 @@ export default function BookingPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Cloudflare Turnstile Bot Protection Widget */}
+              <TurnstileWidget
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
 
               <button
                 type="submit"

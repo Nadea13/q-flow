@@ -1,8 +1,10 @@
 import { addMinutes, format, isBefore, parseISO } from 'date-fns'
-import type { Booking, Merchant, Slot, TimeSlotOption } from '@/types/database'
+import type { Booking, Branch, Merchant, Slot, TimeSlotOption } from '@/types/database'
 
 interface ComputeSlotsParams {
   merchant: Merchant
+  branch?: Branch | null
+  staffId?: string | null
   dateStr: string // "YYYY-MM-DD"
   durationMin: number
   existingBookings: Booking[]
@@ -14,13 +16,18 @@ interface ComputeSlotsParams {
  */
 export function computeAvailableSlots({
   merchant,
+  branch,
+  staffId,
   dateStr,
   durationMin,
   existingBookings,
   blockedSlots,
 }: ComputeSlotsParams): TimeSlotOption[] {
-  const openTimeParts = merchant.open_time.split(':')
-  const closeTimeParts = merchant.close_time.split(':')
+  const openTime = branch?.open_time || merchant.open_time
+  const closeTime = branch?.close_time || merchant.close_time
+
+  const openTimeParts = openTime.split(':')
+  const closeTimeParts = closeTime.split(':')
 
   const openHours = parseInt(openTimeParts[0], 10)
   const openMinutes = parseInt(openTimeParts[1], 10)
@@ -35,8 +42,9 @@ export function computeAvailableSlots({
   const selectedDateObj = new Date(year, month - 1, day)
   const dayOfWeek = selectedDateObj.getDay()
 
-  // If the shop is closed on this day of the week, return empty slots
-  if (merchant.closed_days && merchant.closed_days.includes(dayOfWeek)) {
+  // Check weekly closed days (from branch if defined, else from merchant)
+  const closedDays = branch?.closed_days?.length ? branch.closed_days : (merchant.closed_days || [])
+  if (closedDays.includes(dayOfWeek)) {
     return []
   }
 
@@ -62,6 +70,10 @@ export function computeAvailableSlots({
     // 2. Check if overlapping with existing active bookings
     const isBooked = existingBookings.some((booking) => {
       if (booking.status === 'cancelled') return false
+      // If staffId is specified, only conflict if booking is for the same staff
+      if (staffId && booking.staff_id && booking.staff_id !== staffId) {
+        return false
+      }
       const bStart = parseISO(booking.start_time)
       const bEnd = parseISO(booking.end_time)
       return currentSlotStart < bEnd && currentSlotEnd > bStart
@@ -75,11 +87,15 @@ export function computeAvailableSlots({
       return currentSlotStart < sEnd && currentSlotEnd > sStart
     })
 
-    // 4. Check if overlapping with daily shop break time (e.g. Lunch break 12:00 - 13:00)
+    // 4. Check if overlapping with daily shop / branch break time (e.g. Lunch break 12:00 - 13:00)
     let isDuringBreak = false
-    if (merchant.has_break && merchant.break_start_time && merchant.break_end_time) {
-      const bStartParts = merchant.break_start_time.split(':').map(Number)
-      const bEndParts = merchant.break_end_time.split(':').map(Number)
+    const hasBreak = branch?.has_break ?? merchant.has_break
+    const breakStartStr = branch?.break_start_time || merchant.break_start_time
+    const breakEndStr = branch?.break_end_time || merchant.break_end_time
+
+    if (hasBreak && breakStartStr && breakEndStr) {
+      const bStartParts = breakStartStr.split(':').map(Number)
+      const bEndParts = breakEndStr.split(':').map(Number)
       const breakStart = new Date(year, month - 1, day, bStartParts[0], bStartParts[1], 0)
       const breakEnd = new Date(year, month - 1, day, bEndParts[0], bEndParts[1], 0)
 
@@ -90,13 +106,13 @@ export function computeAvailableSlots({
 
     let reason: string | undefined
     if (isPast) {
-      reason = 'หมดเวลาจองรอบนี้แล้ว'
+      reason = 'หมดเวลาจอง'
     } else if (isDuringBreak) {
-      reason = 'เวลาพักของร้าน (Break)'
+      reason = 'เวลาพัก'
     } else if (isBooked) {
-      reason = 'มีลูกค้าจองแล้ว'
+      reason = 'จองแล้ว'
     } else if (isBlocked) {
-      reason = 'ร้านปิดรับรอบนี้'
+      reason = 'ปิดรับรอบนี้'
     }
 
     const isAvailable = !isPast && !isDuringBreak && !isBooked && !isBlocked

@@ -1,69 +1,69 @@
 'use client'
 
-import { useEffect, useState, use, useMemo } from 'react'
+import { useEffect, useState, use, useMemo, useRef } from 'react'
 import Link from 'next/link'
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  DollarSign, 
-  Users, 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  ExternalLink, 
-  Lock, 
-  Bell, 
-  Settings, 
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  DollarSign,
+  Users,
+  Plus,
+  Trash2,
+  Edit3,
+  ExternalLink,
+  Lock,
+  Settings,
   Image as ImageIcon,
   Sparkles,
   Coffee,
   X,
   KeyRound,
   LogOut,
-  ShieldCheck,
-  ArrowRight,
-  MessageSquare,
-  CreditCard,
-  Zap,
   Building2,
-  MapPin,
-  Phone,
-  CalendarDays,
   PhoneCall,
-  UserPlus
+  UserPlus,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Share2,
+  Sun,
+  Moon,
+  Globe,
+  LayoutGrid,
+  List
 } from 'lucide-react'
-import { format, startOfToday, addDays } from 'date-fns'
-import { th, enUS } from 'date-fns/locale'
+import { format, startOfToday, addDays, subDays, parseISO } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { 
-  updateBookingStatusAction, 
-  createBlockedSlotAction, 
+import {
+  updateBookingStatusAction,
+  createBlockedSlotAction,
   deleteBlockedSlotAction,
   saveServiceAction,
   deleteServiceAction,
-  updateMerchantSettingsAction,
-  updateMerchantBranchAction,
-  createManualBookingAction
+  createManualBookingAction,
+  saveStaffAction,
+  deleteStaffAction
 } from '@/app/actions/dashboard'
-import { 
-  checkMerchantAuthAction, 
-  verifyMerchantPinAction, 
-  verifyMerchantLiffAction, 
-  logoutMerchantAction 
+import {
+  checkMerchantAuthAction,
+  verifyMerchantPinAction,
+  verifyMerchantLiffAction,
+  logoutMerchantAction
 } from '@/app/actions/auth'
-import { createStripeCustomerPortalAction } from '@/app/actions/stripe'
-import { PricingSection } from '@/components/PricingSection'
-import { ThaiAddressSelector } from '@/components/ThaiAddressSelector'
 import { FormattedDateInput } from '@/components/FormattedDateInput'
 import { TimePicker24h } from '@/components/TimePicker24h'
 import { computeAvailableSlots } from '@/lib/slot-engine'
 import { useLanguage } from '@/context/LanguageContext'
+import { useTheme } from '@/context/ThemeContext'
 import { NavbarControls } from '@/components/NavbarControls'
-import type { Booking, Merchant, Service, Slot, BookingStatus, TimeSlotOption } from '@/types/database'
+import { QFlowLogo } from '@/components/QFlowLogo'
+
+import { CustomDropdown } from '@/components/CustomDropdown'
+import type { Booking, Merchant, Service, Slot, BookingStatus, TimeSlotOption, Branch, Staff } from '@/types/database'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -72,7 +72,8 @@ interface PageProps {
 export default function DashboardPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const slug = resolvedParams.slug
-  const { t, lang } = useLanguage()
+  const { t, lang, toggleLang } = useLanguage()
+  const { theme, toggleTheme } = useTheme()
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
@@ -84,20 +85,56 @@ export default function DashboardPage({ params }: PageProps) {
     pictureUrl?: string
     userId: string
   } | null>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  const [branchMenuOpen, setBranchMenuOpen] = useState(false)
+  const branchMenuRef = useRef<HTMLDivElement>(null)
+
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false)
+      }
+      if (branchMenuRef.current && !branchMenuRef.current.contains(event.target as Node)) {
+        setBranchMenuOpen(false)
+      }
+    }
+    if (userMenuOpen || branchMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [userMenuOpen, branchMenuOpen])
 
   const [merchant, setMerchant] = useState<Merchant | null>(null)
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [staffList, setStaffList] = useState<Staff[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [loading, setLoading] = useState(true)
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'bookings' | 'block-slots' | 'services' | 'settings' | 'billing'>('bookings')
+  const [activeTab, setActiveTab] = useState<'bookings' | 'block-slots' | 'services'>('bookings')
 
   // Date Filter for Bookings
   const today = startOfToday()
   const [selectedDate, setSelectedDate] = useState<string>(format(today, 'yyyy-MM-dd'))
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all')
+  const [selectedStaffFilter, setSelectedStaffFilter] = useState<string>('all')
+  const [bookingsViewMode, setBookingsViewMode] = useState<'timeline' | 'list'>('timeline')
+
+  function handleSelectBranch(branchId: string) {
+    setSelectedBranchFilter(branchId)
+    try {
+      localStorage.setItem(`q flow_selected_branch_${slug}`, branchId)
+    } catch { }
+  }
 
   // Selected Slip Modal
   const [selectedSlipUrl, setSelectedSlipUrl] = useState<string | null>(null)
@@ -106,10 +143,18 @@ export default function DashboardPage({ params }: PageProps) {
   const [editingService, setEditingService] = useState<Partial<Service> | null>(null)
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
 
+
+
+  // Staff Edit/New Modal state
+  const [editingStaff, setEditingStaff] = useState<Partial<Staff> & { serviceIds?: string[] } | null>(null)
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false)
+
   // Manual Booking Modal state
   const [isManualBookingModalOpen, setIsManualBookingModalOpen] = useState(false)
   const [manualBookingForm, setManualBookingForm] = useState({
     service_id: '',
+    branch_id: '',
+    staff_id: '',
     date: format(today, 'yyyy-MM-dd'),
     selectedSlot: null as TimeSlotOption | null,
     customer_name: '',
@@ -123,52 +168,40 @@ export default function DashboardPage({ params }: PageProps) {
   const [blockEndTime, setBlockEndTime] = useState('13:00')
   const [blockReason, setBlockReason] = useState('')
 
-  // Settings form state
-  const [settingsForm, setSettingsForm] = useState({
-    name: '',
-    phone: '',
-    promptpay_id: '',
-    promptpay_name: '',
-    default_deposit: '100',
-    open_time: '10:00',
-    close_time: '20:00',
-    has_break: true,
-    break_start_time: '12:00',
-    break_end_time: '13:00',
-    closed_days: [] as number[],
-    branch_name: '',
-    branch_address: '',
-    branch_phone: '',
-    slot_interval_min: '30',
-    line_notify_token: '',
-  })
 
-  const dateLocale = lang === 'th' ? th : enUS
 
   // Available Slots for Manual Booking Modal (Must be declared at top level)
   const selectedManualService = services.find((s) => s.id === manualBookingForm.service_id) || services[0]
+  const selectedManualBranch = branches.find((b) => b.id === manualBookingForm.branch_id) || null
   const manualSlots = useMemo(() => {
     if (!merchant || !manualBookingForm.date) return []
     const duration = selectedManualService?.duration_min || 30
     return computeAvailableSlots({
       merchant,
+      branch: selectedManualBranch,
+      staffId: manualBookingForm.staff_id || null,
       dateStr: manualBookingForm.date,
       durationMin: duration,
       existingBookings: bookings,
       blockedSlots: slots,
     })
-  }, [merchant, manualBookingForm.date, selectedManualService, bookings, slots])
+  }, [merchant, selectedManualBranch, manualBookingForm.staff_id, manualBookingForm.date, selectedManualService, bookings, slots])
+
+  // Active Selected Branch for display & calculations
+  const activeSelectedBranch = selectedBranchFilter === 'all'
+    ? null
+    : branches.find((b) => b.id === selectedBranchFilter) || null
 
   // Check Authentication & Load initial data
   useEffect(() => {
     async function initAuthAndData() {
       // 0. Load cached LINE profile if available
       try {
-        const cachedProfile = localStorage.getItem('qflow_admin_line_profile')
+        const cachedProfile = localStorage.getItem('q flow_admin_line_profile')
         if (cachedProfile) {
           setLineProfile(JSON.parse(cachedProfile))
         }
-      } catch {}
+      } catch { }
 
       // 1. Check if user has active session
       const authStatus = await checkMerchantAuthAction(slug)
@@ -189,7 +222,7 @@ export default function DashboardPage({ params }: PageProps) {
             userId: liffRes.profile.userId,
           }
           setLineProfile(profileData)
-          localStorage.setItem('qflow_admin_line_profile', JSON.stringify(profileData))
+          localStorage.setItem('q flow_admin_line_profile', JSON.stringify(profileData))
 
           const liffAuth = await verifyMerchantLiffAction(slug, liffRes.profile.userId)
           if (liffAuth.success) {
@@ -208,12 +241,13 @@ export default function DashboardPage({ params }: PageProps) {
     }
 
     initAuthAndData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   async function loadDashboardData() {
     setLoading(true)
     const supabase = createClient()
-    
+
     // 1. Merchant
     const { data: mData } = await supabase
       .from('merchants')
@@ -227,51 +261,42 @@ export default function DashboardPage({ params }: PageProps) {
     }
 
     setMerchant(mData)
-    setSettingsForm({
-      name: mData.name || '',
-      phone: mData.phone || '',
-      promptpay_id: mData.promptpay_id || '',
-      promptpay_name: mData.promptpay_name || '',
-      default_deposit: String(mData.default_deposit || 100),
-      open_time: mData.open_time?.slice(0, 5) || '10:00',
-      close_time: mData.close_time?.slice(0, 5) || '20:00',
-      has_break: mData.has_break ?? true,
-      break_start_time: mData.break_start_time?.slice(0, 5) || '12:00',
-      break_end_time: mData.break_end_time?.slice(0, 5) || '13:00',
-      closed_days: mData.closed_days || [],
-      branch_name: mData.branch_name || 'สาขาหลัก (Main Branch)',
-      branch_address: mData.branch_address || '',
-      branch_phone: mData.branch_phone || '',
-      slot_interval_min: String(mData.slot_interval_min || 30),
-      line_notify_token: mData.line_notify_token || '',
-    })
 
-    // 2. Services
-    const { data: sData } = await supabase
-      .from('services')
-      .select('*')
-      .eq('merchant_id', mData.id)
-      .order('sort_order', { ascending: true })
+    // Fetch all related dashboard collections in parallel
+    const [branchRes, staffRes, serviceRes, bookingRes, slotRes] = await Promise.all([
+      supabase.from('branches').select('*').eq('merchant_id', mData.id).order('created_at', { ascending: true }),
+      supabase.from('staff').select('*, branch:branches(*), staff_services(*, service:services(*))').eq('merchant_id', mData.id).order('created_at', { ascending: true }),
+      supabase.from('services').select('*').eq('merchant_id', mData.id).order('sort_order', { ascending: true }),
+      supabase.from('bookings').select('*, services(*), branch:branches(*), staff:staff(*)').eq('merchant_id', mData.id).order('start_time', { ascending: true }),
+      supabase.from('slots').select('*').eq('merchant_id', mData.id).order('start_time', { ascending: true }),
+    ])
 
-    setServices(sData || [])
+    const branchData = branchRes.data || []
+    setBranches(branchData)
 
-    // 3. Bookings
-    const { data: bData } = await supabase
-      .from('bookings')
-      .select('*, services(*)')
-      .eq('merchant_id', mData.id)
-      .order('start_time', { ascending: true })
+    // Synchronize selected branch filter with localStorage
+    if (branchData.length > 0) {
+      try {
+        const savedBranchId = localStorage.getItem(`q flow_selected_branch_${slug}`)
+        if (savedBranchId) {
+          const exists = savedBranchId === 'all' || branchData.some((b) => b.id === savedBranchId)
+          if (exists) {
+            setSelectedBranchFilter(savedBranchId)
+          } else {
+            setSelectedBranchFilter(branchData[0].id)
+            localStorage.setItem(`q flow_selected_branch_${slug}`, branchData[0].id)
+          }
+        } else {
+          setSelectedBranchFilter(branchData[0].id)
+          localStorage.setItem(`q flow_selected_branch_${slug}`, branchData[0].id)
+        }
+      } catch { }
+    }
 
-    setBookings(bData || [])
-
-    // 4. Blocked Slots
-    const { data: slotData } = await supabase
-      .from('slots')
-      .select('*')
-      .eq('merchant_id', mData.id)
-      .order('start_time', { ascending: true })
-
-    setSlots(slotData || [])
+    setStaffList((staffRes.data as unknown as Staff[]) || [])
+    setServices(serviceRes.data || [])
+    setBookings(bookingRes.data || [])
+    setSlots(slotRes.data || [])
     setLoading(false)
   }
 
@@ -366,6 +391,8 @@ export default function DashboardPage({ params }: PageProps) {
       merchantId: merchant.id,
       merchantSlug: slug,
       serviceId: manualBookingForm.service_id,
+      branchId: manualBookingForm.branch_id || undefined,
+      staffId: manualBookingForm.staff_id || undefined,
       startTime: manualBookingForm.selectedSlot.startTime,
       endTime: manualBookingForm.selectedSlot.endTime,
       customerName: manualBookingForm.customer_name,
@@ -379,6 +406,8 @@ export default function DashboardPage({ params }: PageProps) {
       setIsManualBookingModalOpen(false)
       setManualBookingForm({
         service_id: '',
+        branch_id: '',
+        staff_id: '',
         date: selectedDate,
         selectedSlot: null,
         customer_name: '',
@@ -428,58 +457,54 @@ export default function DashboardPage({ params }: PageProps) {
     }
   }
 
-  // Handle Branch Info Submit
-  async function handleSaveBranch(e: React.FormEvent) {
+
+
+  // Handle Save Staff
+  async function handleSaveStaff(e: React.FormEvent) {
     e.preventDefault()
-    if (!merchant) return
-
-    const res = await updateMerchantBranchAction({
-      merchantId: merchant.id,
-      merchantSlug: slug,
-      branch_name: settingsForm.branch_name,
-      branch_address: settingsForm.branch_address,
-      branch_phone: settingsForm.branch_phone,
-    })
-
-    if (res.success) {
-      toast.success(lang === 'th' ? 'บันทึกข้อมูลสาขาเรียบร้อยแล้ว' : 'Branch information saved')
-      loadDashboardData()
-    } else {
-      toast.error(res.error || (lang === 'th' ? 'เกิดข้อผิดพลาดในการบันทึก' : 'Failed to save branch'))
+    if (!merchant || !editingStaff) return
+    if (!editingStaff.name?.trim()) {
+      toast.error('กรุณากรอกชื่อช่าง / ผู้ให้บริการ')
+      return
     }
-  }
 
-  // Handle Settings Submit
-  async function handleSaveSettings(e: React.FormEvent) {
-    e.preventDefault()
-    if (!merchant) return
-
-    const res = await updateMerchantSettingsAction({
+    const res = await saveStaffAction({
+      id: editingStaff.id,
       merchantId: merchant.id,
       merchantSlug: slug,
-      name: settingsForm.name,
-      phone: settingsForm.phone,
-      promptpay_id: settingsForm.promptpay_id,
-      promptpay_name: settingsForm.promptpay_name,
-      default_deposit: Number(settingsForm.default_deposit),
-      open_time: `${settingsForm.open_time}:00`,
-      close_time: `${settingsForm.close_time}:00`,
-      has_break: settingsForm.has_break,
-      break_start_time: settingsForm.has_break ? `${settingsForm.break_start_time}:00` : null,
-      break_end_time: settingsForm.has_break ? `${settingsForm.break_end_time}:00` : null,
-      closed_days: settingsForm.closed_days,
-      branch_name: settingsForm.branch_name,
-      branch_address: settingsForm.branch_address,
-      branch_phone: settingsForm.branch_phone,
-      slot_interval_min: Number(settingsForm.slot_interval_min),
-      line_notify_token: settingsForm.line_notify_token,
+      branchId: editingStaff.branch_id || undefined,
+      name: editingStaff.name,
+      nickname: editingStaff.nickname || undefined,
+      role_title: editingStaff.role_title || undefined,
+      avatar_url: editingStaff.avatar_url || undefined,
+      is_active: editingStaff.is_active ?? true,
+      serviceIds: editingStaff.serviceIds || [],
     })
 
     if (res.success) {
       toast.success(t('settingsSaved'))
+      setIsStaffModalOpen(false)
+      setEditingStaff(null)
       loadDashboardData()
+    } else {
+      toast.error(res.error || 'เกิดข้อผิดพลาด')
     }
   }
+
+  // Handle Delete Staff
+  async function handleDeleteStaff(staffId: string) {
+    if (confirm('ต้องการลบข้อมูลช่างท่านนี้หรือไม่?')) {
+      const res = await deleteStaffAction(staffId, slug)
+      if (res.success) {
+        toast.success(t('delete'))
+        loadDashboardData()
+      } else {
+        toast.error(res.error || 'เกิดข้อผิดพลาด')
+      }
+    }
+  }
+
+
 
   // 1. Loading State
   if (loading && isAuthenticated === null) {
@@ -496,15 +521,13 @@ export default function DashboardPage({ params }: PageProps) {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 transition-colors">
         <div className="flex justify-between items-center max-w-md w-full mx-auto">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-base shadow-xs group-hover:scale-105 transition-transform">
-              Q
-            </div>
+            <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
             <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">QFlow</span>
           </Link>
           <NavbarControls />
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-sm w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6"
@@ -516,60 +539,60 @@ export default function DashboardPage({ params }: PageProps) {
             <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {lang === 'th' ? 'ยืนยันตัวตนเจ้าของร้าน' : 'Merchant Authentication'}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {lang === 'th' ? `ร้าน: ${slug}` : `Shop: ${slug}`}
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+              {merchant ? merchant.name : 'ร้านค้า'}
             </p>
           </div>
 
           <form onSubmit={handleVerifyPin} className="space-y-4">
-            {pinError && (
-              <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{pinError}</span>
-              </div>
-            )}
-
             <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5 text-center">
-                {lang === 'th' ? 'กรอกรหัส Admin PIN (ค่าเริ่มต้น: 1234)' : 'Enter Admin PIN (Default: 1234)'}
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">
+                {lang === 'th' ? 'กรอกรหัส PIN ร้านค้า (4-6 หลัก)' : 'Enter Merchant PIN'}
               </label>
               <input
                 type="password"
-                required
+                inputMode="numeric"
                 maxLength={6}
-                autoFocus
-                placeholder="••••"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
-                className="w-full text-center tracking-[0.5em] text-2xl font-bold py-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+                placeholder="••••"
+                className="w-full text-center tracking-[0.5em] text-2xl font-bold py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition"
+                autoFocus
               />
+              {pinError && (
+                <p className="text-xs text-rose-500 text-center mt-2 font-medium">
+                  {pinError}
+                </p>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={verifyingPin || !pinInput}
-              className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
+              disabled={verifyingPin || pinInput.length < 4}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition shadow-md shadow-indigo-600/20 active:scale-98 cursor-pointer text-sm"
             >
               {verifyingPin ? (
-                <span>{t('loading')}</span>
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {t('loading')}
+                </span>
               ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>{lang === 'th' ? 'เข้าสู่ระบบ Dashboard' : 'Unlock Dashboard'}</span>
-                </>
+                lang === 'th' ? 'เข้าสู่ระบบหลังบ้าน' : 'Access Dashboard'
               )}
             </button>
           </form>
 
-          <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              💡 {lang === 'th' ? 'หากเปิดผ่าน LINE LIFF ของบัญชีเจ้าของร้าน ระบบจะล็อกอินให้อัตโนมัติ' : 'Opening via LINE LIFF will auto-authenticate linked merchants.'}
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              {lang === 'th'
+                ? 'หรือเปิดผ่านแอป LINE เพื่อเข้าสู่ระบบอัตโนมัติ'
+                : 'Or open via LINE app to sign in automatically'}
             </p>
           </div>
         </motion.div>
 
-        <div className="text-center text-xs text-slate-400 dark:text-slate-600">
-          QFlow Security Gateway • PIN & LINE LIFF Protected
+        <div className="text-center text-xs text-slate-600 dark:text-slate-400">
+          © {new Date().getFullYear()} Q Flow. All rights reserved.
         </div>
       </div>
     )
@@ -587,9 +610,13 @@ export default function DashboardPage({ params }: PageProps) {
     )
   }
 
-  // Metrics
-  const todayStr = format(today, 'yyyy-MM-dd')
-  const todayBookings = bookings.filter((b) => b.start_time.startsWith(todayStr))
+  // Filter Bookings for Metrics according to selected branch
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const branchBookings = selectedBranchFilter === 'all'
+    ? bookings
+    : bookings.filter((b) => b.branch_id === selectedBranchFilter)
+
+  const todayBookings = branchBookings.filter((b) => b.start_time.startsWith(todayStr))
   const todayConfirmed = todayBookings.filter((b) => b.status === 'confirmed')
   const todayDepositTotal = todayConfirmed.reduce((sum, b) => sum + Number(b.deposit_amount), 0)
 
@@ -597,85 +624,209 @@ export default function DashboardPage({ params }: PageProps) {
   const filteredBookings = bookings.filter((b) => {
     const matchDate = b.start_time.startsWith(selectedDate)
     const matchStatus = statusFilter === 'all' || b.status === statusFilter
-    return matchDate && matchStatus
+    const matchBranch = selectedBranchFilter === 'all' || b.branch_id === selectedBranchFilter
+    const matchStaff = selectedStaffFilter === 'all' || b.staff_id === selectedStaffFilter
+    return matchDate && matchStatus && matchBranch && matchStaff
   })
 
   // 4. MAIN AUTHENTICATED DASHBOARD
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-20 transition-colors font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 sm:pb-6 transition-colors font-sans antialiased">
       {/* Top Navbar */}
       <header className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="h-8 w-8 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-base shadow-xs hover:scale-105 transition-transform">
-              Q
+        <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
+              <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
             </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">{merchant.name}</h1>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80 text-[10px] font-bold">
-                  {t('live')}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{t('dashboardTitle')}</p>
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs">{merchant.name}</h1>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate hidden xs:block">{t('dashboardTitle')}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* LINE Profile Chip */}
-            {lineProfile ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
-                {lineProfile.pictureUrl ? (
-                  <img
-                    src={lineProfile.pictureUrl}
-                    alt={lineProfile.displayName}
-                    className="w-5 h-5 rounded-full object-cover border border-emerald-500/50"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-[#06C755] flex items-center justify-center text-[10px] font-bold text-white">
-                    L
-                  </div>
-                )}
-                <div className="flex flex-col text-left">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 max-w-[100px] truncate leading-tight">
-                    {lineProfile.displayName}
-                  </span>
-                  <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 leading-none">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                    LINE Connected
-                  </span>
-                </div>
-              </div>
-            ) : merchant.line_user_id ? (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                <span>LINE Admin Linked</span>
-              </div>
-            ) : null}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Top Branch Selector Custom Dropdown (Matches filter dropdown) */}
+            {branches.length > 0 && (
+              <CustomDropdown
+                value={selectedBranchFilter}
+                onChange={(val) => handleSelectBranch(val)}
+                prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                dropdownWidth="w-56"
+                options={[
+                  {
+                    value: 'all',
+                    label: 'ทุกสาขา',
+                    sublabel: `ดูทุกสาขา (${branches.length} สาขา)`,
+                    icon: <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+                  },
+                  ...branches.map((b) => ({
+                    value: b.id,
+                    label: b.name,
+                    sublabel: b.address || undefined,
+                    icon: <Building2 className="w-4 h-4 text-slate-400" />,
+                  })),
+                ]}
+              />
+            )}
 
-            <NavbarControls />
+            {/* External Customer Booking Link (1:1 Aspect Ratio - Matches Dropdown height) */}
             <Link
               href={`/${slug}/book`}
               target="_blank"
-              className="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-2xs"
+              aria-label={t('openCustomerBooking')}
+              title={t('openCustomerBooking')}
+              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-slate-300 dark:border-slate-800 font-semibold flex items-center justify-center transition active:scale-95 shadow-2xs aspect-square shrink-0"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('openCustomerBooking')}</span>
+              <ExternalLink className="w-4 h-4" />
             </Link>
-            <button
-              onClick={handleLogout}
-              type="button"
-              aria-label="Logout"
-              className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl border border-slate-200 dark:border-slate-800 transition active:scale-95"
-              title="ออกจากระบบ"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+
+            {/* Profile Dropdown Menu (1:1 Aspect Ratio - Matches Dropdown height) */}
+            <div className="relative shrink-0" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 transition active:scale-95 focus:outline-none flex items-center justify-center aspect-square shadow-2xs cursor-pointer"
+                aria-label="User Profile Menu"
+              >
+                {lineProfile?.pictureUrl ? (
+                  <img
+                    src={lineProfile.pictureUrl}
+                    alt={lineProfile.displayName || 'LINE Profile'}
+                    className="w-6 h-6 rounded-lg object-cover border border-emerald-500/60 shadow-xs"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+                  </div>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 p-2 overflow-hidden"
+                  >
+                    {/* User Info Header */}
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 mb-1.5">
+                      <div className="flex items-center gap-2.5">
+                        {lineProfile?.pictureUrl ? (
+                          <img
+                            src={lineProfile.pictureUrl}
+                            alt={lineProfile.displayName || 'LINE Profile'}
+                            className="w-9 h-9 rounded-xl object-cover border border-emerald-500/60 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                            {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {lineProfile?.displayName || merchant?.name || 'LINE Admin'}
+                          </p>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 truncate">
+                              {lineProfile ? 'LINE Connected' : merchant?.line_user_id ? 'LINE Linked' : 'Admin Signed In'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Actions */}
+                    <div className="pt-1 space-y-1">
+                      {/* Share Booking Link in Menu */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const bookUrl = `${window.location.origin}/${slug}/book`
+                          if (navigator.share) {
+                            navigator.share({
+                              title: `จองคิวออนไลน์ - ${merchant.name}`,
+                              text: `จองคิวทำนัดหมายร้าน ${merchant.name} ผ่านระบบ Q Flow`,
+                              url: bookUrl,
+                            }).catch(() => { })
+                          } else {
+                            navigator.clipboard.writeText(bookUrl)
+                            setCopiedLink(true)
+                            toast.success(lang === 'th' ? 'คัดลอกลิงก์จองคิวเรียบร้อยแล้ว!' : 'Booking link copied to clipboard!')
+                            setTimeout(() => setCopiedLink(false), 2500)
+                          }
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Share2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <span>{lang === 'th' ? 'แชร์ลิงก์จองคิว' : 'Share Booking Link'}</span>
+                        </div>
+                        {copiedLink ? (
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">คัดลอกแล้ว!</span>
+                        ) : null}
+                      </button>
+
+                      {/* Language Switcher */}
+                      <button
+                        type="button"
+                        onClick={toggleLang}
+                        className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          <span>{lang === 'th' ? 'ภาษา (Language)' : 'Language'}</span>
+                        </div>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80">
+                          {lang === 'th' ? 'TH' : 'EN'}
+                        </span>
+                      </button>
+
+                      {/* Theme Switcher */}
+                      <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          {theme === 'dark' ? (
+                            <Moon className="w-4 h-4 text-indigo-400" />
+                          ) : (
+                            <Sun className="w-4 h-4 text-amber-500" />
+                          )}
+                          <span>{lang === 'th' ? 'ธีมการแสดงผล' : 'Theme'}</span>
+                        </div>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {theme === 'dark' ? (lang === 'th' ? 'โหมดมืด' : 'Dark') : (lang === 'th' ? 'โหมดสว่าง' : 'Light')}
+                        </span>
+                      </button>
+
+                      <div className="border-t border-slate-100 dark:border-slate-800/80 my-1 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false)
+                            handleLogout()
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>ออกจากระบบ</span>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+      <main className="max-w-7xl mx-auto p-4 sm:p-8 space-y-6">
         {/* Metric Cards - Clean Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
@@ -705,132 +856,139 @@ export default function DashboardPage({ params }: PageProps) {
           <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              {t('shopHours')}
+              {activeSelectedBranch ? `เวลาทำการ (${activeSelectedBranch.name})` : t('shopHours')}
             </div>
             <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
-              {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)}
-              {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
+              {(activeSelectedBranch?.open_time || merchant.open_time).slice(0, 5)} - {(activeSelectedBranch?.close_time || merchant.close_time).slice(0, 5)}
+              {(activeSelectedBranch?.has_break ?? merchant.has_break) && (
                 <div className="text-[11px] text-amber-600 dark:text-amber-400 font-normal flex items-center gap-1 mt-0.5">
                   <Coffee className="w-3 h-3" />
-                  <span>Break {merchant.break_start_time.slice(0, 5)} - {merchant.break_end_time.slice(0, 5)}</span>
+                  <span>
+                    Break {(activeSelectedBranch?.break_start_time || merchant.break_start_time || '12:00').slice(0, 5)} - {(activeSelectedBranch?.break_end_time || merchant.break_end_time || '13:00').slice(0, 5)}
+                  </span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation - Pill Segmented Style */}
-        <div className="flex gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto scrollbar-none">
+        {/* Tab Navigation - Desktop Segmented Pill (Hidden on Mobile) */}
+        <div className="hidden sm:flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5 overflow-x-auto scrollbar-none no-scrollbar flex-nowrap">
           <button
+            type="button"
             onClick={() => setActiveTab('bookings')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
-              activeTab === 'bookings'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-850'
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'bookings'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
           >
-            <CalendarIcon className="w-3.5 h-3.5" />
-            {t('tabBookings')} ({bookings.length})
+            <CalendarIcon className="w-3.5 h-3.5 shrink-0" />
+            <span>{t('tabBookings')} ({branchBookings.length})</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('block-slots')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
-              activeTab === 'block-slots'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-850'
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'block-slots'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
           >
-            <Lock className="w-3.5 h-3.5" />
-            {t('tabBlockSlots')} ({slots.length})
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            <span>{t('tabBlockSlots')} ({slots.length})</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('services')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
-              activeTab === 'services'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-850'
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'services'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
           >
-            <Building2 className="w-3.5 h-3.5" />
-            {t('tabBranchesAndServices')} ({services.length})
+            <Users className="w-3.5 h-3.5 shrink-0" />
+            <span>{lang === 'th' ? 'ช่าง และบริการ' : 'Staff & Services'} ({services.length})</span>
           </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
-              activeTab === 'settings'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-850'
-            }`}
+          <Link
+            href={`/${slug}/settings`}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <Settings className="w-3.5 h-3.5" />
-            {t('tabSettings')}
-          </button>
-          <button
-            onClick={() => setActiveTab('billing')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
-              activeTab === 'billing'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-850'
-            }`}
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>{lang === 'th' ? 'แพ็กเกจ & บิลลิ่ง' : 'Plans & Billing'}</span>
-          </button>
+            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <span>{lang === 'th' ? 'ตั้งค่าร้าน & แพ็กเกจ' : 'Settings & Plans'}</span>
+          </Link>
         </div>
 
         {/* TAB 1: BOOKINGS LIST */}
         {activeTab === 'bookings' && (
           <div className="space-y-4">
-            {/* Filters Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-2xl shadow-2xs">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <FormattedDateInput
-                  value={selectedDate}
-                  onChange={(val) => setSelectedDate(val)}
-                  className="py-1 px-2.5"
-                />
-                <button
-                  onClick={() => setSelectedDate(format(today, 'yyyy-MM-dd'))}
-                  className="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 font-medium transition"
-                >
-                  {t('today')}
-                </button>
-                <button
-                  onClick={() => setSelectedDate(format(addDays(today, 1), 'yyyy-MM-dd'))}
-                  className="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 font-medium transition"
-                >
-                  {t('tomorrow')}
-                </button>
-              </div>
+            {/* Filters & Actions Bar */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl shadow-2xs space-y-3">
+              {/* Top Row: Date Selector & Add Manual Booking CTA */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                {/* Date Navigation Bar (Full Width on Mobile, Inline on Desktop) */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Previous Day Arrow (1:1 Aspect Ratio) */}
+                  <button
+                    type="button"
+                    aria-label="ไปยังวันก่อนหน้า"
+                    title="วันก่อนหน้า"
+                    onClick={() => {
+                      const cur = parseISO(selectedDate)
+                      if (!isNaN(cur.getTime())) {
+                        setSelectedDate(format(subDays(cur, 1), 'yyyy-MM-dd'))
+                      }
+                    }}
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 transition active:scale-95 shadow-2xs border border-slate-200 dark:border-slate-700/60 cursor-pointer flex items-center justify-center aspect-square shrink-0"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 overflow-x-auto">
-                  {[
-                    { id: 'all', label: t('all') },
-                    { id: 'confirmed', label: t('statusConfirmed') },
-                    { id: 'pending_payment', label: t('statusPending') },
-                    { id: 'completed', label: t('statusCompleted') },
-                    { id: 'cancelled', label: t('statusCancelled') },
-                  ].map((st) => (
-                    <button
-                      key={st.id}
-                      onClick={() => setStatusFilter(st.id)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition shrink-0 ${
-                        statusFilter === st.id
-                          ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
+                  {/* Date Input Dropdown (Full Width on Mobile, Fixed Width on Desktop) */}
+                  <div className="flex-1 sm:flex-initial sm:w-44 min-w-0">
+                    <FormattedDateInput
+                      value={selectedDate}
+                      onChange={(val) => setSelectedDate(val)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Next Day Arrow (1:1 Aspect Ratio) */}
+                  <button
+                    type="button"
+                    aria-label="ไปยังวันถัดไป"
+                    title="วันถัดไป"
+                    onClick={() => {
+                      const cur = parseISO(selectedDate)
+                      if (!isNaN(cur.getTime())) {
+                        setSelectedDate(format(addDays(cur, 1), 'yyyy-MM-dd'))
+                      }
+                    }}
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 transition active:scale-95 shadow-2xs border border-slate-200 dark:border-slate-700/60 cursor-pointer flex items-center justify-center aspect-square shrink-0"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  {/* Today Quick Jump Button (Visible on Desktop sm:inline-flex) */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDate(format(today, 'yyyy-MM-dd'))}
+                    className={`hidden sm:inline-flex items-center text-xs px-3.5 h-9 rounded-xl font-semibold transition active:scale-95 border cursor-pointer shadow-2xs shrink-0 ${
+                      selectedDate === format(today, 'yyyy-MM-dd')
+                        ? 'bg-indigo-600 text-white border-indigo-700 font-bold'
+                        : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    }`}
+                  >
+                    {t('today')}
+                  </button>
                 </div>
 
+                {/* Manual Booking Button (Full Width on Mobile, Auto on Desktop) */}
                 <button
+                  type="button"
                   onClick={() => {
                     const firstSvc = services[0]
                     setManualBookingForm({
                       service_id: firstSvc?.id || '',
+                      branch_id: '',
+                      staff_id: '',
                       date: selectedDate,
                       selectedSlot: null,
                       customer_name: '',
@@ -840,128 +998,438 @@ export default function DashboardPage({ params }: PageProps) {
                     })
                     setIsManualBookingModalOpen(true)
                   }}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-2xs active:scale-98 shrink-0"
+                  className="w-full sm:w-auto h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer shrink-0"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
                   <span>{t('addManualBookingBtn')}</span>
                 </button>
               </div>
+
+              {/* Bottom Section: Filters (Responsive: Mobile 2 rows vs Desktop single inline row) */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+                {/* Mobile: Row 1 / Desktop: Left Side (Branch, Staff & View Mode Toggle) */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Branch Filter Custom Dropdown (Equal width on mobile, natural on desktop) */}
+                  {branches.length > 0 && (
+                    <div className="flex-1 sm:flex-initial sm:w-48 min-w-0">
+                      <CustomDropdown
+                        value={selectedBranchFilter}
+                        onChange={(val) => handleSelectBranch(val)}
+                        prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                        className="w-full"
+                        dropdownWidth="w-56"
+                        options={[
+                          {
+                            value: 'all',
+                            label: 'ทุกสาขา',
+                            sublabel: `ดูทุกสาขา (${branches.length} สาขา)`,
+                            icon: <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+                          },
+                          ...branches.map((b) => ({
+                            value: b.id,
+                            label: b.name,
+                            sublabel: b.address || undefined,
+                            icon: <Building2 className="w-4 h-4 text-slate-400" />,
+                          })),
+                        ]}
+                      />
+                    </div>
+                  )}
+
+                  {/* Staff Filter Custom Dropdown (Equal width on mobile, natural on desktop) */}
+                  {staffList.length > 0 && (
+                    <div className="flex-1 sm:flex-initial sm:w-52 min-w-0">
+                      <CustomDropdown
+                        value={selectedStaffFilter}
+                        onChange={(val) => setSelectedStaffFilter(val)}
+                        prefixIcon={<Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                        className="w-full"
+                        dropdownWidth="w-64"
+                        options={[
+                          {
+                            value: 'all',
+                            label: 'ช่างทุกคน',
+                            sublabel: `แสดงช่างทุกคน (${staffList.length} ท่าน)`,
+                            icon: <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+                          },
+                          ...staffList.map((s) => ({
+                            value: s.id,
+                            label: s.nickname ? `${s.nickname} (${s.name})` : s.name,
+                            sublabel: `${s.role_title || 'ช่างประจำ'} • ${branches.find((b) => b.id === s.branch_id)?.name || 'ทุกสาขา'}`,
+                            avatarUrl: s.avatar_url || undefined,
+                            avatarFallback: s.nickname ? s.nickname.charAt(0) : s.name.charAt(0),
+                          })),
+                        ]}
+                      />
+                    </div>
+                  )}
+
+                  {/* View Mode Toggle: Grid Timeline vs Detailed List (Fixed at Far Right on mobile, directly inline on desktop) */}
+                  <div className="h-9 flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs shrink-0">
+                    <button
+                      type="button"
+                      aria-label="แสดงแบบตารางเวลา (Grid Timeline)"
+                      title="แสดงแบบตารางเวลา (Grid Timeline)"
+                      onClick={() => setBookingsViewMode('timeline')}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition active:scale-95 cursor-pointer aspect-square ${
+                        bookingsViewMode === 'timeline'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="แสดงแบบรายการ (List)"
+                      title="แสดงแบบรายการ (List)"
+                      onClick={() => setBookingsViewMode('list')}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition active:scale-95 cursor-pointer aspect-square ${
+                        bookingsViewMode === 'list'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile: Row 2 / Desktop: Right Side (Status Filter Segmented Badges) */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs overflow-x-auto max-w-full shrink-0">
+                  {[
+                    { id: 'all', label: t('all') },
+                    { id: 'confirmed', label: t('statusConfirmed') },
+                    { id: 'pending_payment', label: t('statusPending') },
+                    { id: 'completed', label: t('statusCompleted') },
+                    { id: 'cancelled', label: t('statusCancelled') },
+                  ].map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => setStatusFilter(st.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer active:scale-95 ${
+                        statusFilter === st.id
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Bookings Card List */}
-            {filteredBookings.length === 0 ? (
-              <div className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xs">
-                <CalendarIcon className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
-                <p className="text-xs text-slate-500 dark:text-slate-400">{t('noBookingsFound')}</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredBookings.map((b) => {
-                  const sTime = new Date(b.start_time)
-                  const eTime = new Date(b.end_time)
+            {/* TAB 1 CONTENT: 1. TIMELINE GRID VIEW OR 2. DETAILED LIST VIEW */}
+            {bookingsViewMode === 'timeline' ? (
+              /* ================== 1. TIMELINE SLOTS GRID ================== */
+              (() => {
+                // Determine active branch, staff, and representative service duration
+                const branchObj = selectedBranchFilter === 'all'
+                  ? null
+                  : branches.find((b) => b.id === selectedBranchFilter) || null
 
-                  return (
-                    <div
-                      key={b.id}
-                      className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition space-y-3"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-base font-bold text-slate-900 dark:text-white">
-                              {format(sTime, 'HH:mm')} - {format(eTime, 'HH:mm')} น.
-                            </span>
-                            <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                                b.status === 'confirmed'
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
-                                  : b.status === 'completed'
-                                  ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/80'
-                                  : b.status === 'cancelled'
-                                  ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
-                                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
-                              }`}
-                            >
-                              {b.status === 'confirmed' && t('statusConfirmed')}
-                              {b.status === 'completed' && t('statusCompleted')}
-                              {b.status === 'cancelled' && t('statusCancelled')}
-                              {b.status === 'pending_payment' && t('statusPending')}
-                              {b.status === 'no_show' && t('statusNoShow')}
-                            </span>
-                          </div>
-                          <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
-                            {b.services?.title || b.service?.title || t('service')}
-                          </div>
-                        </div>
+                const repService = services[0]
+                const durationMin = repService?.duration_min || 45
 
-                        <div className="text-right text-xs">
-                          <span className="text-slate-500 dark:text-slate-400">{t('depositAmount')}: </span>
-                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                            ฿{Number(b.deposit_amount).toLocaleString()}
+                // Compute exact same slots as customer booking page via slot engine
+                const computedTimelineSlots = computeAvailableSlots({
+                  merchant,
+                  branch: branchObj,
+                  staffId: selectedStaffFilter !== 'all' ? selectedStaffFilter : null,
+                  dateStr: selectedDate,
+                  durationMin,
+                  existingBookings: bookings,
+                  blockedSlots: slots,
+                })
+
+                // Metrics
+                const availableCount = computedTimelineSlots.filter((s) => s.isAvailable).length
+                const bookedCount = computedTimelineSlots.filter((s) => !s.isAvailable && s.reason === 'มีลูกค้าจองแล้ว').length
+
+                return (
+                  <div className="space-y-4">
+                    {/* Summary Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          {lang === 'th'
+                            ? `เลือกรอบเวลาว่าง (${durationMin} นาที) • ประจำวันที่ ${format(parseISO(selectedDate), 'dd/MM/yyyy')}`
+                            : `Available Slots (${durationMin} mins) • ${selectedDate}`}
+                        </span>
+                        {repService && (
+                          <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                            (อ้างอิง: {repService.title})
                           </span>
-                        </div>
-                      </div>
-
-                      {/* Customer Details */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl text-xs">
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('customer')}</span>
-                          <span className="font-semibold text-slate-900 dark:text-white">{b.customer_name}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('phone')}</span>
-                          <a href={`tel:${b.customer_phone}`} className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
-                            {b.customer_phone}
-                          </a>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('lineId')}</span>
-                          <span className="text-slate-700 dark:text-slate-300 font-mono">{b.customer_line_id || '-'}</span>
-                        </div>
-                        {b.customer_notes && (
-                          <div className="sm:col-span-3 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-1.5 mt-0.5 text-[11px]">
-                            <strong>{t('notes')}:</strong> {b.customer_notes}
-                          </div>
                         )}
                       </div>
 
-                      {/* Action buttons & Slip preview */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                        <div>
-                          {b.slip_url && (
-                            <button
-                              onClick={() => setSelectedSlipUrl(b.slip_url)}
-                              className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 font-semibold active:scale-95 transition"
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800/80 font-bold">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>{lang === 'th' ? `ว่าง ${availableCount} รอบ` : `${availableCount} Available`}</span>
+                        </div>
+                        {bookedCount > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-xl border border-indigo-200 dark:border-indigo-800/80 font-bold">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                            <span>{lang === 'th' ? `จองแล้ว ${bookedCount} คิว` : `${bookedCount} Booked`}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Timeline Slots Grid (Matching Customer Booking Card UI) */}
+                    {computedTimelineSlots.length === 0 ? (
+                      <div className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xs space-y-2">
+                        <Coffee className="w-8 h-8 text-amber-500 mx-auto" />
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                          {lang === 'th' ? 'ร้านปิดทำการในวันนี้' : 'Shop is closed on this date'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                        {computedTimelineSlots.map((slot, i) => {
+                          const isBreak = slot.reason === 'เวลาพักของร้าน (Break)'
+                          const isBooked = slot.reason === 'มีลูกค้าจองแล้ว'
+
+                          // Find matching booking details if booked
+                          const sTime = slot.startTime ? new Date(slot.startTime).getTime() : 0
+                          const eTime = slot.endTime ? new Date(slot.endTime).getTime() : 0
+                          const matchedBooking = isBooked
+                            ? bookings.find((b) => {
+                                if (!b.start_time.startsWith(selectedDate) || b.status === 'cancelled') return false
+                                const bS = new Date(b.start_time).getTime()
+                                const bE = new Date(b.end_time).getTime()
+                                return bS < eTime && bE > sTime
+                              })
+                            : null
+
+                          return (
+                            <div
+                              key={i}
+                              className={`p-3.5 rounded-2xl border transition-colors flex flex-col justify-between min-h-[76px] ${
+                                slot.isAvailable
+                                  ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-sm'
+                                  : isBreak
+                                  ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+                                  : isBooked
+                                  ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80'
+                                  : 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+                              }`}
                             >
-                              <ImageIcon className="w-3.5 h-3.5" />
-                              {t('viewSlip')} ({b.slip_trans_ref ? `Ref: ${b.slip_trans_ref.slice(0, 8)}...` : 'Slip'})
-                            </button>
+                              <div className="flex items-center justify-between">
+                                <span className={`font-mono text-xs font-bold ${
+                                  slot.isAvailable
+                                    ? 'text-slate-900 dark:text-white'
+                                    : isBooked
+                                    ? 'text-indigo-950 dark:text-indigo-200'
+                                    : 'text-slate-600 dark:text-slate-300'
+                                }`}>
+                                  {slot.displayTime}
+                                </span>
+
+                                {slot.isAvailable ? (
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                ) : isBooked ? (
+                                  <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                                ) : isBreak ? (
+                                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                ) : (
+                                  <span className="w-2 h-2 rounded-full bg-rose-400" />
+                                )}
+                              </div>
+
+                              <div className="mt-2 flex items-center justify-between gap-2">
+                                {slot.isAvailable ? (
+                                  <>
+                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3" />
+                                      <span>{lang === 'th' ? 'ว่าง' : 'Available'}</span>
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setManualBookingForm({
+                                          service_id: repService?.id || '',
+                                          branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : '',
+                                          staff_id: selectedStaffFilter !== 'all' ? selectedStaffFilter : '',
+                                          date: selectedDate,
+                                          selectedSlot: slot,
+                                          customer_name: '',
+                                          notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+                                          deposit_amount: String(repService?.deposit_amount ?? merchant.default_deposit ?? 100),
+                                          status: 'confirmed',
+                                        })
+                                        setIsManualBookingModalOpen(true)
+                                      }}
+                                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white dark:bg-indigo-950/60 dark:hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white rounded-lg text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 transition active:scale-95 cursor-pointer flex items-center gap-1"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                      <span>{lang === 'th' ? 'ลงคิว' : 'Book'}</span>
+                                    </button>
+                                  </>
+                                ) : isBreak ? (
+                                  <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
+                                    <Coffee className="w-3 h-3" />
+                                    <span>เวลาพักของร้าน (Break)</span>
+                                  </span>
+                                ) : isBooked ? (
+                                  <div className="text-left truncate w-full">
+                                    <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 block truncate">
+                                      👤 {matchedBooking?.customer_name || 'มีลูกค้าจองแล้ว'}
+                                    </span>
+                                    {matchedBooking?.services && (
+                                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 block truncate">
+                                        ✂️ {matchedBooking.services.title}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
+                                    <Lock className="w-3 h-3" />
+                                    <span>{slot.reason || 'ไม่พร้อมให้บริการ'}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()
+            ) : (
+              /* ================== 2. DETAILED LIST VIEW ================== */
+              filteredBookings.length === 0 ? (
+                <div className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xs">
+                  <CalendarIcon className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t('noBookingsFound')}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredBookings.map((b) => {
+                    const sTime = new Date(b.start_time)
+                    const eTime = new Date(b.end_time)
+
+                    return (
+                      <div
+                        key={b.id}
+                        className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition space-y-3"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base font-bold text-slate-900 dark:text-white">
+                                {format(sTime, 'HH:mm')} - {format(eTime, 'HH:mm')} น.
+                              </span>
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${b.status === 'confirmed'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
+                                  : b.status === 'completed'
+                                    ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/80'
+                                    : b.status === 'cancelled'
+                                      ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
+                                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
+                                  }`}
+                              >
+                                {b.status === 'confirmed' && t('statusConfirmed')}
+                                {b.status === 'completed' && t('statusCompleted')}
+                                {b.status === 'cancelled' && t('statusCancelled')}
+                                {b.status === 'pending_payment' && t('statusPending')}
+                                {b.status === 'no_show' && t('statusNoShow')}
+                              </span>
+                            </div>
+                            <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5 flex flex-wrap items-center gap-2">
+                              <span>{b.services?.title || b.service?.title || t('service')}</span>
+                              {(b.branch || b.staff) && (
+                                <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1.5">
+                                  {b.branch && (
+                                    <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">
+                                      🏢 {b.branch.name}
+                                    </span>
+                                  )}
+                                  {b.staff && (
+                                    <span className="bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded text-indigo-700 dark:text-indigo-300 font-medium">
+                                      👤 {b.staff.name} {b.staff.nickname ? `(${b.staff.nickname})` : ''}
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right text-xs">
+                            <span className="text-slate-500 dark:text-slate-400">{t('depositAmount')}: </span>
+                            <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                              ฿{Number(b.deposit_amount).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Customer Details */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl text-xs">
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('customer')}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{b.customer_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('phone')}</span>
+                            <a href={`tel:${b.customer_phone}`} className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+                              {b.customer_phone}
+                            </a>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('lineId')}</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-mono">{b.customer_line_id || '-'}</span>
+                          </div>
+                          {b.customer_notes && (
+                            <div className="sm:col-span-3 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-1.5 mt-0.5 text-[11px]">
+                              <strong>{t('notes')}:</strong> {b.customer_notes}
+                            </div>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          {b.status === 'confirmed' && (
-                            <button
-                              onClick={() => handleStatusChange(b.id, 'completed')}
-                              className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition active:scale-95 shadow-2xs"
-                            >
-                              {t('markCompleted')}
-                            </button>
-                          )}
-                          {b.status !== 'cancelled' && b.status !== 'completed' && (
-                            <button
-                              onClick={() => handleStatusChange(b.id, 'cancelled')}
-                              className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-500/20 transition active:scale-95"
-                            >
-                              {t('cancelBooking')}
-                            </button>
-                          )}
+                        {/* Action buttons & Slip preview */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                          <div>
+                            {b.slip_url && (
+                              <button
+                                onClick={() => setSelectedSlipUrl(b.slip_url)}
+                                className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 font-semibold active:scale-95 transition"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                                {t('viewSlip')} ({b.slip_trans_ref ? `Ref: ${b.slip_trans_ref.slice(0, 8)}...` : 'Slip'})
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {b.status === 'confirmed' && (
+                              <button
+                                onClick={() => handleStatusChange(b.id, 'completed')}
+                                className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition active:scale-95 shadow-2xs"
+                              >
+                                {t('markCompleted')}
+                              </button>
+                            )}
+                            {b.status !== 'cancelled' && b.status !== 'completed' && (
+                              <button
+                                onClick={() => handleStatusChange(b.id, 'cancelled')}
+                                className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-500/20 transition active:scale-95"
+                              >
+                                {t('cancelBooking')}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              )
             )}
           </div>
         )}
@@ -1064,423 +1532,459 @@ export default function DashboardPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* TAB 3: MANAGE BRANCHES & SERVICES */}
+        {/* TAB 3: MANAGE STAFF & SERVICES */}
         {activeTab === 'services' && (
-          <div className="space-y-6 max-w-4xl">
-            {/* Branch Profile Section */}
-            <form onSubmit={handleSaveBranch} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
-              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                    <Building2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('branchInfoTitle')}</h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">กำหนดชื่อสาขา ที่ตั้ง และเบอร์ติดต่อสำหรับให้บริการ</p>
+          <div className="space-y-6 w-full">
+            {/* Header & Controls: Staff Selector Dropdown & Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Staff Selector Custom Rich Dropdown */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
+                    {lang === 'th' ? 'เลือกช่างผู้ให้บริการ' : 'Select Specialist / Staff'}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <CustomDropdown
+                      value={selectedStaffFilter}
+                      onChange={(val) => setSelectedStaffFilter(val)}
+                      prefixIcon={<Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                      dropdownWidth="w-72"
+                      options={[
+                        {
+                          value: 'all',
+                          label: lang === 'th' ? 'ช่างทั้งหมด' : 'All Specialists',
+                          sublabel: lang === 'th' ? `แสดงช่างทุกคน (${staffList.length} ท่าน)` : `View all staff (${staffList.length})`,
+                          icon: <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+                        },
+                        ...staffList
+                          .filter((s) => selectedBranchFilter === 'all' || !s.branch_id || s.branch_id === selectedBranchFilter)
+                          .map((stf) => ({
+                            value: stf.id,
+                            label: stf.nickname ? `${stf.nickname} (${stf.name})` : stf.name,
+                            sublabel: `${stf.role_title || 'ช่างประจำ'} • ${branches.find((b) => b.id === stf.branch_id)?.name || 'ทุกสาขา'}`,
+                            avatarUrl: stf.avatar_url || undefined,
+                            avatarFallback: stf.nickname ? stf.nickname.charAt(0) : stf.name.charAt(0),
+                          })),
+                      ]}
+                    />
+
+                    {/* Quick Edit/Manage Staff button if specific staff is selected */}
+                    {selectedStaffFilter !== 'all' && (
+                      (() => {
+                        const curStaff = staffList.find((s) => s.id === selectedStaffFilter)
+                        if (!curStaff) return null
+                        const curStaffServiceIds = curStaff.staff_services?.map((ss) => ss.service_id) || []
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingStaff({
+                                ...curStaff,
+                                serviceIds: curStaffServiceIds,
+                              })
+                              setIsStaffModalOpen(true)
+                            }}
+                            className="p-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl transition cursor-pointer active:scale-95 shadow-2xs"
+                            title="แก้ไขข้อมูลช่างท่านนี้"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        )
+                      })()
+                    )}
                   </div>
                 </div>
+              </div>
+
+              {/* Action Buttons: Add Staff & Add Service */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0">
                 <button
-                  type="submit"
-                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs active:scale-98"
+                  type="button"
+                  onClick={() => {
+                    setEditingStaff({
+                      name: '',
+                      nickname: '',
+                      role_title: 'ช่างผู้ให้บริการ',
+                      branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : (branches[0]?.id || null),
+                      is_active: true,
+                      serviceIds: services.map((s) => s.id),
+                    })
+                    setIsStaffModalOpen(true)
+                  }}
+                  className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-indigo-700 dark:text-indigo-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-2xs cursor-pointer"
                 >
-                  <span>{t('save')}</span>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{t('addNewStaffBtn')}</span>
                 </button>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('branchName')}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น สาขาหลัก (Main Branch)"
-                    value={settingsForm.branch_name}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, branch_name: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('branchPhone')}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น 081-234-5678"
-                    value={settingsForm.branch_phone}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, branch_phone: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Geo Hierarchy Thai Address Selector */}
-              <ThaiAddressSelector
-                initialAddress={settingsForm.branch_address}
-                onChange={(fullAddr) => setSettingsForm({ ...settingsForm, branch_address: fullAddr })}
-                lang={lang}
-              />
-            </form>
-
-            {/* Services List Section */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('allServicesTitle')}</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">รายการเมนูบริการ ราคา และระยะเวลาที่ลูกค้าสามารถเลือกจอง</p>
-                </div>
                 <button
+                  type="button"
                   onClick={() => {
                     setEditingService({ duration_min: 60, price: 500, deposit_amount: 100, is_active: true })
                     setIsServiceModalOpen(true)
                   }}
-                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs active:scale-98"
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  {t('addNewServiceBtn')}
+                  <span>{t('addNewServiceBtn')}</span>
                 </button>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {services.map((svc) => (
-                  <div
-                    key={svc.id}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{svc.title}</h4>
-                        <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                          ฿{Number(svc.price).toLocaleString()}
-                        </span>
-                      </div>
-                      {svc.description && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{svc.description}</p>
-                      )}
-                      <div className="flex items-center gap-3 mt-3 text-xs text-slate-700 dark:text-slate-300">
-                        <span className="bg-slate-50 dark:bg-slate-950 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 font-medium">
-                          ⏱️ {svc.duration_min} {t('minutes')}
-                        </span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                          {t('depositAmount')} ฿{Number(svc.deposit_amount ?? merchant.default_deposit).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2">
-                      <button
-                        onClick={() => {
-                          setEditingService(svc)
-                          setIsServiceModalOpen(true)
-                        }}
-                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteService(svc.id)}
-                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          </div>
-        )}
 
-        {/* TAB 4: SETTINGS & LINE NOTIFY & CLOSED DAYS */}
-        {activeTab === 'settings' && (
-          <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5 max-w-2xl shadow-2xs">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              {t('shopSettingsTitle')}
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('shopName')}</label>
-                <input
-                  type="text"
-                  required
-                  value={settingsForm.name}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('shopPhone')}</label>
-                <input
-                  type="text"
-                  value={settingsForm.phone}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, phone: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('promptpayNumber')}</label>
-                <input
-                  type="text"
-                  required
-                  value={settingsForm.promptpay_id}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, promptpay_id: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('promptpayAccountName')}</label>
-                <input
-                  type="text"
-                  value={settingsForm.promptpay_name}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, promptpay_name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('openTime')}</label>
-                <TimePicker24h
-                  value={settingsForm.open_time}
-                  onChange={(val) => setSettingsForm({ ...settingsForm, open_time: val })}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('closeTime')}</label>
-                <TimePicker24h
-                  value={settingsForm.close_time}
-                  onChange={(val) => setSettingsForm({ ...settingsForm, close_time: val })}
-                />
-              </div>
-
-              {/* WEEKLY CLOSED DAYS SECTION */}
-              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <CalendarDays className="w-4 h-4 text-rose-500" />
-                    {t('closedDaysTitle')}
-                  </label>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t('closedDaysDesc')}
-                  </p>
+            {/* Staff Section: When 'all' is selected, show list of all staff members */}
+            {selectedStaffFilter === 'all' ? (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>{lang === 'th' ? `รายชื่อช่างผู้ให้บริการทั้งหมด (${staffList.length} ท่าน)` : `All Staff / Providers (${staffList.length})`}</span>
+                  </h3>
                 </div>
 
-                <div className="grid grid-cols-7 gap-1.5 pt-1">
-                  {[
-                    { day: 0, label: 'อา', full: 'อาทิตย์', en: 'Sun' },
-                    { day: 1, label: 'จ', full: 'จันทร์', en: 'Mon' },
-                    { day: 2, label: 'อ', full: 'อังคาร', en: 'Tue' },
-                    { day: 3, label: 'พ', full: 'พุธ', en: 'Wed' },
-                    { day: 4, label: 'พฤ', full: 'พฤหัสฯ', en: 'Thu' },
-                    { day: 5, label: 'ศ', full: 'ศุกร์', en: 'Fri' },
-                    { day: 6, label: 'ส', full: 'เสาร์', en: 'Sat' },
-                  ].map((item) => {
-                    const isClosed = settingsForm.closed_days.includes(item.day)
-                    return (
-                      <button
-                        key={item.day}
-                        type="button"
-                        onClick={() => {
-                          const nextClosedDays = isClosed
-                            ? settingsForm.closed_days.filter((d) => d !== item.day)
-                            : [...settingsForm.closed_days, item.day]
-                          setSettingsForm({ ...settingsForm, closed_days: nextClosedDays })
-                        }}
-                        className={`py-2.5 px-1 rounded-xl text-xs font-semibold flex flex-col items-center justify-center transition border active:scale-95 ${
-                          isClosed
-                            ? 'bg-rose-500 text-white border-rose-600 shadow-xs font-bold'
-                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        <span>{lang === 'th' ? item.label : item.en}</span>
-                        <span className={`text-[9px] mt-0.5 font-normal ${isClosed ? 'text-rose-100 font-bold' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                          {isClosed ? (lang === 'th' ? 'ปิด' : 'Off') : (lang === 'th' ? 'เปิด' : 'Open')}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+                {staffList.length === 0 ? (
+                  <div className="p-6 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2 shadow-2xs">
+                    <Users className="w-8 h-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      {lang === 'th' ? 'ยังไม่มีรายชื่อช่าง / ผู้ให้บริการ' : 'No staff members added yet'}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      {lang === 'th' ? 'กดปุ่ม "+ เพิ่มช่าง / ผู้ให้บริการ" ด้านบนเพื่อเพิ่มช่าง' : 'Click "+ Add Staff" above to add your first provider'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    {staffList.map((stf) => {
+                      const stfBranch = branches.find((b) => b.id === stf.branch_id)
+                      const stfServiceIds = stf.staff_services?.map((ss) => ss.service_id) || []
+                      return (
+                        <div
+                          key={stf.id}
+                          className="bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/50 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-2xs hover:border-indigo-400 transition"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {stf.avatar_url ? (
+                              <img
+                                src={stf.avatar_url}
+                                alt={stf.name}
+                                className="w-10 h-10 rounded-xl object-cover border border-indigo-200 dark:border-indigo-800 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                                {stf.nickname ? stf.nickname.charAt(0) : stf.name.charAt(0)}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                  {stf.name} {stf.nickname && <span className="text-indigo-600 dark:text-indigo-400">({stf.nickname})</span>}
+                                </h4>
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80">
+                                  {stf.role_title || 'ช่างประจำ'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5 truncate">
+                                <Building2 className="w-3 h-3 text-indigo-500 shrink-0" />
+                                <span className="truncate">{stfBranch ? `สาขา: ${stfBranch.name}` : 'ทุกสาขา'}</span>
+                                <span>•</span>
+                                <span className="shrink-0">{stfServiceIds.length} รายการ</span>
+                              </p>
+                            </div>
+                          </div>
 
-              {/* LUNCH BREAK SECTION */}
-              <div className="sm:col-span-2 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="has_break"
-                    checked={settingsForm.has_break}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, has_break: e.target.checked })}
-                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                  />
-                  <label htmlFor="has_break" className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 cursor-pointer">
-                    <Coffee className="w-4 h-4" />
-                    {t('enableDailyBreak')}
-                  </label>
-                </div>
-
-                {settingsForm.has_break && (
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div>
-                      <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block mb-1">{t('breakStartTime')}</label>
-                      <TimePicker24h
-                        value={settingsForm.break_start_time || '12:00'}
-                        onChange={(val) => setSettingsForm({ ...settingsForm, break_start_time: val })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block mb-1">{t('breakEndTime')}</label>
-                      <TimePicker24h
-                        value={settingsForm.break_end_time || '13:00'}
-                        onChange={(val) => setSettingsForm({ ...settingsForm, break_end_time: val })}
-                      />
-                    </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStaff({
+                                  ...stf,
+                                  serviceIds: stfServiceIds,
+                                })
+                                setIsStaffModalOpen(true)
+                              }}
+                              className="px-2.5 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-800 dark:text-slate-200 rounded-xl text-[11px] font-semibold border border-slate-200 dark:border-slate-800 transition active:scale-95 shadow-2xs cursor-pointer flex items-center gap-1"
+                            >
+                              <Edit3 className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                              <span>{lang === 'th' ? 'ปรับบริการ' : 'Edit'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  ระบบจะไม่เปิดให้ลูกค้าจองรอบคิวที่ตรงกับช่วงเวลาพักนี้โดยอัตโนมัติ
-                </p>
               </div>
+            ) : (
+              /* Selected Staff Info Banner (if specific staff selected) */
+              (() => {
+                const curStaff = staffList.find((s) => s.id === selectedStaffFilter)
+                if (!curStaff) return null
+                const curStaffBranch = branches.find((b) => b.id === curStaff.branch_id)
+                const curStaffServiceIds = curStaff.staff_services?.map((ss) => ss.service_id) || []
+                return (
+                  <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      {curStaff.avatar_url ? (
+                        <img
+                          src={curStaff.avatar_url}
+                          alt={curStaff.name}
+                          className="w-12 h-12 rounded-2xl object-cover border border-indigo-200 dark:border-indigo-800"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
+                          {curStaff.nickname ? curStaff.nickname.charAt(0) : curStaff.name.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {curStaff.name} {curStaff.nickname && <span className="text-indigo-600 dark:text-indigo-400">({curStaff.nickname})</span>}
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80">
+                            {curStaff.role_title || 'ช่างประจำ'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{curStaffBranch ? `สาขา: ${curStaffBranch.name}` : 'ทุกสาขา'}</span>
+                          <span>•</span>
+                          <span>เปิดให้บริการ {curStaffServiceIds.length} รายการ</span>
+                        </p>
+                      </div>
+                    </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('defaultDepositAmount')}</label>
-                <input
-                  type="number"
-                  required
-                  value={settingsForm.default_deposit}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, default_deposit: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('slotInterval')}</label>
-                <select
-                  value={settingsForm.slot_interval_min}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, slot_interval_min: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                >
-                  <option value="15">{t('every15Min')}</option>
-                  <option value="30">{t('every30Min')}</option>
-                  <option value="60">{t('every60Min')}</option>
-                </select>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
-                  <Bell className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  {t('lineNotifyTokenLabel')}
-                </label>
-                <input
-                  type="text"
-                  placeholder="เช่น Nq8Z8... (https://notify-bot.line.me)"
-                  value={settingsForm.line_notify_token}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, line_notify_token: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-98"
-            >
-              {t('saveSettingsBtn')}
-            </button>
-          </form>
-        )}
-
-        {/* TAB 5: BILLING & SUBSCRIPTION */}
-        {activeTab === 'billing' && (
-          <div className="space-y-6">
-            {/* Active Plan & Slip Quota Status Card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs">
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-1">
-                    {lang === 'th' ? 'สถานะแพ็กเกจปัจจุบัน' : 'Subscription Status'}
-                  </span>
-                  <div className="flex items-center gap-2.5">
-                    <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white capitalize">
-                      {merchant.plan || 'Growth'} Plan
-                    </h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80 text-xs font-bold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      {merchant.subscription_status === 'active' ? (lang === 'th' ? 'กำลังใช้งาน' : 'Active') : merchant.subscription_status}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingStaff({
+                            ...curStaff,
+                            serviceIds: curStaffServiceIds,
+                          })
+                          setIsStaffModalOpen(true)
+                        }}
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-800 transition active:scale-95 shadow-2xs cursor-pointer"
+                      >
+                        {lang === 'th' ? 'ปรับรายการบริการ' : 'Edit Services'}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )
+              })()
+            )}
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={async () => {
-                      const res = await createStripeCustomerPortalAction(slug)
-                      if (res.url) {
-                        window.location.href = res.url
-                      } else {
-                        toast.error(res.error || 'ยังไม่มีประวัติการชำระเงินผ่าน Stripe')
-                      }
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition active:scale-95"
-                  >
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>{lang === 'th' ? 'จัดการบัตร / ดูใบเสร็จผ่าน Stripe' : 'Manage via Stripe'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Quota Progress Bar */}
-              <div className="pt-5 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-amber-500" />
-                    {lang === 'th' ? 'โควตาตรวจสลิป SlipOK เดือนนี้' : 'Monthly SlipOK Verification Quota'}
-                  </span>
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    {(merchant.used_slips_this_month || 0).toLocaleString()} / {(merchant.monthly_slip_quota || 500).toLocaleString()} สลิป
-                  </span>
-                </div>
-
-                {/* Bar */}
-                <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(4, (((merchant.used_slips_this_month || 0) / (merchant.monthly_slip_quota || 500)) * 100))
-                      )}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+            {/* Services List Grid (Filtered by Selected Staff) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   <span>
-                    {lang === 'th' 
-                      ? `เหลือโควตาอีก ${Math.max(0, (merchant.monthly_slip_quota || 500) - (merchant.used_slips_this_month || 0)).toLocaleString()} สลิป` 
-                      : `${Math.max(0, (merchant.monthly_slip_quota || 500) - (merchant.used_slips_this_month || 0)).toLocaleString()} slips remaining`}
+                    {selectedStaffFilter === 'all'
+                      ? (lang === 'th' ? `รายการบริการทั้งหมด (${services.length})` : `All Services (${services.length})`)
+                      : (() => {
+                        const curStaff = staffList.find((s) => s.id === selectedStaffFilter)
+                        const curStaffServiceIds = curStaff?.staff_services?.map((ss) => ss.service_id) || []
+                        return lang === 'th'
+                          ? `บริการของช่าง ${curStaff?.nickname || curStaff?.name} (${curStaffServiceIds.length} รายการ)`
+                          : `Services by ${curStaff?.nickname || curStaff?.name} (${curStaffServiceIds.length})`
+                      })()}
                   </span>
-                  <span>{lang === 'th' ? 'รีเซ็ตโควตาทุก 30 วัน' : 'Resets monthly'}</span>
-                </div>
+                </h3>
               </div>
-            </div>
 
-            {/* Plans List Component */}
-            <div className="pt-2">
-              <PricingSection
-                merchantSlug={slug}
-                currentPlan={merchant.plan || 'growth'}
-                onPlanSelected={loadDashboardData}
-              />
+              {(() => {
+                const displayedServices = services.filter((svc) => {
+                  if (selectedStaffFilter === 'all') return true
+                  const curStaff = staffList.find((s) => s.id === selectedStaffFilter)
+                  if (!curStaff) return true
+                  return curStaff.staff_services?.some((ss) => ss.service_id === svc.id)
+                })
+
+                if (displayedServices.length === 0) {
+                  return (
+                    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2 shadow-2xs">
+                      <Sparkles className="w-8 h-8 text-slate-400 mx-auto" />
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {selectedStaffFilter === 'all'
+                          ? (lang === 'th' ? 'ยังไม่มีรายการบริการ' : 'No services created yet')
+                          : (lang === 'th' ? 'ช่างท่านนี้ยังไม่ได้เลือกให้บริการเมนูใด' : 'This specialist does not offer any services yet')}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {selectedStaffFilter === 'all'
+                          ? 'กดปุ่ม "+ เพิ่มบริการใหม่" ด้านบนเพื่อเพิ่มบริการ'
+                          : 'กดปุ่ม "ปรับรายการบริการ" ด้านบนเพื่อติ๊กเลือกบริการที่ช่างท่านนี้ทำได้'}
+                      </p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {displayedServices.map((svc) => {
+                      const eligibleStaff = staffList.filter((stf) =>
+                        stf.staff_services?.some((ss) => ss.service_id === svc.id)
+                      )
+
+                      return (
+                        <div
+                          key={svc.id}
+                          className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-3"
+                        >
+                          <div>
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-bold text-slate-900 dark:text-white text-sm">{svc.title}</h4>
+                              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                                ฿{Number(svc.price).toLocaleString()}
+                              </span>
+                            </div>
+                            {svc.description && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{svc.description}</p>
+                            )}
+                            <div className="flex items-center gap-3 mt-3 text-xs text-slate-700 dark:text-slate-300">
+                              <span className="bg-slate-50 dark:bg-slate-950 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 font-medium">
+                                ⏱️ {svc.duration_min} {t('minutes')}
+                              </span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                {t('depositAmount')} ฿{Number(svc.deposit_amount ?? merchant.default_deposit).toLocaleString()}
+                              </span>
+                            </div>
+
+                            {/* Staff providing this service */}
+                            <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                ผู้ให้บริการ ({eligibleStaff.length}):{' '}
+                                {eligibleStaff.length > 0
+                                  ? eligibleStaff.map((s) => s.nickname || s.name).join(', ')
+                                  : 'ยังไม่ได้ผูกกับช่างใด'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                            <button
+                              onClick={() => {
+                                setEditingService(svc)
+                                setIsServiceModalOpen(true)
+                              }}
+                              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                              title={t('edit')}
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteService(svc.id)}
+                              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                              title={t('delete')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           </div>
         )}
+
+
       </main>
+
+      {/* MOBILE FIXED BOTTOM NAVIGATION BAR */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 shadow-lg safe-area-bottom">
+        <div className="grid grid-cols-4 gap-1 items-center justify-around">
+          {/* Tab 1: คิวงาน */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('bookings')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${
+              activeTab === 'bookings'
+                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <div className="relative">
+              <CalendarIcon className="w-5 h-5" />
+              {branchBookings.length > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-indigo-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
+                  {branchBookings.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5 leading-tight">คิวงาน</span>
+            {activeTab === 'bookings' && (
+              <span className="w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 2: บล็อกเวลา */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('block-slots')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${
+              activeTab === 'block-slots'
+                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <div className="relative">
+              <Lock className="w-5 h-5" />
+              {slots.length > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
+                  {slots.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5 leading-tight">บล็อกเวลา</span>
+            {activeTab === 'block-slots' && (
+              <span className="w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 3: ช่าง/บริการ */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('services')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${
+              activeTab === 'services'
+                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <div className="relative">
+              <Users className="w-5 h-5" />
+              {services.length > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-emerald-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
+                  {services.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5 leading-tight">ช่าง/บริการ</span>
+            {activeTab === 'services' && (
+              <span className="w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 4: ตั้งค่าร้าน */}
+          <Link
+            href={`/${slug}/settings`}
+            className="flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5 leading-tight">ตั้งค่าร้าน</span>
+          </Link>
+        </div>
+      </nav>
 
       {/* Slip Image Fullscreen Modal */}
       <AnimatePresence>
@@ -1492,7 +1996,7 @@ export default function DashboardPage({ params }: PageProps) {
             onClick={() => setSelectedSlipUrl(null)}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.95 }}
@@ -1517,10 +2021,158 @@ export default function DashboardPage({ params }: PageProps) {
         )}
       </AnimatePresence>
 
+      {/* Staff Add/Edit Modal (with Per-Staff Service Selection) */}
+      <AnimatePresence>
+        {isStaffModalOpen && editingStaff && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.form
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              onSubmit={handleSaveStaff}
+              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl my-8"
+            >
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <span>{editingStaff.id ? t('editStaffTitle') : t('addNewStaffBtn')}</span>
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffName')} *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="เช่น สมศักดิ์ แซ่ตั้ง"
+                    value={editingStaff.name || ''}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffNickname')}</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น ช่างเอก, น้องฟ้า"
+                    value={editingStaff.nickname || ''}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, nickname: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffRoleTitle')}</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น Senior Stylist, ช่างทำเล็บ"
+                    value={editingStaff.role_title || ''}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, role_title: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('staffBranch')} *
+                  </label>
+                  <CustomDropdown
+                    value={editingStaff.branch_id || (branches[0]?.id || '')}
+                    onChange={(val) => setEditingStaff({ ...editingStaff, branch_id: val || null })}
+                    prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                    dropdownWidth="w-full"
+                    className="w-full"
+                    options={branches.map((b) => ({
+                      value: b.id,
+                      label: b.name,
+                      sublabel: b.address || undefined,
+                      icon: <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+                    }))}
+                  />
+                </div>
+              </div>
+
+              {/* Per-Staff Services Checklist */}
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-xs font-bold text-slate-900 dark:text-white block">
+                  {t('staffServices')} (เลือกบริการที่ช่างท่านนี้ทำได้) *
+                </label>
+                <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                  {services.map((svc) => {
+                    const isChecked = editingStaff.serviceIds?.includes(svc.id)
+                    return (
+                      <label
+                        key={svc.id}
+                        className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-900 cursor-pointer text-xs transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const current = editingStaff.serviceIds || []
+                            const next = e.target.checked
+                              ? [...current, svc.id]
+                              : current.filter((id) => id !== svc.id)
+                            setEditingStaff({ ...editingStaff, serviceIds: next })
+                          }}
+                          className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                        />
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 flex-1">{svc.title}</span>
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">฿{Number(svc.price).toLocaleString()}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                {editingStaff.id ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingStaff.id) {
+                        handleDeleteStaff(editingStaff.id)
+                        setIsStaffModalOpen(false)
+                      }
+                    }}
+                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{t('delete')}</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsStaffModalOpen(false)}
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium active:scale-95 cursor-pointer"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 shadow-2xs cursor-pointer"
+                  >
+                    {t('save')}
+                  </button>
+                </div>
+              </div>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Service Add/Edit Modal */}
       <AnimatePresence>
         {isServiceModalOpen && editingService && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1562,12 +2214,15 @@ export default function DashboardPage({ params }: PageProps) {
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('durationMin')} *</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     required
-                    min="10"
-                    step="5"
-                    value={editingService.duration_min || 60}
-                    onChange={(e) => setEditingService({ ...editingService, duration_min: Number(e.target.value) })}
+                    value={editingService.duration_min !== undefined ? editingService.duration_min : 60}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '')
+                      setEditingService({ ...editingService, duration_min: val ? Number(val) : 0 })
+                    }}
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
                   />
                 </div>
@@ -1575,11 +2230,15 @@ export default function DashboardPage({ params }: PageProps) {
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('servicePrice')} *</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     required
-                    min="0"
-                    value={editingService.price || 0}
-                    onChange={(e) => setEditingService({ ...editingService, price: Number(e.target.value) })}
+                    value={editingService.price !== undefined ? editingService.price : 0}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '')
+                      setEditingService({ ...editingService, price: val ? Number(val) : 0 })
+                    }}
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
                   />
                 </div>
@@ -1588,10 +2247,15 @@ export default function DashboardPage({ params }: PageProps) {
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('serviceDeposit')}</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder={`฿${merchant.default_deposit}`}
-                  value={editingService.deposit_amount || ''}
-                  onChange={(e) => setEditingService({ ...editingService, deposit_amount: e.target.value ? Number(e.target.value) : undefined })}
+                  value={editingService.deposit_amount !== undefined && editingService.deposit_amount !== null ? editingService.deposit_amount : ''}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '')
+                    setEditingService({ ...editingService, deposit_amount: val ? Number(val) : undefined })
+                  }}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
                 />
               </div>
@@ -1649,32 +2313,111 @@ export default function DashboardPage({ params }: PageProps) {
                 </button>
               </div>
 
+              {/* Branch & Staff Selection (Optional / Multi-Branch) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('selectBranch')}
+                  </label>
+                  <CustomDropdown
+                    value={manualBookingForm.branch_id || ''}
+                    onChange={(val) => {
+                      setManualBookingForm({
+                        ...manualBookingForm,
+                        branch_id: val,
+                        selectedSlot: null,
+                      })
+                    }}
+                    prefixIcon={<Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                    dropdownWidth="w-full"
+                    className="w-full"
+                    options={[
+                      {
+                        value: '',
+                        label: merchant.branch_name || 'สาขาหลัก',
+                        sublabel: 'สาขาเริ่มต้นของร้าน',
+                        icon: <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+                      },
+                      ...branches.map((b) => ({
+                        value: b.id,
+                        label: b.name,
+                        sublabel: b.address || undefined,
+                        icon: <Building2 className="w-4 h-4 text-slate-400" />,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('selectStaff')}
+                  </label>
+                  <CustomDropdown
+                    value={manualBookingForm.staff_id || ''}
+                    onChange={(val) => {
+                      setManualBookingForm({
+                        ...manualBookingForm,
+                        staff_id: val,
+                        selectedSlot: null,
+                      })
+                    }}
+                    prefixIcon={<Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                    dropdownWidth="w-full"
+                    className="w-full"
+                    options={[
+                      {
+                        value: '',
+                        label: t('anyStaff'),
+                        sublabel: 'ให้ระบบเลือกช่างที่ว่างให้',
+                        icon: <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+                      },
+                      ...staffList
+                        .filter((s) => !manualBookingForm.branch_id || s.branch_id === manualBookingForm.branch_id)
+                        .map((s) => ({
+                          value: s.id,
+                          label: s.nickname ? `${s.nickname} (${s.name})` : s.name,
+                          sublabel: s.role_title || undefined,
+                          avatarUrl: s.avatar_url || undefined,
+                          avatarFallback: s.nickname ? s.nickname.charAt(0) : s.name.charAt(0),
+                        })),
+                    ]}
+                  />
+                </div>
+              </div>
+
               {/* Service Selection */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   {t('selectService')} *
                 </label>
-                <select
-                  required
-                  value={manualBookingForm.service_id}
-                  onChange={(e) => {
-                    const svcId = e.target.value
+                <CustomDropdown
+                  value={manualBookingForm.service_id || ''}
+                  onChange={(svcId) => {
                     const s = services.find((x) => x.id === svcId)
                     setManualBookingForm({
                       ...manualBookingForm,
                       service_id: svcId,
                       deposit_amount: String(s?.deposit_amount ?? merchant.default_deposit ?? 100),
+                      selectedSlot: null,
                     })
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                >
-                  <option value="">-- {t('selectService')} --</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.title} ({s.duration_min} นาที - ฿{s.price})
-                    </option>
-                  ))}
-                </select>
+                  prefixIcon={<Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                  dropdownWidth="w-full"
+                  className="w-full"
+                  placeholder="-- เลือกบริการที่ต้องการ --"
+                  options={services
+                    .filter((s) => {
+                      if (!manualBookingForm.staff_id) return true
+                      const stf = staffList.find((x) => x.id === manualBookingForm.staff_id)
+                      return stf?.staff_services?.some((ss) => ss.service_id === s.id)
+                    })
+                    .map((s) => ({
+                      value: s.id,
+                      label: s.title,
+                      sublabel: `${s.duration_min} นาที • ฿${Number(s.price).toLocaleString()} (มัดจำ ฿${s.deposit_amount ?? 100})`,
+                      icon: <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+                    }))}
+                />
               </div>
 
               {/* Date Selection */}
@@ -1740,11 +2483,10 @@ export default function DashboardPage({ params }: PageProps) {
                           key={slot.startTime}
                           type="button"
                           onClick={() => setManualBookingForm({ ...manualBookingForm, selectedSlot: slot })}
-                          className={`p-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center min-h-[48px] ${
-                            isSelected
-                              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/20'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30'
-                          }`}
+                          className={`p-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center min-h-[48px] ${isSelected
+                            ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/20'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30'
+                            }`}
                         >
                           <span className="text-xs font-semibold">{slot.displayTime}</span>
                         </button>

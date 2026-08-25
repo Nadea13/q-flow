@@ -15,6 +15,10 @@ interface CreateMerchantInput {
   open_time?: string
   close_time?: string
   customSlug?: string
+  branch_name?: string
+  branch_address?: string
+  branch_phone?: string
+  plan?: string
 }
 
 function generateSlug(name: string): string {
@@ -34,6 +38,13 @@ export async function createMerchantAction(input: CreateMerchantInput) {
 
   const slug = input.customSlug?.trim() || generateSlug(input.name)
   const pin = input.admin_pin?.trim() || '1234'
+  const branchName = input.branch_name?.trim() || 'สาขาหลัก (Main Branch)'
+  const branchAddress = input.branch_address?.trim() || null
+  const branchPhone = input.branch_phone?.trim() || input.phone?.trim() || input.promptpay_id.trim()
+
+  const plan = input.plan || undefined
+  const subscriptionStatus = plan ? 'active' : undefined
+  const monthlySlipQuota = plan === 'enterprise' ? 5000 : plan === 'business' ? 1500 : plan === 'professional' ? 500 : undefined
 
   // 1. Insert merchant
   const { data: merchant, error: mError } = await supabase
@@ -49,8 +60,13 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       phone: input.phone?.trim() || input.promptpay_id.trim(),
       open_time: input.open_time || '10:00:00',
       close_time: input.close_time || '20:00:00',
+      branch_name: branchName,
+      branch_address: branchAddress,
       slot_interval_min: 30,
       is_active: true,
+      plan: plan,
+      subscription_status: subscriptionStatus,
+      monthly_slip_quota: monthlySlipQuota,
     })
     .select()
     .single()
@@ -72,17 +88,59 @@ export async function createMerchantAction(input: CreateMerchantInput) {
     path: '/',
   })
 
-  // 2. Insert default sample service
-  await supabase.from('services').insert({
-    merchant_id: merchant.id,
-    title: 'บริการทั่วไป (Standard Service)',
-    description: 'บริการมาตรฐานของร้าน',
-    duration_min: 60,
-    price: 500,
-    deposit_amount: Number(input.default_deposit) || 100,
-    is_active: true,
-    sort_order: 1,
-  })
+  // 2. Insert first branch in `branches` table
+  const { data: firstBranch } = await supabase
+    .from('branches')
+    .insert({
+      merchant_id: merchant.id,
+      name: branchName,
+      address: branchAddress,
+      phone: branchPhone,
+      open_time: input.open_time || '10:00:00',
+      close_time: input.close_time || '20:00:00',
+      is_active: true,
+    })
+    .select()
+    .single()
+
+  // 3. Insert default sample service
+  const { data: defaultService } = await supabase
+    .from('services')
+    .insert({
+      merchant_id: merchant.id,
+      title: 'บริการทั่วไป (Standard Service)',
+      description: 'บริการมาตรฐานของร้าน',
+      duration_min: 60,
+      price: 500,
+      deposit_amount: Number(input.default_deposit) || 100,
+      is_active: true,
+      sort_order: 1,
+    })
+    .select()
+    .single()
+
+  // 4. Insert default staff member linked to the first branch & service
+  if (firstBranch && defaultService) {
+    const { data: defaultStaff } = await supabase
+      .from('staff')
+      .insert({
+        merchant_id: merchant.id,
+        branch_id: firstBranch.id,
+        name: 'ช่างประจำร้าน (Master Specialist)',
+        nickname: 'ช่างเอก',
+        role_title: 'ช่างผู้ให้บริการหลัก',
+        is_active: true,
+      })
+      .select()
+      .single()
+
+    if (defaultStaff) {
+      await supabase.from('staff_services').insert({
+        staff_id: defaultStaff.id,
+        service_id: defaultService.id,
+      })
+    }
+  }
 
   revalidatePath('/')
   return { success: true, merchant }

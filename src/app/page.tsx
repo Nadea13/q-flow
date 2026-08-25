@@ -10,12 +10,7 @@ import {
   ShieldCheck, 
   Calendar, 
   Zap, 
-  CreditCard, 
-  Bell, 
-  BarChart3, 
   Clock, 
-  Check, 
-  Lock, 
   HelpCircle,
   QrCode,
   Store,
@@ -31,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import { PricingSection } from '@/components/PricingSection'
+import { QFlowLogo } from '@/components/QFlowLogo'
 
 export default function Home() {
   const { t, lang } = useLanguage()
@@ -139,8 +135,8 @@ export default function Home() {
     {
       q: lang === 'th' ? 'ระบบตรวจสลิปอย่างไร ป้องกันสลิปปลอมได้จริงไหม?' : 'How does slip verification work? Does it prevent fake slips?',
       a: lang === 'th'
-        ? 'QFlow เชื่อมต่อกับระบบ SlipOK API ซึ่งตรวจสอบข้อมูลกับระบบธนาคารโดยตรง โดยตรวจเช็คยอดเงิน บัญชีปลายทาง และเลขอ้างอิงสลิป (transRef) แบบเรียลไทม์ ป้องกันสลิปปลอม สลิปยอดไม่ตรง และสลิปที่ใช้ซ้ำ 100%'
-        : 'QFlow connects directly with SlipOK API to verify real bank transfer metadata, exact amounts, receiver accounts, and duplicate transaction references.'
+        ? 'Q Flow เชื่อมต่อกับระบบ SlipOK API ซึ่งตรวจสอบข้อมูลกับระบบธนาคารโดยตรง โดยตรวจเช็คยอดเงิน บัญชีปลายทาง และเลขอ้างอิงสลิป (transRef) แบบเรียลไทม์ ป้องกันสลิปปลอม สลิปยอดไม่ตรง และสลิปที่ใช้ซ้ำ 100%'
+        : 'Q Flow connects directly with SlipOK API to verify real bank transfer metadata, exact amounts, receiver accounts, and duplicate transaction references.'
     },
     {
       q: lang === 'th' ? 'สามารถตั้งเวลาพักเที่ยง หรือบล็อกเวลาไม่ว่างได้ไหม?' : 'Can I set lunch breaks or quickly block busy hours?',
@@ -162,9 +158,7 @@ export default function Home() {
       <nav className="border-b border-slate-200/80 dark:border-slate-850/80 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-lg shadow-sm shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              Q
-            </div>
+            <QFlowLogo className="h-9 w-9 group-hover:scale-105 transition-transform" />
             <div className="flex flex-col">
               <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
                 {t('appName')}
@@ -304,7 +298,7 @@ export default function Home() {
               <span>{lang === 'th' ? 'ขั้นตอนง่ายๆ ใน 3 สเต็ป' : 'Simple 3-Step Process'}</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {lang === 'th' ? 'วิธีใช้งานเบื้องต้น' : 'How QFlow Works'}
+              {lang === 'th' ? 'วิธีใช้งานเบื้องต้น' : 'How Q Flow Works'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
               {lang === 'th' ? 'ระบบที่ออกแบบมาให้ใช้งานง่ายที่สุดทั้งสำหรับร้านค้าและลูกค้าผู้จอง' : 'Engineered for seamless experience on both sides.'}
@@ -511,7 +505,7 @@ export default function Home() {
             {lang === 'th' ? 'คำถามที่พบบ่อย (FAQ)' : 'Frequently Asked Questions'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {lang === 'th' ? 'ข้อสงสัยทั่วไปเกี่ยวกับการใช้งานระบบ QFlow' : 'Answers to common questions about QFlow.'}
+            {lang === 'th' ? 'ข้อสงสัยทั่วไปเกี่ยวกับการใช้งานระบบ Q Flow' : 'Answers to common questions about Q Flow.'}
           </p>
         </div>
 
@@ -567,11 +561,8 @@ export default function Home() {
       <footer className="border-t border-slate-200 dark:border-slate-850 py-10 bg-white dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-xs">
-              Q
-            </div>
-            <span className="font-bold text-slate-800 dark:text-slate-200">QFlow Micro-SaaS</span>
-            <span>• Next.js 16 + Supabase</span>
+            <QFlowLogo className="h-6 w-6" />
+            <span className="font-bold text-slate-800 dark:text-slate-200">Q Flow</span>
           </div>
 
           <div className="flex items-center gap-4 text-[11px]">

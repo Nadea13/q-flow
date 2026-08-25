@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { 
   Sparkles, 
   CheckCircle2, 
@@ -12,15 +13,32 @@ import {
   Copy, 
   ExternalLink,
   Check,
-  Lock
+  Building2,
+  Phone
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createMerchantAction } from '@/app/actions/merchant'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
+import { ThaiAddressSelector } from '@/components/ThaiAddressSelector'
+import { PRICING_PLANS } from '@/lib/stripe'
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const { t, lang } = useLanguage()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  const planParam = searchParams.get('plan')
+  const validPlan = planParam && PRICING_PLANS[planParam] ? planParam : null
+
+  // If no package is subscribed / selected, redirect to /pricing
+  useEffect(() => {
+    if (!validPlan) {
+      router.replace('/pricing')
+    }
+  }, [validPlan, router])
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [createdMerchant, setCreatedMerchant] = useState<{
@@ -40,8 +58,10 @@ export default function OnboardingPage() {
     name: '',
     promptpay_id: '',
     default_deposit: '200',
-    admin_pin: '1234',
     slug: '',
+    branch_name: 'สาขาหลัก (Main Branch)',
+    branch_address: '',
+    branch_phone: '',
   })
 
   // Detect LINE LIFF on mount
@@ -82,9 +102,13 @@ export default function OnboardingPage() {
       name: formData.name,
       promptpay_id: formData.promptpay_id,
       default_deposit: Number(formData.default_deposit) || 100,
-      admin_pin: formData.admin_pin || '1234',
+      admin_pin: '1234',
       line_user_id: lineAdminProfile?.userId,
       customSlug: formData.slug || undefined,
+      branch_name: formData.branch_name || undefined,
+      branch_address: formData.branch_address || undefined,
+      branch_phone: formData.branch_phone || undefined,
+      plan: validPlan || undefined,
     })
 
     setLoading(false)
@@ -98,6 +122,17 @@ export default function OnboardingPage() {
       slug: res.merchant.slug,
       name: res.merchant.name,
     })
+  }
+
+  if (!validPlan) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-500">{lang === 'th' ? 'กำลังนำคุณไปเลือกแพ็กเกจ...' : 'Redirecting to pricing plans...'}</p>
+        </div>
+      </div>
+    )
   }
 
   const bookingUrl = createdMerchant
@@ -120,10 +155,8 @@ export default function OnboardingPage() {
         {/* Top Navbar */}
         <div className="flex justify-between items-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-base shadow-xs group-hover:scale-105 transition-transform">
-              Q
-            </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">QFlow</span>
+            <QFlowLogo className="h-8 w-8 group-hover:scale-105 transition-transform" />
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Q Flow</span>
           </Link>
           <NavbarControls />
         </div>
@@ -310,13 +343,13 @@ export default function OnboardingPage() {
                     <DollarSign className="w-4 h-4" />
                   </div>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     required
-                    min="0"
-                    step="10"
                     placeholder={t('depositPlaceholder')}
                     value={formData.default_deposit}
-                    onChange={(e) => setFormData({ ...formData, default_deposit: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, default_deposit: e.target.value.replace(/\D/g, '') })}
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
                   />
                 </div>
@@ -325,28 +358,66 @@ export default function OnboardingPage() {
                 </p>
               </div>
 
-              {/* Field 4: Admin PIN */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                  {lang === 'th' ? '4. รหัส Admin PIN เข้าจัดการหลังบ้าน (4-6 หลัก)' : '4. Admin PIN Code (4-6 digits)'} <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                    <Lock className="w-4 h-4" />
+              {/* Field 4: First Branch & Location */}
+              <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 space-y-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+                    <Building2 className="w-3.5 h-3.5" />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                      {lang === 'th' ? '4. ข้อมูลสาขาแรกของร้าน' : '4. First Branch Details'}
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      {lang === 'th' ? 'ตั้งค่าสาขาแรกเพื่อเริ่มเปิดรับคิวและช่างประจำสาขา (เพิ่มสาขาอื่นได้ภายหลัง)' : 'Configure your initial branch (You can add more branches later)'}
+                    </p>
                   </div>
+                </div>
+
+                {/* Branch Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                    {lang === 'th' ? 'ชื่อสาขา' : 'Branch Name'}
+                  </label>
                   <input
-                    type="password"
-                    required
-                    maxLength={6}
-                    placeholder="1234"
-                    value={formData.admin_pin}
-                    onChange={(e) => setFormData({ ...formData, admin_pin: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono tracking-widest"
+                    type="text"
+                    placeholder="เช่น สาขาหลัก, สาขาสยามสแควร์, สาขาเซ็นทรัล"
+                    value={formData.branch_name}
+                    onChange={(e) => setFormData({ ...formData, branch_name: e.target.value })}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  {lang === 'th' ? 'ใช้สำหรับปลดล็อกเข้าดูหน้า Dashboard จัดการคิว (เริ่มต้น: 1234)' : 'Used to unlock and access your management Dashboard (Default: 1234)'}
-                </p>
+
+                {/* Branch Phone */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                    {lang === 'th' ? 'เบอร์โทรศัพท์สาขา (ถ้ามี)' : 'Branch Phone (Optional)'}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                      <Phone className="w-3.5 h-3.5" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="เช่น 02-123-4567, 081-234-5678"
+                      value={formData.branch_phone}
+                      onChange={(e) => setFormData({ ...formData, branch_phone: e.target.value })}
+                      className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Branch Geo Address */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                    {lang === 'th' ? 'ที่ตั้งสาขา (Geo Thai Address)' : 'Branch Location'}
+                  </label>
+                  <ThaiAddressSelector
+                    initialAddress={formData.branch_address}
+                    onChange={(fullAddr) => setFormData({ ...formData, branch_address: fullAddr })}
+                    lang={lang}
+                  />
+                </div>
               </div>
 
               {/* Optional Custom Slug */}
@@ -389,8 +460,22 @@ export default function OnboardingPage() {
 
       {/* Footer info */}
       <div className="text-center text-xs text-slate-500 dark:text-slate-500 mt-8">
-        QFlow Micro-SaaS • 100% Mobile Ready • Auto PromptPay & SlipOK Verification
+        Q Flow • 100% Mobile Ready • Auto PromptPay & SlipOK Verification
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
   )
 }

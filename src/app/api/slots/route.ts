@@ -7,6 +7,8 @@ export async function GET(request: Request) {
   const merchantSlug = searchParams.get('merchantSlug')
   const dateStr = searchParams.get('date') // YYYY-MM-DD
   const durationMin = parseInt(searchParams.get('duration') || '60', 10)
+  const branchId = searchParams.get('branchId') || undefined
+  const staffId = searchParams.get('staffId') || undefined
 
   if (!merchantSlug || !dateStr) {
     return NextResponse.json({ error: 'Missing merchantSlug or date' }, { status: 400 })
@@ -25,17 +27,34 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Merchant not found' }, { status: 404 })
   }
 
+  // Fetch branch if requested
+  let branch = null
+  if (branchId) {
+    const { data: bData } = await supabase
+      .from('branches')
+      .select('*')
+      .eq('id', branchId)
+      .single()
+    branch = bData
+  }
+
   // 2. Fetch existing bookings for that date
   const startOfDay = `${dateStr}T00:00:00Z`
   const endOfDay = `${dateStr}T23:59:59Z`
 
-  const { data: bookings } = await supabase
+  let bookingsQuery = supabase
     .from('bookings')
     .select('*')
     .eq('merchant_id', merchant.id)
     .neq('status', 'cancelled')
     .gte('start_time', startOfDay)
     .lte('start_time', endOfDay)
+
+  if (branchId) {
+    bookingsQuery = bookingsQuery.eq('branch_id', branchId)
+  }
+
+  const { data: bookings } = await bookingsQuery
 
   // 3. Fetch blocked slots
   const { data: blockedSlots } = await supabase
@@ -47,11 +66,13 @@ export async function GET(request: Request) {
 
   const slots = computeAvailableSlots({
     merchant,
+    branch,
+    staffId,
     dateStr,
     durationMin,
     existingBookings: bookings || [],
     blockedSlots: blockedSlots || [],
   })
 
-  return NextResponse.json({ slots, merchant })
+  return NextResponse.json({ slots, merchant, branch })
 }

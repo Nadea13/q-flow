@@ -12,18 +12,13 @@ import {
   Check,
   ShieldCheck,
   MessageSquare,
-  QrCode,
   Clock,
   Hourglass,
   RefreshCw,
   ExternalLink,
-  Calendar,
-  User,
-  Phone,
   ArrowLeft
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { th, enUS } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { generatePromptPayQR } from '@/lib/promptpay'
@@ -39,7 +34,7 @@ interface PageProps {
 export default function BookingCheckingPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const { slug, id } = resolvedParams
-  const { t, lang } = useLanguage()
+  const { t } = useLanguage()
 
   const [booking, setBooking] = useState<Booking | null>(null)
   const [merchant, setMerchant] = useState<Merchant | null>(null)
@@ -60,8 +55,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
   const [slipPreview, setSlipPreview] = useState<string | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
-
-  const dateLocale = lang === 'th' ? th : enUS
 
   // Load Booking Data
   useEffect(() => {
@@ -135,6 +128,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.created_at, booking?.status, isExpired, id])
 
   // Handle Slip file selection
@@ -355,7 +349,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
             <div className="flex flex-col gap-2.5">
               <a
                 href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                  `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูสถานะคิว: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                  `🎉 ตั๋วคิวการจอง Q Flow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูสถานะคิว: ${typeof window !== 'undefined' ? window.location.href : ''}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

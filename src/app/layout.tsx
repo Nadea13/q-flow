@@ -16,8 +16,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QFlow • Smart Queue Booking & Auto-Deposit Check",
+  title: "Q Flow • Smart Queue Booking & Auto-Deposit Check",
   description: "ระบบจองคิวบริการ และตรวจสลิปมัดจำอัตโนมัติ 3 คลิกผ่าน LINE LIFF & Responsive Web สำหรับธุรกิจ SME ขนาดเล็ก",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

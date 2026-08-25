@@ -1,5 +1,5 @@
 export type BookingStatus = 'pending_payment' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
-export type PlanType = 'starter' | 'growth'
+export type PlanType = 'professional' | 'business' | 'enterprise' | 'starter' | 'growth'
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
 export interface Merchant {
@@ -35,6 +35,52 @@ export interface Merchant {
   updated_at: string
 }
 
+export interface Branch {
+  id: string
+  merchant_id: string
+  name: string
+  address: string | null
+  phone: string | null
+  promptpay_id?: string | null
+  promptpay_name?: string | null
+  open_time?: string | null
+  close_time?: string | null
+  has_break?: boolean
+  break_start_time?: string | null
+  break_end_time?: string | null
+  closed_days?: number[]
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Staff {
+  id: string
+  merchant_id: string
+  branch_id: string | null
+  name: string
+  nickname: string | null
+  role_title: string | null
+  avatar_url: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  // relations
+  branch?: Branch | null
+  staff_services?: StaffService[]
+  services?: Service[]
+}
+
+export interface StaffService {
+  id: string
+  staff_id: string
+  service_id: string
+  price_override?: number | null
+  duration_override?: number | null
+  created_at: string
+  service?: Service
+}
+
 export interface Service {
   id: string
   merchant_id: string
@@ -63,6 +109,8 @@ export interface Booking {
   id: string
   merchant_id: string
   service_id: string
+  branch_id?: string | null
+  staff_id?: string | null
   customer_name: string
   customer_phone: string
   customer_line_id: string | null
@@ -83,6 +131,8 @@ export interface Booking {
   services?: Service
   merchant?: Merchant
   merchants?: Merchant
+  branch?: Branch
+  staff?: Staff
 }
 
 export interface TimeSlotOption {
@@ -92,3 +142,4 @@ export interface TimeSlotOption {
   isAvailable: boolean
   reason?: string
 }
+

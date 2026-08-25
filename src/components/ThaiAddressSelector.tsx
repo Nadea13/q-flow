@@ -1,18 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Check, Sparkles, Building, Hash, Zap, Search } from 'lucide-react'
-import { 
-  getProvinces, 
-  getDistricts, 
-  getSubdistricts, 
-  getZipcode, 
+import { MapPin, Check, Sparkles, Zap } from 'lucide-react'
+import {
+  getProvinces,
+  getDistricts,
+  getSubdistricts,
+  getZipcode,
   lookupByZipcode,
-  formatThaiAddress, 
+  formatThaiAddress,
   parseThaiAddress,
   type ThaiAddress,
   type ZipcodeLocation
 } from '@/lib/thai-geo'
+import { CustomDropdown } from '@/components/CustomDropdown'
 
 interface ThaiAddressSelectorProps {
   initialAddress?: string
@@ -35,10 +36,10 @@ export function ThaiAddressSelector({
 
   const provinces = getProvinces()
   const districts = addressState.province ? getDistricts(addressState.province) : []
-  
+
   // If we have matching subdistricts from zipcode, we can highlight them
-  const rawSubdistricts = addressState.province && addressState.district 
-    ? getSubdistricts(addressState.province, addressState.district) 
+  const rawSubdistricts = addressState.province && addressState.district
+    ? getSubdistricts(addressState.province, addressState.district)
     : []
 
   // Filter subdistricts by zipcode if a 5-digit zipcode is present
@@ -48,7 +49,7 @@ export function ThaiAddressSelector({
 
   // When initialAddress changes externally, parse it
   useEffect(() => {
-    if (initialAddress && initialAddress !== formatThaiAddress(addressState)) {
+    if (initialAddress) {
       setFreeformText(initialAddress)
       const parsed = parseThaiAddress(initialAddress)
       if (parsed.province) {
@@ -60,7 +61,7 @@ export function ThaiAddressSelector({
   // Handle Zipcode Typing & Reverse Auto-Lookup
   function handleZipcodeChange(zip: string) {
     const cleanZip = zip.replace(/\D/g, '').slice(0, 5)
-    
+
     let nextState: ThaiAddress = {
       ...addressState,
       zipcode: cleanZip,
@@ -72,7 +73,7 @@ export function ThaiAddressSelector({
 
       if (matches.length > 0) {
         const first = matches[0]
-        
+
         // Check if all matches belong to the same province
         const allSameProvince = matches.every(m => m.province === first.province)
         const allSameDistrict = matches.every(m => m.district === first.district)
@@ -184,22 +185,20 @@ export function ThaiAddressSelector({
           <button
             type="button"
             onClick={() => setMode('structured')}
-            className={`px-2 py-0.5 rounded-md font-semibold transition ${
-              mode === 'structured'
+            className={`px-2 py-0.5 rounded-md font-semibold transition ${mode === 'structured'
                 ? 'bg-indigo-600 text-white shadow-2xs'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             {lang === 'th' ? 'เลือกตามลำดับ' : 'Structured'}
           </button>
           <button
             type="button"
             onClick={() => setMode('freeform')}
-            className={`px-2 py-0.5 rounded-md font-semibold transition ${
-              mode === 'freeform'
+            className={`px-2 py-0.5 rounded-md font-semibold transition ${mode === 'freeform'
                 ? 'bg-indigo-600 text-white shadow-2xs'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             {lang === 'th' ? 'พิมพ์อิสระ' : 'Freeform'}
           </button>
@@ -219,6 +218,8 @@ export function ThaiAddressSelector({
               <div className="w-full sm:w-44">
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={5}
                   placeholder="เช่น 10330, 50200"
                   value={addressState.zipcode}
@@ -244,11 +245,10 @@ export function ThaiAddressSelector({
                         key={idx}
                         type="button"
                         onClick={() => handleSelectZipcodeMatch(m)}
-                        className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition active:scale-95 flex items-center gap-1 border ${
-                          isSelected
+                        className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition active:scale-95 flex items-center gap-1 border ${isSelected
                             ? 'bg-indigo-600 text-white border-indigo-700 shadow-2xs font-bold'
                             : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-indigo-200/80 dark:border-indigo-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/60'
-                        }`}
+                          }`}
                       >
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                         <span>{prefixSub}{m.subdistrict} ({prefixDist}{m.district}, {m.province})</span>
@@ -274,25 +274,26 @@ export function ThaiAddressSelector({
             />
           </div>
 
-          {/* 3 Cascading Dropdowns: Province -> District -> Subdistrict */}
+          {/* 3 Cascading Modern Dropdowns: Province -> District -> Subdistrict */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {/* Province */}
             <div>
               <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
                 {lang === 'th' ? 'จังหวัด' : 'Province'}
               </label>
-              <select
+              <CustomDropdown
                 value={addressState.province}
-                onChange={(e) => handleProvinceChange(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              >
-                <option value="">{lang === 'th' ? '-- เลือกจังหวัด --' : '-- Select Province --'}</option>
-                {provinces.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
+                onChange={handleProvinceChange}
+                placeholder={lang === 'th' ? 'เลือกจังหวัด' : 'Select Province'}
+                searchable={true}
+                searchPlaceholder="พิมพ์ค้นหาจังหวัด..."
+                dropdownWidth="w-full sm:w-60"
+                className="w-full"
+                options={provinces.map((p) => ({
+                  value: p,
+                  label: p,
+                }))}
+              />
             </div>
 
             {/* District */}
@@ -300,23 +301,24 @@ export function ThaiAddressSelector({
               <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
                 {isBKK ? (lang === 'th' ? 'เขต' : 'District (Khet)') : (lang === 'th' ? 'อำเภอ' : 'District (Amphoe)')}
               </label>
-              <select
-                disabled={!addressState.province}
+              <CustomDropdown
                 value={addressState.district}
-                onChange={(e) => handleDistrictChange(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50"
-              >
-                <option value="">
-                  {addressState.province 
-                    ? (isBKK ? (lang === 'th' ? '-- เลือกเขต --' : '-- Select Khet --') : (lang === 'th' ? '-- เลือกอำเภอ --' : '-- Select Amphoe --'))
-                    : (lang === 'th' ? '-- เลือกจังหวัดก่อน --' : '-- Select Province First --')}
-                </option>
-                {districts.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
+                onChange={handleDistrictChange}
+                disabled={!addressState.province}
+                searchable={true}
+                searchPlaceholder={isBKK ? "พิมพ์ค้นหาเขต..." : "พิมพ์ค้นหาอำเภอ..."}
+                placeholder={
+                  addressState.province
+                    ? (isBKK ? (lang === 'th' ? 'เลือกเขต' : 'Select Khet') : (lang === 'th' ? 'เลือกอำเภอ' : 'Select Amphoe'))
+                    : (lang === 'th' ? 'เลือกจังหวัดก่อน' : 'Select Province First')
+                }
+                dropdownWidth="w-full sm:w-60"
+                className="w-full"
+                options={districts.map((d) => ({
+                  value: d,
+                  label: d,
+                }))}
+              />
             </div>
 
             {/* Subdistrict */}
@@ -324,23 +326,25 @@ export function ThaiAddressSelector({
               <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
                 {isBKK ? (lang === 'th' ? 'แขวง' : 'Subdistrict (Khwaeng)') : (lang === 'th' ? 'ตำบล' : 'Subdistrict (Tambon)')}
               </label>
-              <select
-                disabled={!addressState.district}
+              <CustomDropdown
                 value={addressState.subdistrict}
-                onChange={(e) => handleSubdistrictChange(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50"
-              >
-                <option value="">
-                  {addressState.district 
-                    ? (isBKK ? (lang === 'th' ? '-- เลือกแขวง --' : '-- Select Khwaeng --') : (lang === 'th' ? '-- เลือกตำบล --' : '-- Select Tambon --'))
-                    : (lang === 'th' ? '-- เลือกอำเภอ/เขตก่อน --' : '-- Select District First --')}
-                </option>
-                {subdistricts.map((s) => (
-                  <option key={s.subdistrict} value={s.subdistrict}>
-                    {s.subdistrict} {s.zipcode ? `(${s.zipcode})` : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={handleSubdistrictChange}
+                disabled={!addressState.district}
+                searchable={true}
+                searchPlaceholder={isBKK ? "พิมพ์ค้นหาแขวง..." : "พิมพ์ค้นหาตำบล..."}
+                placeholder={
+                  addressState.district
+                    ? (isBKK ? (lang === 'th' ? 'เลือกแขวง' : 'Select Khwaeng') : (lang === 'th' ? 'เลือกตำบล' : 'Select Tambon'))
+                    : (lang === 'th' ? 'เลือกอำเภอ/เขตก่อน' : 'Select District First')
+                }
+                dropdownWidth="w-full sm:w-60"
+                className="w-full"
+                options={subdistricts.map((s) => ({
+                  value: s.subdistrict,
+                  label: s.subdistrict,
+                  sublabel: s.zipcode ? `รหัส ${s.zipcode}` : undefined,
+                }))}
+              />
             </div>
           </div>
         </div>

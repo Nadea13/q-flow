@@ -2,19 +2,31 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { verifySlipWithSlipOK } from '@/lib/slipok'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 
 interface CreateBookingInput {
   merchantSlug: string
   serviceId: string
+  branchId?: string
+  staffId?: string
   startTime: string // ISO string
   endTime: string   // ISO string
   customerName: string
   customerPhone: string
   customerLineId?: string
   customerNotes?: string
+  turnstileToken?: string
 }
 
 export async function createBookingAction(input: CreateBookingInput) {
+  // Verify Turnstile security token
+  if (input.turnstileToken) {
+    const turnstileRes = await verifyTurnstileToken(input.turnstileToken)
+    if (!turnstileRes.success) {
+      return { success: false, error: turnstileRes.error || 'การตรวจสอบความปลอดภัยล้มเหลว (Bot detected)' }
+    }
+  }
+
   const supabase = await createClient()
 
   // 1. Fetch merchant
@@ -40,8 +52,8 @@ export async function createBookingAction(input: CreateBookingInput) {
     return { success: false, error: 'ไม่พบบริการที่เลือก' }
   }
 
-  // 3. Double check slot conflict
-  const { data: existingBookings } = await supabase
+  // 3. Double check slot conflict (if staff specified, check conflict for that staff; otherwise check merchant)
+  let conflictQuery = supabase
     .from('bookings')
     .select('id, start_time, end_time, status')
     .eq('merchant_id', merchant.id)
@@ -49,18 +61,52 @@ export async function createBookingAction(input: CreateBookingInput) {
     .lt('start_time', input.endTime)
     .gt('end_time', input.startTime)
 
+  if (input.staffId) {
+    conflictQuery = conflictQuery.eq('staff_id', input.staffId)
+  }
+
+  const { data: existingBookings } = await conflictQuery
+
   if (existingBookings && existingBookings.length > 0) {
-    return { success: false, error: 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกรอบเวลาอื่น' }
+    return { success: false, error: 'ช่วงเวลานี้มีผู้จองกับผู้ให้บริการท่านนี้แล้ว กรุณาเลือกรอบเวลาอื่น' }
+  }
+
+  // 4. Resolve Branch ID (from input, staff's branch, or merchant's default first branch)
+  let resolvedBranchId = input.branchId || null
+  if (!resolvedBranchId && input.staffId) {
+    const { data: staffData } = await supabase
+      .from('staff')
+      .select('branch_id')
+      .eq('id', input.staffId)
+      .single()
+    if (staffData?.branch_id) {
+      resolvedBranchId = staffData.branch_id
+    }
+  }
+
+  if (!resolvedBranchId) {
+    const { data: firstBranch } = await supabase
+      .from('branches')
+      .select('id')
+      .eq('merchant_id', merchant.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+    if (firstBranch) {
+      resolvedBranchId = firstBranch.id
+    }
   }
 
   const depositAmount = service.deposit_amount ?? merchant.default_deposit
 
-  // 4. Create booking in pending_payment status
+  // 5. Create booking in pending_payment status
   const { data: booking, error: bError } = await supabase
     .from('bookings')
     .insert({
       merchant_id: merchant.id,
       service_id: service.id,
+      branch_id: resolvedBranchId,
+      staff_id: input.staffId || null,
       customer_name: input.customerName.trim(),
       customer_phone: input.customerPhone.trim(),
       customer_line_id: input.customerLineId?.trim() || null,
@@ -88,10 +134,10 @@ export async function createBookingAction(input: CreateBookingInput) {
 export async function verifyAndConfirmBookingAction(bookingId: string, formData: FormData) {
   const supabase = await createClient()
 
-  // 1. Fetch booking with service & merchant
+  // 1. Fetch booking with service, merchant, and branch
   const { data: booking, error: bError } = await supabase
     .from('bookings')
-    .select('*, merchants(*), services(*)')
+    .select('*, merchants(*), services(*), branch:branches(*)')
     .eq('id', bookingId)
     .single()
 
@@ -152,12 +198,15 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
     }
   }
 
-  // 3. Verify with SlipOK
+  // 3. Verify with SlipOK (using branch PromptPay if set, else merchant PromptPay)
   const merchant = booking.merchants
+  const branchPromptPay = booking.branch?.promptpay_id
+  const targetPromptPayId = branchPromptPay || merchant.promptpay_id
+
   const verification = await verifySlipWithSlipOK(
     fileBuffer,
     Number(booking.deposit_amount),
-    merchant.promptpay_id
+    targetPromptPayId
   )
 
   if (!verification.success) {

@@ -12,13 +12,11 @@ import {
   Check,
   ShieldCheck,
   MessageSquare,
-  QrCode,
   Clock,
   Hourglass,
   RefreshCw
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { th, enUS } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { generatePromptPayQR } from '@/lib/promptpay'
@@ -34,7 +32,7 @@ interface PageProps {
 export default function BookingDetailPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const { slug, bookingId } = resolvedParams
-  const { t, lang } = useLanguage()
+  const { t } = useLanguage()
 
   const [booking, setBooking] = useState<Booking | null>(null)
   const [merchant, setMerchant] = useState<Merchant | null>(null)
@@ -55,15 +53,13 @@ export default function BookingDetailPage({ params }: PageProps) {
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
 
-  const dateLocale = lang === 'th' ? th : enUS
-
   // Load Booking Data
   useEffect(() => {
     async function loadData() {
       const supabase = createClient()
       const { data: bData, error } = await supabase
         .from('bookings')
-        .select('*, merchants(*), services(*)')
+        .select('*, merchants(*), services(*), branch:branches(*), staff:staff(*)')
         .eq('id', bookingId)
         .single()
 
@@ -88,11 +84,13 @@ export default function BookingDetailPage({ params }: PageProps) {
         }
       }
 
-      // Generate PromptPay QR if pending and not expired
+      // Generate PromptPay QR (Use branch promptpay_id if available, otherwise merchant's)
       if (bData.status === 'pending_payment' && bData.merchants && diff > 0) {
         try {
+          const branchPromptPay = bData.branch?.promptpay_id
+          const activePromptPayId = branchPromptPay || bData.merchants.promptpay_id
           const qrRes = await generatePromptPayQR(
-            bData.merchants.promptpay_id,
+            activePromptPayId,
             Number(bData.deposit_amount)
           )
           setQrDataUrl(qrRes.qrDataUrl)
@@ -129,6 +127,7 @@ export default function BookingDetailPage({ params }: PageProps) {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.created_at, booking?.status, isExpired, bookingId])
 
   // Handle Slip file selection
@@ -172,14 +171,6 @@ export default function BookingDetailPage({ params }: PageProps) {
       })
     } catch {
       // Fallback
-    }
-  }
-
-  function copyPromptPay() {
-    if (merchant?.promptpay_id) {
-      navigator.clipboard.writeText(merchant.promptpay_id)
-      setCopiedPayId(true)
-      setTimeout(() => setCopiedPayId(false), 2000)
     }
   }
 
@@ -321,7 +312,7 @@ export default function BookingDetailPage({ params }: PageProps) {
             <div className="flex flex-col gap-2.5">
               <a
                 href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                  `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                  `🎉 ตั๋วคิวการจอง Q Flow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -465,31 +456,43 @@ export default function BookingDetailPage({ params }: PageProps) {
               )}
 
               {/* PromptPay Details */}
-              <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
-                <div className="text-left">
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                    {t('promptpayNumber')} ({merchant.promptpay_name || merchant.name})
+              {(() => {
+                const activePromptPayId = booking.branch?.promptpay_id || merchant.promptpay_id
+                const activePromptPayName = booking.branch?.promptpay_name || merchant.promptpay_name || merchant.name
+                return (
+                  <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
+                    <div className="text-left">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                        {t('promptpayNumber')} ({activePromptPayName})
+                      </div>
+                      <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{activePromptPayId}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activePromptPayId) {
+                          navigator.clipboard.writeText(activePromptPayId)
+                          setCopiedPayId(true)
+                          setTimeout(() => setCopiedPayId(false), 2000)
+                        }
+                      }}
+                      className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      {copiedPayId ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                          <span>{t('copied')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3 text-slate-500" />
+                          <span>{t('copy')}</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{merchant.promptpay_id}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyPromptPay}
-                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95"
-                >
-                  {copiedPayId ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('copied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3 text-slate-500" />
-                      <span>{t('copy')}</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                )
+              })()}
 
               {qrDataUrl && (
                 <a

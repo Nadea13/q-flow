@@ -2,33 +2,28 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { 
   Sparkles, 
   Check, 
   X, 
   ArrowRight, 
   CreditCard, 
-  ShieldCheck, 
   Zap, 
-  Clock, 
-  HelpCircle, 
-  Calendar, 
-  MessageSquare, 
-  Building2, 
-  TrendingUp,
-  CheckCircle2,
-  ChevronRight
+  HelpCircle
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { PRICING_PLANS } from '@/lib/stripe'
 import { createStripeCheckoutSessionAction } from '@/app/actions/stripe'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import { toast } from 'sonner'
 import type { PlanType } from '@/types/database'
 
 export default function PricingPage() {
   const { t, lang } = useLanguage()
+  const router = useRouter()
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
 
   async function handleSubscribe(planId: PlanType) {
@@ -47,67 +42,94 @@ export default function PricingPage() {
     if (res.url) {
       if (res.simulated) {
         toast.success(`กำลังพาคุณไปหน้าสร้างร้านพร้อมแพ็กเกจ ${PRICING_PLANS[planId].name}...`)
-        window.location.href = res.url
+        router.push(res.url)
       } else {
-        window.location.href = res.url
+        window.location.assign(res.url)
       }
     }
   }
 
   const comparisonCategories = [
     {
-      category: lang === 'th' ? 'โควตาสลิป & ระบบชำระเงิน' : 'Slip Quota & Payment',
+      category: lang === 'th' ? 'ข้อมูลทั่วไป & ราคา' : 'General & Pricing',
       features: [
         {
-          name: lang === 'th' ? 'โควตาสลิปตรวจอัตโนมัติ (SlipOK API)' : 'Monthly Auto-verified Slips',
-          starter: '500 สลิป/เดือน (เฉลี่ย ~16 คิว/วัน)',
-          growth: '1,500 สลิป/เดือน (เฉลี่ย ~50 คิว/วัน)',
+          name: lang === 'th' ? 'เหมาะสำหรับ' : 'Target Audience',
+          professional: 'ร้านค้าบริการเดี่ยว / สตูดิโอ / ฟรีแลนซ์',
+          business: 'ร้านเสริมสวย / คลินิกความงาม 2-5 สาขา',
+          enterprise: 'แฟรนไชส์ / คลินิกใหญ่ / เชนธุรกิจ',
+        },
+        {
+          name: lang === 'th' ? 'ราคาค่าบริการ (รายเดือน)' : 'Monthly Fee',
+          professional: '790 บาท / เดือน',
+          business: '1,590 บาท / เดือน',
+          enterprise: '3,990 บาท / เดือน',
           highlight: true,
         },
         {
-          name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และป้องกันสลิปใช้ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
-          starter: true,
-          growth: true,
-        },
-        {
-          name: lang === 'th' ? 'QR Code พร้อมเพย์สร้างอัตโนมัติ' : 'Dynamic PromptPay QR Code',
-          starter: true,
-          growth: true,
-        },
-        {
-          name: lang === 'th' ? 'จัดเก็บรูปสลิปบนคลาวด์ความเร็วสูง (Cloudflare R2)' : 'Cloudflare R2 Slip Storage',
-          starter: true,
-          growth: true,
+          name: lang === 'th' ? 'ราคาค่าบริการ (รายปี - ลด 2 เดือน)' : 'Yearly Fee (Save 2 Months)',
+          professional: '7,900 บาท / ปี',
+          business: '15,900 บาท / ปี',
+          enterprise: '39,900 บาท / ปี',
         },
       ],
     },
     {
-      category: lang === 'th' ? 'ระบบจองคิว & ปฏิทินร้าน' : 'Queue & Booking Engine',
+      category: lang === 'th' ? 'โครงสร้างร้าน สาขา และช่าง' : 'Merchants, Branches & Staff',
       features: [
         {
-          name: lang === 'th' ? 'ระบบปฏิทินจองคิว 24 ชม. ไม่จำกัดจำนวนคิว' : '24/7 Unlimited Bookings Calendar',
-          starter: true,
-          growth: true,
+          name: lang === 'th' ? 'จำนวนร้านค้า (Merchants)' : 'Number of Merchants',
+          professional: '1 ร้านค้า',
+          business: 'สูงสุด 2 ร้านค้า',
+          enterprise: 'ไม่จำกัด (Unlimited)',
         },
         {
-          name: lang === 'th' ? 'บล็อกวันย้อนหลัง & ป้องกันรอบชนอัตโนมัติ' : 'Past Dates Disabled & Conflict Free',
-          starter: true,
-          growth: true,
+          name: lang === 'th' ? 'จำนวนสาขา (Branches)' : 'Number of Branches',
+          professional: 'สูงสุด 2 สาขา',
+          business: 'สูงสุด 5 สาขา',
+          enterprise: 'ไม่จำกัด (Unlimited)',
         },
         {
-          name: lang === 'th' ? 'ระบบล็อกเวลาพักเที่ยงรายวัน (Lunch Break)' : 'Daily Lunch Break Filter',
-          starter: false,
-          growth: true,
+          name: lang === 'th' ? 'จำนวนช่าง / ผู้ให้บริการ (Staff)' : 'Number of Staff / Specialists',
+          professional: 'สูงสุด 5 ท่าน',
+          business: 'สูงสุด 20 ท่าน',
+          enterprise: 'ไม่จำกัด (Unlimited)',
         },
         {
-          name: lang === 'th' ? 'Quick Block ปิดรับคิวกะทันหันใน 1 คลิก' : 'Quick Block Slots in 1-Click',
-          starter: false,
-          growth: true,
+          name: lang === 'th' ? 'การผูกบัญชีรับเงิน' : 'Payment Account Linking',
+          professional: 'แยกบัญชีพร้อมเพย์รายสาขา',
+          business: 'แยกบัญชีพร้อมเพย์รายสาขา',
+          enterprise: 'แยกบัญชีพร้อมเพย์อิสระตามสาขา/ร้าน',
+        },
+      ],
+    },
+    {
+      category: lang === 'th' ? 'โควตาสลิป & ตรวจสอบอัตโนมัติ' : 'Slip Quota & Verification',
+      features: [
+        {
+          name: lang === 'th' ? 'โควตาสลิปตรวจอัตโนมัติ' : 'Monthly Auto-verified Slips',
+          professional: '500 สลิป / เดือน (~16 คิว/วัน)',
+          business: '1,500 สลิป / เดือน (~50 คิว/วัน)',
+          enterprise: '5,000 สลิป / เดือน (~165 คิว/วัน)',
+          highlight: true,
         },
         {
-          name: lang === 'th' ? 'กำหนดช่วงความถี่รอบจอง (15, 30, 60 นาที)' : 'Configurable Slot Intervals',
-          starter: true,
-          growth: true,
+          name: lang === 'th' ? 'สิทธิ์ซื้อโควตาสลิปส่วนเกิน' : 'Overage Slip Rate',
+          professional: '0.60 บาท / สลิป',
+          business: '0.50 บาท / สลิป',
+          enterprise: '0.40 บาท / สลิป',
+        },
+        {
+          name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และป้องกันสลิปใช้ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
+          professional: true,
+          business: true,
+          enterprise: true,
+        },
+        {
+          name: lang === 'th' ? 'จัดเก็บรูปสลิปบนคลาวด์ความเร็วสูง (Cloudflare R2)' : 'Cloudflare R2 Slip Storage',
+          professional: true,
+          business: true,
+          enterprise: true,
         },
       ],
     },
@@ -115,49 +137,45 @@ export default function PricingPage() {
       category: lang === 'th' ? 'การเชื่อมต่อ LINE & แจ้งเตือน' : 'LINE & Notification System',
       features: [
         {
-          name: lang === 'th' ? 'LINE LIFF ดึงชื่อและโปรไฟล์ผู้จองอัตโนมัติ' : 'LINE LIFF Auto Profile Pre-fill',
-          starter: true,
-          growth: true,
+          name: lang === 'th' ? 'บริการ Setup LINE' : 'LINE Setup Service',
+          professional: 'ทีมงานตั้งค่า & เชื่อม LINE ให้',
+          business: 'ทีมงานตั้งค่า & เชื่อม LINE ให้',
+          enterprise: 'Setup LINE OA + Rich Menu + Flex Message ครบวงจร',
         },
         {
-          name: lang === 'th' ? 'ส่งตั๋วคิว Boarding Pass เข้าแชท LINE ลูกค้า' : 'LINE Flex Message Booking Pass',
-          starter: true,
-          growth: true,
-        },
-        {
-          name: lang === 'th' ? 'LINE OA Webhook ตอบกลับอัตโนมัติ' : 'LINE OA Webhook Auto-responder',
-          starter: true,
-          growth: true,
-        },
-        {
-          name: lang === 'th' ? 'LINE Notify แจ้งเตือนสลิปเข้าเจ้าของร้าน' : 'Instant LINE Notify for Merchant',
-          starter: false,
-          growth: true,
+          name: lang === 'th' ? 'การแจ้งเตือนคิวใหม่' : 'New Queue Notification',
+          professional: 'LINE Notify เข้ากลุ่มแอดมิน',
+          business: 'LINE Notify เข้ากลุ่มแอดมิน',
+          enterprise: 'LINE Notify + Flex Message สรุปประจำวัน',
         },
       ],
     },
     {
-      category: lang === 'th' ? 'การบริหารจัดการ & การดูแล' : 'Management & Support',
+      category: lang === 'th' ? 'ฟังก์ชันระบบ & การปรับแต่งแบรนด์' : 'System Features & Branding',
       features: [
         {
-          name: lang === 'th' ? 'จำนวนบริการที่สร้างได้' : 'Maximum Services',
-          starter: '5 บริการ',
-          growth: 'ไม่จำกัด',
+          name: lang === 'th' ? 'ระบบปฏิทินจองคิว 24 ชม.' : '24/7 Booking Calendar',
+          professional: true,
+          business: true,
+          enterprise: true,
         },
         {
-          name: lang === 'th' ? 'ระบบวิเคราะห์ยอดมัดจำและสถิติคิวเชิงลึก' : 'Advanced Analytics & Deposit Trends',
-          starter: false,
-          growth: true,
+          name: lang === 'th' ? 'Dashboard จัดการคิว Real-time' : 'Real-time Queue Dashboard',
+          professional: true,
+          business: true,
+          enterprise: true,
         },
         {
-          name: lang === 'th' ? 'ระบบรักษาความปลอดภัย Admin PIN Code' : 'Admin PIN Code Security',
-          starter: true,
-          growth: true,
+          name: lang === 'th' ? 'Custom Branding / White-label' : 'Custom Branding',
+          professional: 'โลโก้ร้านค้า + ป้าย Q Flow',
+          business: 'White-label (ซ่อนป้าย Q Flow)',
+          enterprise: '100% White-label + รองรับ Custom Domain',
         },
         {
-          name: lang === 'th' ? 'ระดับการดูแลและซัพพอร์ต' : 'Support SLA',
-          starter: 'มาตรฐาน (Standard)',
-          growth: 'ซัพพอร์ตด่วนพิเศษ (Priority Support)',
+          name: lang === 'th' ? 'ระดับการซัพพอร์ต (Support)' : 'Support Tier',
+          professional: 'Standard Support (LINE Official)',
+          business: 'Priority Support',
+          enterprise: 'Dedicated VIP Support (กลุ่ม LINE ส่วนตัว)',
         },
       ],
     },
@@ -179,7 +197,7 @@ export default function PricingPage() {
     {
       q: lang === 'th' ? 'สามารถยกเลิกหรือเปลี่ยนแพ็กเกจได้ตลอดเวลาไหม?' : 'Can I cancel or switch plans anytime?',
       a: lang === 'th'
-        ? 'ได้ตลอดเวลา ไม่มีข้อผูกมัดใดๆ คุณสามารถจัดการการสมัครสมาชิก บัตรเครดิต หรือยกเลิกได้เองผ่าน Stripe Customer Portal ในคลิกเดียว'
+        ? 'ได้ตลอดเวลา ไม่มีข้อผูกมัดใดๆ คุณสามารถจัดการการสมัครสมาชิก บัตรเครดิต หรือยกเลิกได้เอง Customer Portal ในคลิกเดียว'
         : 'Yes, anytime with no lock-in contracts. You can manage your cards, invoices, or cancel anytime via the Stripe Customer Portal.',
     },
     {
@@ -197,10 +215,8 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="inline-flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-base shadow-xs group-hover:scale-105 transition-transform">
-                Q
-              </div>
-              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">QFlow</span>
+              <QFlowLogo className="h-8 w-8 group-hover:scale-105 transition-transform" />
+              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Q Flow</span>
             </Link>
           </div>
 
@@ -240,7 +256,7 @@ export default function PricingPage() {
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 text-xs font-semibold mb-4"
         >
           <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span>{lang === 'th' ? 'ระบบเก็บเงินรายเดือนผ่าน Stripe • คืนทุนไวตั้งแต่คิวแรก' : 'Stripe Monthly Subscriptions • ROI from Day 1'}</span>
+          <span>{lang === 'th' ? 'ระบบเก็บเงินรายเดือน • คืนทุนไวตั้งแต่คิวแรก' : 'Stripe Monthly Subscriptions • ROI from Day 1'}</span>
         </motion.div>
 
         <motion.h1
@@ -264,9 +280,9 @@ export default function PricingPage() {
         </motion.p>
       </section>
 
-      {/* 2 PRICING CARDS */}
-      <section className="pb-16 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+      {/* 3 PRICING CARDS */}
+      <section className="pb-16 px-4 sm:px-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
           {Object.values(PRICING_PLANS).map((p) => {
             const isPopular = p.popular
 
@@ -297,16 +313,19 @@ export default function PricingPage() {
                   </div>
 
                   {/* Price Box */}
-                  <div className="my-6 p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800/80">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <div className="my-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                         ฿{p.priceTHB.toLocaleString()}
                       </span>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                         {lang === 'th' ? '/เดือน' : '/month'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                      รายปี ฿{p.priceYearlyTHB.toLocaleString()} / ปี <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(ประหยัด 2 เดือน)</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
                       <span className="font-bold text-indigo-600 dark:text-indigo-400">
                         ⚡ โควตา {p.quota.toLocaleString()} สลิป/เดือน
                       </span>
@@ -314,17 +333,17 @@ export default function PricingPage() {
                   </div>
 
                   {/* Features */}
-                  <div className="space-y-3 mb-8 text-xs text-slate-700 dark:text-slate-300">
+                  <div className="space-y-2.5 mb-6 text-xs text-slate-700 dark:text-slate-300">
                     {p.features.map((feat, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5">
-                        <div className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                      <div key={idx} className="flex items-start gap-2">
+                        <div className={`mt-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
                           isPopular 
                             ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400' 
                             : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
                         }`}>
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </div>
-                        <span className="leading-snug">{feat}</span>
+                        <span className="leading-snug text-[11px]">{feat}</span>
                       </div>
                     ))}
                   </div>
@@ -346,13 +365,13 @@ export default function PricingPage() {
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4" />
-                        <span>{lang === 'th' ? `สมัครแพ็กเกจ ${p.name} ผ่าน Stripe` : `Subscribe ${p.name} via Stripe`}</span>
+                        <span>{lang === 'th' ? `สมัครแพ็กเกจ ${p.name}` : `Subscribe ${p.name} via Stripe`}</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
                   <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 mt-2">
-                    {lang === 'th' ? 'ชำระเงินรายเดือนปลอดภัยผ่าน Stripe Checkout' : 'Secure monthly billing via Stripe Checkout'}
+                    {lang === 'th' ? 'ชำระเงินรายเดือนปลอดภัย Checkout' : 'Secure monthly billing via Stripe Checkout'}
                   </p>
                 </div>
               </motion.div>
@@ -377,16 +396,20 @@ export default function PricingPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80">
-                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-700 dark:text-slate-300 w-1/2">
-                    {lang === 'th' ? 'ฟังก์ชันการทำงาน' : 'Capabilities'}
+                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-700 dark:text-slate-300 w-2/5">
+                    {lang === 'th' ? 'ฟังก์ชันการทำงาน / รายละเอียด' : 'Capabilities'}
                   </th>
-                  <th className="p-4 sm:p-5 text-xs font-bold text-slate-900 dark:text-white text-center w-1/4">
-                    Starter <br />
-                    <span className="font-normal text-[11px] text-slate-500">฿590/ด.</span>
+                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-900 dark:text-white text-center w-1/5">
+                    Professional <br />
+                    <span className="font-normal text-[10px] text-slate-500">฿790/ด. (฿7,900/ปี)</span>
                   </th>
-                  <th className="p-4 sm:p-5 text-xs font-bold text-indigo-600 dark:text-indigo-400 text-center w-1/4 bg-indigo-50/50 dark:bg-indigo-950/20">
-                    Growth (แนะนำ) <br />
-                    <span className="font-normal text-[11px] text-indigo-500">฿1,290/ด.</span>
+                  <th className="p-3 sm:p-4 text-xs font-bold text-indigo-600 dark:text-indigo-400 text-center w-1/5 bg-indigo-50/50 dark:bg-indigo-950/20">
+                    Business (แนะนำ) <br />
+                    <span className="font-normal text-[10px] text-indigo-500">฿1,590/ด. (฿15,900/ปี)</span>
+                  </th>
+                  <th className="p-3 sm:p-4 text-xs font-bold text-amber-600 dark:text-amber-400 text-center w-1/5 bg-amber-50/30 dark:bg-amber-950/10">
+                    Enterprise <br />
+                    <span className="font-normal text-[10px] text-amber-600">฿3,990/ด. (฿39,900/ปี)</span>
                   </th>
                 </tr>
               </thead>
@@ -394,39 +417,52 @@ export default function PricingPage() {
                 {comparisonCategories.map((cat, cIdx) => (
                   <tr key={cIdx} className="contents">
                     <tr className="bg-slate-100/60 dark:bg-slate-800/40">
-                      <td colSpan={3} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider">
+                      <td colSpan={4} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider">
                         {cat.category}
                       </td>
                     </tr>
                     {cat.features.map((feat, fIdx) => (
                       <tr key={fIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition">
-                        <td className="p-4 sm:p-5 font-semibold text-slate-800 dark:text-slate-200">
+                        <td className="p-3 sm:p-4 font-semibold text-slate-800 dark:text-slate-200">
                           {feat.name}
                         </td>
                         
-                        {/* Starter Column */}
-                        <td className="p-4 text-center">
-                          {typeof feat.starter === 'boolean' ? (
-                            feat.starter ? (
+                        {/* Professional Column */}
+                        <td className="p-3 text-center">
+                          {typeof feat.professional === 'boolean' ? (
+                            feat.professional ? (
                               <Check className="w-4 h-4 text-emerald-500 mx-auto stroke-[2.5]" />
                             ) : (
                               <X className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
                             )
                           ) : (
-                            <span className="font-bold text-slate-700 dark:text-slate-300">{feat.starter}</span>
+                            <span className="font-medium text-[11px] text-slate-700 dark:text-slate-300">{feat.professional}</span>
                           )}
                         </td>
 
-                        {/* Growth Column */}
-                        <td className="p-4 text-center bg-indigo-50/20 dark:bg-indigo-950/10">
-                          {typeof feat.growth === 'boolean' ? (
-                            feat.growth ? (
+                        {/* Business Column */}
+                        <td className="p-3 text-center bg-indigo-50/20 dark:bg-indigo-950/10">
+                          {typeof feat.business === 'boolean' ? (
+                            feat.business ? (
                               <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mx-auto stroke-[2.5]" />
                             ) : (
                               <X className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
                             )
                           ) : (
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400">{feat.growth}</span>
+                            <span className="font-bold text-[11px] text-indigo-600 dark:text-indigo-400">{feat.business}</span>
+                          )}
+                        </td>
+
+                        {/* Enterprise Column */}
+                        <td className="p-3 text-center bg-amber-50/10 dark:bg-amber-950/5">
+                          {typeof feat.enterprise === 'boolean' ? (
+                            feat.enterprise ? (
+                              <Check className="w-4 h-4 text-amber-500 mx-auto stroke-[2.5]" />
+                            ) : (
+                              <X className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
+                            )
+                          ) : (
+                            <span className="font-bold text-[11px] text-amber-600 dark:text-amber-400">{feat.enterprise}</span>
                           )}
                         </td>
                       </tr>
@@ -447,7 +483,7 @@ export default function PricingPage() {
               ⚡ ROI Analysis & Value
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {lang === 'th' ? 'ทำไม QFlow ถึงคุ้มค่าตั้งแต่วันแรก?' : 'Why QFlow pays for itself on Day 1'}
+              {lang === 'th' ? 'ทำไม Q Flow ถึงคุ้มค่าตั้งแต่วันแรก?' : 'Why Q Flow pays for itself on Day 1'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed font-normal">
               {lang === 'th' 
@@ -506,9 +542,7 @@ export default function PricingPage() {
       <footer className="border-t border-slate-200 dark:border-slate-850 py-10 bg-white dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center font-bold text-white text-xs">
-              Q
-            </div>
+            <QFlowLogo className="h-6 w-6" />
             <span className="font-bold text-slate-800 dark:text-slate-200">QFlow Micro-SaaS</span>
             <span>• Powered by Stripe Billing</span>
           </div>
