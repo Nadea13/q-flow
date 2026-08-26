@@ -829,7 +829,7 @@ export default function DashboardPage({ params }: PageProps) {
       <main className="max-w-7xl mx-auto p-4 sm:p-8 space-y-6">
         {/* Metric Cards - Clean Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               {t('todayBookings')}
@@ -837,7 +837,7 @@ export default function DashboardPage({ params }: PageProps) {
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{todayBookings.length}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               {t('todayConfirmed')}
@@ -845,7 +845,7 @@ export default function DashboardPage({ params }: PageProps) {
             <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">{todayConfirmed.length}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <DollarSign className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
               {t('todayDepositTotal')}
@@ -853,7 +853,7 @@ export default function DashboardPage({ params }: PageProps) {
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">฿{todayDepositTotal.toLocaleString()}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
               {activeSelectedBranch ? `เวลาทำการ (${activeSelectedBranch.name})` : t('shopHours')}
@@ -920,7 +920,7 @@ export default function DashboardPage({ params }: PageProps) {
         {activeTab === 'bookings' && (
           <div className="space-y-4">
             {/* Filters & Actions Bar */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-4 rounded-2xl shadow-2xs space-y-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl shadow-sm space-y-4">
               {/* Top Row: Date Selector & Add Manual Booking CTA */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 {/* Date Navigation Bar (Full Width on Mobile, Inline on Desktop) */}
@@ -1304,7 +1304,7 @@ export default function DashboardPage({ params }: PageProps) {
             ) : (
               /* ================== 2. DETAILED LIST VIEW ================== */
               filteredBookings.length === 0 ? (
-                <div className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xs">
+                <div className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
                   <CalendarIcon className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
                   <p className="text-xs text-slate-500 dark:text-slate-400">{t('noBookingsFound')}</p>
                 </div>
@@ -1317,7 +1317,7 @@ export default function DashboardPage({ params }: PageProps) {
                     return (
                       <div
                         key={b.id}
-                        className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition space-y-3"
+                        className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition space-y-3"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
@@ -1440,7 +1440,7 @@ export default function DashboardPage({ params }: PageProps) {
             {/* Create Block Form */}
             <form
               onSubmit={handleCreateBlock}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-sm"
             >
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -1500,7 +1500,7 @@ export default function DashboardPage({ params }: PageProps) {
               </h4>
 
               {slots.length === 0 ? (
-                <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs text-slate-500">
+                <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm text-xs text-slate-500">
                   {t('noBlockedSlots')}
                 </div>
               ) : (
@@ -1508,7 +1508,7 @@ export default function DashboardPage({ params }: PageProps) {
                   {slots.map((s) => (
                     <div
                       key={s.id}
-                      className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between"
+                      className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between"
                     >
                       <div>
                         <div className="text-xs font-bold text-slate-900 dark:text-white">
@@ -1536,7 +1536,7 @@ export default function DashboardPage({ params }: PageProps) {
         {activeTab === 'services' && (
           <div className="space-y-6 w-full">
             {/* Header & Controls: Staff Selector Dropdown & Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl shadow-sm">
               <div className="flex flex-wrap items-center gap-3">
                 {/* Staff Selector Custom Rich Dropdown */}
                 <div className="space-y-1">
