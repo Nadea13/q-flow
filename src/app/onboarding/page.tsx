@@ -56,9 +56,9 @@ function OnboardingContent() {
   const [formData, setFormData] = useState({
     name: '',
     promptpay_id: '',
-    default_deposit: '200',
+    default_deposit: '',
     slug: '',
-    branch_name: 'สาขาหลัก (Main Branch)',
+    branch_name: '',
     branch_address: '',
     branch_phone: '',
   })
@@ -180,7 +180,7 @@ function OnboardingContent() {
               transition={{ duration: 0.25 }}
               className="space-y-4 text-center"
             >
-              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
 
@@ -404,7 +404,7 @@ function OnboardingContent() {
                 {/* Branch Geo Address */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                    {lang === 'th' ? 'ที่ตั้งสาขา (Geo Thai Address)' : 'Branch Location'}
+                    {lang === 'th' ? 'ที่ตั้งสาขา' : 'Branch Location'}
                   </label>
                   <ThaiAddressSelector
                     initialAddress={formData.branch_address}

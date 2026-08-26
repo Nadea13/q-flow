@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Check, Sparkles, Zap } from 'lucide-react'
+import { MapPin, Check } from 'lucide-react'
 import {
   getProvinces,
   getDistricts,
@@ -74,7 +74,7 @@ export function ThaiAddressSelector({
       if (matches.length > 0) {
         const first = matches[0]
 
-        // Check if all matches belong to the same province
+        // Check if all matches belong to the same province / district
         const allSameProvince = matches.every(m => m.province === first.province)
         const allSameDistrict = matches.every(m => m.district === first.district)
 
@@ -95,6 +95,21 @@ export function ThaiAddressSelector({
     const formatted = formatThaiAddress(nextState)
     setFreeformText(formatted)
     onChange(formatted, nextState)
+  }
+
+  function handleResetLocation() {
+    const emptyState: ThaiAddress = {
+      province: '',
+      district: '',
+      subdistrict: '',
+      zipcode: '',
+      addressDetail: addressState.addressDetail || '',
+    }
+    setAddressState(emptyState)
+    setZipcodeMatches([])
+    const formatted = formatThaiAddress(emptyState)
+    setFreeformText(formatted)
+    onChange(formatted, emptyState)
   }
 
   function handleSelectZipcodeMatch(match: ZipcodeLocation) {
@@ -211,21 +226,30 @@ export function ThaiAddressSelector({
           <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 rounded-xl space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                <span>{lang === 'th' ? 'กรอกรหัสไปรษณีย์เพื่อค้นหาอัตโนมัติ (Zipcode Auto-Fill):' : 'Enter 5-digit Zipcode to auto-fill:'}</span>
+                <span>{lang === 'th' ? 'กรอกรหัสไปรษณีย์:' : 'Enter 5-digit Zipcode:'}</span>
               </label>
 
-              <div className="w-full sm:w-44">
+              <div className="w-full sm:w-48 relative flex items-center">
                 <input
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={5}
                   placeholder="เช่น 10330, 50200"
-                  value={addressState.zipcode}
+                  value={addressState.zipcode || ''}
                   onChange={(e) => handleZipcodeChange(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white font-mono font-bold tracking-wider placeholder:font-normal focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
+                  className="w-full bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-lg pl-3 pr-8 py-1.5 text-xs text-slate-900 dark:text-white font-mono font-bold tracking-wider placeholder:font-normal focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs"
                 />
+                {addressState.zipcode && (
+                  <button
+                    type="button"
+                    onClick={handleResetLocation}
+                    className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-[10px] font-bold p-0.5"
+                    title="ล้างรหัสไปรษณีย์และเลือกใหม่"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
 
@@ -233,7 +257,7 @@ export function ThaiAddressSelector({
             {zipcodeMatches.length > 0 && (
               <div className="pt-2 border-t border-indigo-100/80 dark:border-indigo-900/40">
                 <div className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 mb-1.5 flex items-center gap-1">
-                  <span>⚡ {lang === 'th' ? `พบ ${zipcodeMatches.length} พื้นที่สำหรับรหัส ${addressState.zipcode} (แตะเพื่อเลือก):` : `Found ${zipcodeMatches.length} locations:`}</span>
+                  <span>{lang === 'th' ? `พบ ${zipcodeMatches.length} พื้นที่สำหรับรหัส ${addressState.zipcode}:` : `Found ${zipcodeMatches.length} locations:`}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {zipcodeMatches.map((m, idx) => {
@@ -251,7 +275,7 @@ export function ThaiAddressSelector({
                           }`}
                       >
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                        <span>{prefixSub}{m.subdistrict} ({prefixDist}{m.district}, {m.province})</span>
+                        <span>{prefixSub}{m.subdistrict} ({prefixDist}{m.district})</span>
                       </button>
                     )
                   })}
@@ -366,7 +390,6 @@ export function ThaiAddressSelector({
       {/* Formatted Address Preview */}
       {(addressState.province || freeformText) && (
         <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-xl">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
           <div>
             <span className="font-bold text-slate-900 dark:text-white mr-1">
               {lang === 'th' ? 'ที่อยู่ที่แสดงบนหน้าร้าน:' : 'Formatted Address:'}
