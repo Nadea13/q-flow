@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createStripeCheckoutSessionAction } from '@/app/actions/stripe'
 import { PRICING_PLANS } from '@/lib/stripe'
@@ -18,8 +18,12 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
   const planParam = rawPlan as PlanType
   const [error, setError] = useState<string | null>(null)
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
+  const hasTriggeredRef = useRef(false)
 
   useEffect(() => {
+    if (hasTriggeredRef.current) return
+    hasTriggeredRef.current = true
+
     async function initCheckout() {
       try {
         let lineUserId: string | undefined = undefined

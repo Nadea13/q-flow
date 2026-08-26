@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createStripeCheckoutSessionAction } from '@/app/actions/stripe'
 import { PRICING_PLANS } from '@/lib/stripe'
@@ -16,8 +16,12 @@ function CheckoutRedirectContent() {
   const [error, setError] = useState<string | null>(null)
 
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
+  const hasTriggeredRef = useRef(false)
 
   useEffect(() => {
+    if (hasTriggeredRef.current) return
+    hasTriggeredRef.current = true
+
     async function initCheckout() {
       try {
         let lineUserId: string | undefined = undefined

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -16,8 +16,9 @@ export function LiffStateResolver() {
     if (liffState) {
       try {
         const decodedPath = decodeURIComponent(liffState)
-        // Check if it's a valid relative path starting with '/'
-        if (decodedPath.startsWith('/')) {
+        // Check if it's a valid relative path starting with '/' and not current path
+        const currentPath = window.location.pathname + window.location.search
+        if (decodedPath.startsWith('/') && decodedPath !== currentPath) {
           router.replace(decodedPath)
         }
       } catch {
