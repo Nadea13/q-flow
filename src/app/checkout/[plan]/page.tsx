@@ -28,11 +28,19 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
       try {
         let lineUserId: string | undefined = undefined
 
-        // Try getting LINE profile if opened inside LIFF
+        // Try getting LINE profile if opened inside LIFF (with 1.5s timeout to prevent hanging)
         try {
-          const { initLiff } = await import('@/lib/liff')
-          const liffRes = await initLiff()
-          if (liffRes.success && liffRes.profile?.userId) {
+          const liffPromise = (async () => {
+            const { initLiff } = await import('@/lib/liff')
+            return await initLiff()
+          })()
+
+          const timeoutPromise = new Promise<{ success: boolean; profile?: undefined }>((resolve) =>
+            setTimeout(() => resolve({ success: false }), 1500)
+          )
+
+          const liffRes = await Promise.race([liffPromise, timeoutPromise])
+          if (liffRes?.success && liffRes.profile?.userId) {
             lineUserId = liffRes.profile.userId
             localStorage.setItem('qflow_admin_line_profile', JSON.stringify(liffRes.profile))
           }
