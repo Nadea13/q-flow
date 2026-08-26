@@ -9,6 +9,7 @@ interface CreateCheckoutInput {
   planId: PlanType
   billingCycle?: 'monthly' | 'yearly'
   returnUrl?: string
+  lineUserId?: string
 }
 
 /**
@@ -33,9 +34,11 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     merchant = mData
   }
 
+  const lineQuery = input.lineUserId ? `&line_uid=${encodeURIComponent(input.lineUserId)}` : ''
+
   const successUrl = merchant
     ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
-    : `${siteUrl}/onboarding?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}`
+    : `${siteUrl}/onboarding?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}${lineQuery}`
   
   const cancelUrl = merchant
     ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing`
@@ -116,6 +119,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
         merchant_slug: input.merchantSlug || '',
         plan_id: plan.id,
         billing_cycle: input.billingCycle || 'monthly',
+        line_user_id: input.lineUserId || '',
       },
       success_url: successUrl,
       cancel_url: cancelUrl,

@@ -64,6 +64,8 @@ function OnboardingContent() {
     branch_phone: '',
   })
 
+  const lineUidParam = searchParams.get('line_uid')
+
   // Detect LINE LIFF on mount
   useEffect(() => {
     async function checkLiff() {
@@ -84,14 +86,20 @@ function OnboardingContent() {
             ...prev,
             name: prev.name ? prev.name : `${res.profile?.displayName || 'Shop'}'s Studio`,
           }))
+          return
         }
       } catch {
         // LIFF fallback
       }
+
+      // If line_uid came from Stripe redirect query param
+      if (lineUidParam) {
+        setLineAdminProfile((prev) => prev || { displayName: 'LINE Admin', userId: lineUidParam })
+      }
     }
 
     checkLiff()
-  }, [])
+  }, [lineUidParam])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

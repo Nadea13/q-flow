@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { Toaster } from "sonner";
+import { LiffStateResolver } from "@/components/LiffStateResolver";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
         <ThemeProvider>
           <LanguageProvider>
+            <LiffStateResolver />
             {children}
             <Toaster position="top-center" richColors closeButton />
           </LanguageProvider>
