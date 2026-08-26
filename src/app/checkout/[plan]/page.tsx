@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,7 +8,7 @@ import { createStripePaymentIntentAction } from '@/app/actions/stripe'
 import { StripeEmbeddedForm } from '@/components/StripeEmbeddedForm'
 import { PRICING_PLANS } from '@/lib/stripe'
 import { QFlowLogo } from '@/components/QFlowLogo'
-import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import type { PlanType } from '@/types/database'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -77,18 +77,11 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-6">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center">
           <div className="flex items-center gap-2">
             <QFlowLogo className="h-7 w-7" />
-            <span className="font-bold text-sm text-slate-900 dark:text-white">Q Flow Subscriptions</span>
+            <span className="font-bold text-lg text-slate-900 dark:text-white">Q Flow Subscriptions</span>
           </div>
-          <button
-            onClick={() => router.replace('/pricing')}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg transition"
-            title="กลับ"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
         </div>
 
         {error ? (

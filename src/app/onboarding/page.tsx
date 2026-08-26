@@ -158,27 +158,28 @@ function OnboardingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between py-8 px-4 sm:px-6 transition-colors">
-      <div className="max-w-md w-full mx-auto">
-        {/* Top Navbar */}
-        <div className="flex justify-between items-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 group">
-            <QFlowLogo className="h-8 w-8 group-hover:scale-105 transition-transform" />
-            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Q Flow</span>
-          </Link>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            <QFlowLogo className="h-7 w-7" />
+            <span className="font-bold text-sm text-slate-900 dark:text-white">Q Flow Merchant Setup</span>
+          </div>
           <NavbarControls />
         </div>
 
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 text-xs font-semibold mb-3">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 text-xs font-semibold mb-2">
             <Sparkles className="w-3.5 h-3.5" />
             {t('onboardingBadge')}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {t('onboardingTitle')}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {t('onboardingSubtitle')}
           </p>
         </div>
@@ -192,21 +193,21 @@ function OnboardingContent() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 sm:p-7 shadow-lg shadow-emerald-500/5"
+              className="space-y-4 text-center"
             >
-              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3.5">
-                <CheckCircle2 className="w-6 h-6" />
+              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+                <CheckCircle2 className="w-7 h-7" />
               </div>
 
-              <h2 className="text-lg font-bold text-center text-slate-900 dark:text-white mb-0.5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 {t('onboardingSuccessTitle')}
               </h2>
-              <p className="text-center text-xs text-slate-600 dark:text-slate-400 mb-5">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{createdMerchant.name}</strong> {t('onboardingSuccessDesc')}
               </p>
 
-              <div className="space-y-4">
-                <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+              <div className="space-y-3 pt-2">
+                <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-left">
                   <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
                     {t('yourBookingLink')}
                   </label>
@@ -217,7 +218,7 @@ function OnboardingContent() {
                     <button
                       onClick={copyLink}
                       type="button"
-                      className="shrink-0 text-xs bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 font-medium transition shadow-2xs active:scale-95"
+                      className="shrink-0 text-xs bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 font-medium transition shadow-2xs active:scale-95 cursor-pointer"
                     >
                       {copied ? (
                         <>
@@ -237,14 +238,14 @@ function OnboardingContent() {
                 <div className="grid grid-cols-2 gap-2.5 pt-1">
                   <Link
                     href={`/${createdMerchant.slug}/book`}
-                    className="w-full py-3 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition text-center active:scale-98"
+                    className="w-full py-3 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 transition text-center active:scale-98"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     {t('testBookingBtn')}
                   </Link>
                   <Link
                     href={`/${createdMerchant.slug}/dashboard`}
-                    className="w-full py-3 px-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 transition text-center shadow-2xs active:scale-98"
+                    className="w-full py-3 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 transition text-center shadow-2xs active:scale-98"
                   >
                     {t('gotoDashboardBtn')}
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -261,7 +262,7 @@ function OnboardingContent() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4"
+              className="space-y-4"
             >
               {/* LINE Account Link Card */}
               {lineAdminProfile && (
@@ -293,7 +294,7 @@ function OnboardingContent() {
               )}
 
               {error && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
                   {error}
                 </div>
               )}
@@ -313,7 +314,7 @@ function OnboardingContent() {
                     placeholder={t('shopNamePlaceholder')}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
                   />
                 </div>
               </div>
@@ -333,10 +334,10 @@ function OnboardingContent() {
                     placeholder={t('promptpayPlaceholder')}
                     value={formData.promptpay_id}
                     onChange={(e) => setFormData({ ...formData, promptpay_id: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                   {t('promptpayHint')}
                 </p>
               </div>
@@ -358,10 +359,10 @@ function OnboardingContent() {
                     placeholder={t('depositPlaceholder')}
                     value={formData.default_deposit}
                     onChange={(e) => setFormData({ ...formData, default_deposit: e.target.value.replace(/\D/g, '') })}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                   {t('depositHint')}
                 </p>
               </div>
@@ -377,7 +378,7 @@ function OnboardingContent() {
                       {lang === 'th' ? '4. ข้อมูลสาขาแรกของร้าน' : '4. First Branch Details'}
                     </h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {lang === 'th' ? 'ตั้งค่าสาขาแรกเพื่อเริ่มเปิดรับคิวและช่างประจำสาขา (เพิ่มสาขาอื่นได้ภายหลัง)' : 'Configure your initial branch (You can add more branches later)'}
+                      {lang === 'th' ? 'ตั้งค่าสาขาแรกเพื่อเริ่มเปิดรับคิว (เพิ่มสาขาได้ภายหลัง)' : 'Configure your initial branch'}
                     </p>
                   </div>
                 </div>
@@ -389,7 +390,7 @@ function OnboardingContent() {
                   </label>
                   <input
                     type="text"
-                    placeholder="เช่น สาขาหลัก, สาขาสยามสแควร์, สาขาเซ็นทรัล"
+                    placeholder="เช่น สาขาหลัก, สาขาสยามสแควร์"
                     value={formData.branch_name}
                     onChange={(e) => setFormData({ ...formData, branch_name: e.target.value })}
                     className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
@@ -442,7 +443,7 @@ function OnboardingContent() {
                     placeholder="my-shop"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-r-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-r-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
                   />
                 </div>
               </div>
@@ -450,25 +451,24 @@ function OnboardingContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 mt-4 active:scale-98"
+                className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold text-xs shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 mt-4 active:scale-98 cursor-pointer"
               >
                 {loading ? (
                   <span>{t('creatingShop')}</span>
                 ) : (
                   <>
                     <span>{t('createShopBtn')}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
               </button>
             </motion.form>
           )}
         </AnimatePresence>
-      </div>
 
-      {/* Footer info */}
-      <div className="text-center text-xs text-slate-500 dark:text-slate-500 mt-8">
-        Q Flow • 100% Mobile Ready • Auto PromptPay & SlipOK Verification
+        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
+          Q Flow • 100% Mobile Ready • Auto PromptPay & SlipOK
+        </div>
       </div>
     </div>
   )
