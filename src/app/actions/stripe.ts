@@ -214,3 +214,49 @@ export async function upgradeMerchantPlanAction(merchantSlug: string, planId: Pl
 
   return { success: true, plan }
 }
+
+/**
+ * Creates a Stripe Payment Intent for embedded in-app card checkout
+ */
+export async function createStripePaymentIntentAction(input: {
+  planId: PlanType
+  lineUserId?: string
+  merchantSlug?: string
+}) {
+  const plan = PRICING_PLANS[input.planId]
+  if (!plan) {
+    return { success: false, error: 'ไม่พบแพ็กเกจที่เลือก' }
+  }
+
+  // If mock / no stripe key
+  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('mock')) {
+    return {
+      success: true,
+      clientSecret: 'mock_secret_12345',
+      amount: plan.priceTHB,
+      simulated: true,
+    }
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: plan.priceTHB * 100, // in satang
+      currency: 'thb',
+      payment_method_types: ['card'],
+      metadata: {
+        plan_id: plan.id,
+        line_user_id: input.lineUserId || '',
+        merchant_slug: input.merchantSlug || '',
+      },
+    })
+
+    return {
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      amount: plan.priceTHB,
+    }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err)
+    return { success: false, error: `Stripe Error: ${errorMsg}` }
+  }
+}
