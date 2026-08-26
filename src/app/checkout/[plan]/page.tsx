@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
@@ -48,20 +48,7 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
           if (res.simulated) {
             router.replace(res.url)
           } else {
-            // If running inside LINE LIFF In-App Browser, open external browser
-            try {
-              const { default: liff } = await import('@line/liff')
-              if (liff.isInClient()) {
-                liff.openWindow({
-                  url: res.url,
-                  external: true,
-                })
-                return
-              }
-            } catch {
-              // Not inside LIFF
-            }
-
+            // First try window.location.href directly so in-app / mobile browser redirects immediately
             window.location.href = res.url
           }
         } else {
@@ -80,9 +67,7 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
 
   function handleManualOpen() {
     if (!checkoutUrl) return
-    if (typeof window !== 'undefined') {
-      window.open(checkoutUrl, '_blank')
-    }
+    window.location.href = checkoutUrl
   }
 
   return (

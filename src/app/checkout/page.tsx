@@ -47,20 +47,6 @@ function CheckoutRedirectContent() {
           if (res.simulated) {
             router.replace(res.url)
           } else {
-            // If running inside LINE LIFF In-App Browser, Stripe payment requires external browser
-            try {
-              const { default: liff } = await import('@line/liff')
-              if (liff.isInClient()) {
-                liff.openWindow({
-                  url: res.url,
-                  external: true,
-                })
-                return
-              }
-            } catch {
-              // Not inside LIFF
-            }
-
             window.location.href = res.url
           }
         } else {
@@ -79,9 +65,7 @@ function CheckoutRedirectContent() {
 
   function handleManualOpen() {
     if (!checkoutUrl) return
-    if (typeof window !== 'undefined') {
-      window.open(checkoutUrl, '_blank')
-    }
+    window.location.href = checkoutUrl
   }
 
   return (
