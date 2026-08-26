@@ -147,6 +147,16 @@ export default function BookingDetailPage({ params }: PageProps) {
     setVerifying(true)
     setVerifyError(null)
 
+    // 1. Client-Side Pre-scan QR Code: Save SlipOK API Credits from non-slip images
+    const { detectQrCodeInImage } = await import('@/lib/slip-client-guard')
+    const preCheck = await detectQrCodeInImage(slipFile)
+    if (!preCheck.hasQr) {
+      setVerifying(false)
+      setVerifyError(preCheck.error || 'ไม่พบ QR Code ในรูปภาพสลิป กรุณาถ่ายหรือแนบรูปสลิปธนาคารที่มี QR Code ชัดเจน')
+      return
+    }
+
+    // 2. Submit to Server and Verify with SlipOK
     const formData = new FormData()
     formData.append('slip', slipFile)
 

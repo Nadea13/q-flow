@@ -165,6 +165,16 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
     return { success: false, error: 'หมดเวลาชำระเงินมัดจำ (เกิน 10 นาที) คิวจองนี้ถูกยกเลิกแล้ว กรุณาทำการจองใหม่' }
   }
 
+  // 1.2 Prevent excessive verify attempts on the same booking
+  const rawData = (booking.slip_raw_data as Record<string, unknown>) || {}
+  const attemptCount = Number(rawData._verify_attempts || 0)
+  if (attemptCount >= 5) {
+    return {
+      success: false,
+      error: 'คุณส่งตรวจสอบสลิปเกินจำนวนครั้งที่กำหนด (5 ครั้ง) กรุณาติดต่อทางร้านโดยตรงเพื่อยืนยันคิว',
+    }
+  }
+
   const file = formData.get('slip') as File
   if (!file || file.size === 0) {
     return { success: false, error: 'กรุณาเลือกไฟล์สลิปการโอนเงิน' }
@@ -210,6 +220,19 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
   )
 
   if (!verification.success) {
+    // Record failed attempt
+    await supabase
+      .from('bookings')
+      .update({
+        slip_raw_data: {
+          ...rawData,
+          _verify_attempts: attemptCount + 1,
+          _last_error: verification.message,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', booking.id)
+
     return {
       success: false,
       error: verification.message,

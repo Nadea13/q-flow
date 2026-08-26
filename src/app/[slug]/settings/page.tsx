@@ -12,7 +12,6 @@ import {
   KeyRound,
   LogOut,
   CreditCard,
-  Zap,
   Building2,
   MapPin,
   Phone,
@@ -1083,7 +1082,6 @@ export default function SettingsPage({ params }: PageProps) {
                     <div className="pt-2 space-y-2">
                       <div className="flex justify-between items-center text-xs">
                         <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                          <Zap className="w-4 h-4 text-amber-500" />
                           {lang === 'th' ? 'โควตาตรวจสลิป SlipOK เดือนนี้' : 'Monthly SlipOK Verification Quota'}
                         </span>
                         <span className="font-bold text-slate-900 dark:text-white">
