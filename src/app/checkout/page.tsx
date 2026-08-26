@@ -15,6 +15,8 @@ function CheckoutRedirectContent() {
   const merchantSlug = searchParams.get('slug') || undefined
   const [error, setError] = useState<string | null>(null)
 
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
+
   useEffect(() => {
     async function initCheckout() {
       try {
@@ -41,9 +43,24 @@ function CheckoutRedirectContent() {
         })
 
         if (res.success && res.url) {
+          setCheckoutUrl(res.url)
           if (res.simulated) {
             router.replace(res.url)
           } else {
+            // If running inside LINE LIFF In-App Browser, Stripe payment requires external browser
+            try {
+              const { default: liff } = await import('@line/liff')
+              if (liff.isInClient()) {
+                liff.openWindow({
+                  url: res.url,
+                  external: true,
+                })
+                return
+              }
+            } catch {
+              // Not inside LIFF
+            }
+
             window.location.href = res.url
           }
         } else {
@@ -59,6 +76,13 @@ function CheckoutRedirectContent() {
   }, [planParam, merchantSlug, router])
 
   const planName = PRICING_PLANS[planParam]?.name || 'Professional'
+
+  function handleManualOpen() {
+    if (!checkoutUrl) return
+    if (typeof window !== 'undefined') {
+      window.open(checkoutUrl, '_blank')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
@@ -91,10 +115,20 @@ function CheckoutRedirectContent() {
               กำลังพาคุณไปหน้าชำระเงิน Stripe...
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              ระบบกำลังเชื่อมต่อและส่งต่อไปยัง Stripe Checkout ที่ปลอดภัย กรุณารอสักครู่
+              ระบบกำลังส่งต่อไปยัง Stripe Checkout หากหน้าต่างไม่เปิดอัตโนมัติ ให้แตะปุ่มด้านล่าง
             </p>
-            <div className="pt-3">
-              <div className="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="pt-2">
+              {checkoutUrl ? (
+                <button
+                  type="button"
+                  onClick={handleManualOpen}
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>แตะเพื่อไปหน้าชำระเงิน Stripe ทันที</span>
+                </button>
+              ) : (
+                <div className="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              )}
             </div>
           </div>
         )}
