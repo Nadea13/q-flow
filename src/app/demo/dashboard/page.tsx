@@ -19,6 +19,8 @@ import {
   List,
   Building2,
   Sparkles,
+  Coffee,
+  Plus,
   X
 } from 'lucide-react'
 import { format, addDays, subDays } from 'date-fns'
@@ -394,87 +396,206 @@ export default function DemoDashboardPage() {
 
         </div>
 
-        {/* Bookings Card List matching Screenshot cards */}
-        <div className="space-y-3">
-          {filteredBookings.map((b) => (
-            <div
-              key={b.id}
-              className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
-            >
-              {/* Header: Time, Status Badge & Deposit */}
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                      {b.start_time.slice(11, 16)} - {b.end_time.slice(11, 16)} น.
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80">
-                      ยืนยันสลิปแล้ว
-                    </span>
-                  </div>
-                  <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-2 flex-wrap">
-                    <span>{b.service_title}</span>
-                    <span className="text-[11px] text-slate-400 font-normal flex items-center gap-1">
-                      <span>🏢 {b.branch_count}</span>
-                      {b.staff_name && (
-                        <span className="bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded text-indigo-700 dark:text-indigo-300 font-medium">
-                          👤 {b.staff_name} ({b.staff_nickname})
+        {/* BOOKINGS CONTENT: 1. TIMELINE GRID VIEW OR 2. DETAILED LIST VIEW */}
+        {bookingsViewMode === 'timeline' ? (
+          <div className="space-y-4">
+            {/* Timeline Summary Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  ตารางรอบเวลาว่าง (60 นาที) • ประจำวันที่ {selectedDate}
+                </span>
+                <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                  (บริการทั่วไป Standard Service)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800/80 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>ว่าง {mockSlots.filter((s) => s.isAvailable).length} รอบ</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-xl border border-indigo-200 dark:border-indigo-800/80 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                  <span>จองแล้ว {demoBookings.length} คิว</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline Slots Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {mockSlots.map((slot, i) => {
+                const isBreak = slot.reason === 'เวลาพัก'
+                const isBooked = slot.reason === 'จองแล้ว'
+                const matchedBooking = isBooked ? demoBookings[i % demoBookings.length] : null
+
+                return (
+                  <div
+                    key={i}
+                    className={`p-3.5 rounded-2xl border transition-colors flex flex-col justify-between min-h-[82px] ${
+                      slot.isAvailable
+                        ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-sm'
+                        : isBreak
+                        ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+                        : isBooked
+                        ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80'
+                        : 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`font-mono text-xs font-bold ${
+                          slot.isAvailable
+                            ? 'text-slate-900 dark:text-white'
+                            : isBooked
+                            ? 'text-indigo-950 dark:text-indigo-200'
+                            : 'text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        {slot.time}
+                      </span>
+
+                      {slot.isAvailable ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      ) : isBooked ? (
+                        <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                      ) : isBreak ? (
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-rose-400" />
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between gap-1.5">
+                      {slot.isAvailable ? (
+                        <>
+                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>ว่าง</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSlot(slot.time)
+                              setManualDate(selectedDate)
+                              setIsManualModalOpen(true)
+                            }}
+                            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white dark:bg-indigo-950/60 dark:hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white rounded-lg text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 transition active:scale-95 cursor-pointer flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>ลงคิว</span>
+                          </button>
+                        </>
+                      ) : isBreak ? (
+                        <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
+                          <Coffee className="w-3 h-3 text-amber-500" />
+                          <span>เวลาพักร้าน</span>
+                        </span>
+                      ) : isBooked ? (
+                        <div className="text-left truncate w-full">
+                          <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 block truncate">
+                            👤 {matchedBooking?.customer_name || 'มีลูกค้าจองแล้ว'}
+                          </span>
+                          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 block truncate">
+                            ✂️ {matchedBooking?.service_title || 'บริการทั่วไป'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
+                          <Lock className="w-3 h-3" />
+                          <span>{slot.reason || 'ไม่พร้อมให้บริการ'}</span>
                         </span>
                       )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Bookings Card List matching Screenshot cards */
+          <div className="space-y-3">
+            {filteredBookings.map((b) => (
+              <div
+                key={b.id}
+                className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+              >
+                {/* Header: Time, Status Badge & Deposit */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-base font-extrabold text-slate-900 dark:text-white">
+                        {b.start_time.slice(11, 16)} - {b.end_time.slice(11, 16)} น.
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80">
+                        ยืนยันสลิปแล้ว
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-2 flex-wrap">
+                      <span>{b.service_title}</span>
+                      <span className="text-[11px] text-slate-400 font-normal flex items-center gap-1">
+                        <span>🏢 {b.branch_count}</span>
+                        {b.staff_name && (
+                          <span className="bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded text-indigo-700 dark:text-indigo-300 font-medium">
+                            👤 {b.staff_name} ({b.staff_nickname})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">มัดจำ: </span>
+                    <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                      ฿{b.deposit_amount}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">มัดจำ: </span>
-                  <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                    ฿{b.deposit_amount}
-                  </span>
-                </div>
-              </div>
-
-              {/* Inner Customer Gray Card */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/70 rounded-2xl space-y-1.5 text-xs border border-slate-100 dark:border-slate-850">
-                <div>
-                  <span className="text-[10px] text-slate-400 block">ลูกค้า</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-xs">{b.customer_name}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 block">เบอร์โทร</span>
-                  <span className="text-slate-500 font-mono">-</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 block">LINE ID</span>
-                  <span className="text-slate-500 font-mono">-</span>
-                </div>
-                {b.notes && (
-                  <div className="border-t border-slate-200/60 dark:border-slate-800 pt-1.5 mt-1 text-[11px] text-slate-600 dark:text-slate-400">
-                    หมายเหตุ: {b.notes}
+                {/* Inner Customer Gray Card */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-950/70 rounded-2xl space-y-1.5 text-xs border border-slate-100 dark:border-slate-850">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">ลูกค้า</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-xs">{b.customer_name}</span>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">เบอร์โทร</span>
+                    <span className="text-slate-500 font-mono">-</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">LINE ID</span>
+                    <span className="text-slate-500 font-mono">-</span>
+                  </div>
+                  {b.notes && (
+                    <div className="border-t border-slate-200/60 dark:border-slate-800 pt-1.5 mt-1 text-[11px] text-slate-600 dark:text-slate-400">
+                      หมายเหตุ: {b.notes}
+                    </div>
+                  )}
+                </div>
 
-              {/* Bottom Action Buttons (Matching Screenshot) */}
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange(b.id, 'completed')}
-                  className="px-4 py-2 bg-[#008ba3] hover:bg-[#007a8f] active:scale-95 text-white rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
-                >
-                  เข้าบริการเสร็จสิ้น
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange(b.id, 'cancelled')}
-                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer"
-                >
-                  ยกเลิกคิว
-                </button>
-              </div>
+                {/* Bottom Action Buttons (Matching Screenshot) */}
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange(b.id, 'completed')}
+                    className="px-4 py-2 bg-[#008ba3] hover:bg-[#007a8f] active:scale-95 text-white rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
+                  >
+                    เข้าบริการเสร็จสิ้น
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStatusChange(b.id, 'cancelled')}
+                    className="px-4 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer"
+                  >
+                    ยกเลิกคิว
+                  </button>
+                </div>
 
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
 
       </main>
 
