@@ -8,101 +8,85 @@ import {
   DollarSign,
   Clock,
   Calendar as CalendarIcon,
-  Sparkles,
-  ArrowRight,
+  PhoneCall,
   ChevronLeft,
   ChevronRight,
   Lock,
-  Layers
+  Settings,
+  ExternalLink,
+  User,
+  LayoutGrid,
+  List,
+  Building2,
+  X
 } from 'lucide-react'
 import { format, addDays, subDays } from 'date-fns'
-import { th, enUS } from 'date-fns/locale'
 import { QFlowLogo } from '@/components/QFlowLogo'
-import { NavbarControls } from '@/components/NavbarControls'
-import { useLanguage } from '@/context/LanguageContext'
+import { CustomDropdown } from '@/components/CustomDropdown'
+import { FormattedDateInput } from '@/components/FormattedDateInput'
 import { toast } from 'sonner'
 
 export default function DemoDashboardPage() {
-  const { lang, t } = useLanguage()
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [statusFilter, setStatusFilter] = useState('all')
-  const [activeTab, setActiveTab] = useState<'bookings' | 'services' | 'block-slots'>('bookings')
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState('all')
+  const [selectedStaffFilter, setSelectedStaffFilter] = useState('all')
+  const [bookingsViewMode, setBookingsViewMode] = useState<'timeline' | 'list'>('list')
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false)
 
-  // Interactive Mock Data for Demo
+  // Interactive Mock Data for Demo (Matching Screenshot)
   const [demoBookings, setDemoBookings] = useState([
     {
       id: 'demo-1',
-      customer_name: 'คุณพิมลภัส (ลูกค้าประจำ)',
-      customer_phone: '089-123-4567',
-      service_title: 'ตัด สระ ไดร์ พรีเมียม (Hair Cut & Styling)',
-      staff_name: 'ช่างเอก (Master Stylist)',
-      branch_name: 'สาขาสยามสแควร์',
-      start_time: `${selectedDate}T11:00:00`,
-      end_time: `${selectedDate}T12:00:00`,
-      total_price: 650,
-      deposit_amount: 150,
+      customer_name: 'จอน',
+      customer_phone: '',
+      customer_line_id: '',
+      service_title: 'บริการทั่วไป (Standard Service)',
+      staff_name: '',
+      staff_nickname: '',
+      branch_name: 'สาขาหลัก',
+      branch_count: 1,
+      start_time: `${selectedDate}T10:00:00`,
+      end_time: `${selectedDate}T11:00:00`,
+      deposit_amount: 50,
+      total_price: 500,
       status: 'confirmed',
-      slip_trans_ref: '2026082711002345',
-      paid_at: '10:45 น.',
+      notes: 'โทรจอง / ลงคิวหน้าร้านโดยแอดมิน',
     },
     {
       id: 'demo-2',
-      customer_name: 'คุณกิตติศักดิ์',
-      customer_phone: '081-987-6543',
-      service_title: 'ทำสีผมออร์แกนิก + ทรีทเม้นท์เคราติน',
-      staff_name: 'ช่างแนน (Color Specialist)',
-      branch_name: 'สาขาสยามสแควร์',
-      start_time: `${selectedDate}T13:30:00`,
-      end_time: `${selectedDate}T15:30:00`,
-      total_price: 2500,
-      deposit_amount: 500,
+      customer_name: 'ขวัญ',
+      customer_phone: '',
+      customer_line_id: '',
+      service_title: 'บริการทั่วไป (Standard Service)',
+      staff_name: '',
+      staff_nickname: '',
+      branch_name: 'สาขาหลัก',
+      branch_count: 1,
+      start_time: `${selectedDate}T15:30:00`,
+      end_time: `${selectedDate}T16:30:00`,
+      deposit_amount: 50,
+      total_price: 500,
       status: 'confirmed',
-      slip_trans_ref: '2026082713159988',
-      paid_at: '13:12 น.',
+      notes: 'ลูกค้าโทรจอง / หน้าร้าน',
     },
     {
       id: 'demo-3',
-      customer_name: 'คุณชลธิชา',
-      customer_phone: '095-555-8888',
-      service_title: 'ดัดผมดิจิตอลลอนเกาหลี',
-      staff_name: 'ช่างเอก (Master Stylist)',
-      branch_name: 'สาขาสยามสแควร์',
-      start_time: `${selectedDate}T16:00:00`,
-      end_time: `${selectedDate}T18:00:00`,
-      total_price: 3200,
-      deposit_amount: 500,
-      status: 'pending_payment',
-      slip_trans_ref: null,
-      paid_at: null,
+      customer_name: 'กรกต',
+      customer_phone: '',
+      customer_line_id: '',
+      service_title: 'บริการทั่วไป (Standard Service)',
+      staff_name: 'ช่างประจำร้าน (Master Specialist)',
+      staff_nickname: 'ช่างเอก',
+      branch_name: 'สาขาหลัก',
+      branch_count: 1,
+      start_time: `${selectedDate}T17:30:00`,
+      end_time: `${selectedDate}T18:30:00`,
+      deposit_amount: 50,
+      total_price: 500,
+      status: 'confirmed',
+      notes: 'ลูกค้าโทรจอง / หน้าร้าน',
     },
-    {
-      id: 'demo-4',
-      customer_name: 'คุณวรเมธ',
-      customer_phone: '086-777-1234',
-      service_title: 'ตัดผมชายสไตล์วินเทจ + เซ็ตผม',
-      staff_name: 'ช่างท็อป (Barber Pro)',
-      branch_name: 'สาขาทองหล่อ',
-      start_time: `${selectedDate}T18:30:00`,
-      end_time: `${selectedDate}T19:15:00`,
-      total_price: 450,
-      deposit_amount: 100,
-      status: 'completed',
-      slip_trans_ref: '2026082718104422',
-      paid_at: '18:05 น.',
-    },
-  ])
-
-  const [demoServices] = useState([
-    { id: 's1', title: 'ตัด สระ ไดร์ พรีเมียม', price: 650, deposit: 150, duration: 60, staffCount: 3 },
-    { id: 's2', title: 'ทำสีผมออร์แกนิก + ทรีทเม้นท์', price: 2500, deposit: 500, duration: 120, staffCount: 2 },
-    { id: 's3', title: 'ดัดผมดิจิตอลลอนเกาหลี', price: 3200, deposit: 500, duration: 120, staffCount: 2 },
-    { id: 's4', title: 'ตัดผมชายสไตล์วินเทจ + เซ็ต', price: 450, deposit: 100, duration: 45, staffCount: 3 },
-  ])
-
-  const [demoStaff] = useState([
-    { id: 'st1', nickname: 'ช่างเอก', name: 'เอกราช ภักดี', role: 'Master Specialist', branch: 'สยามสแควร์' },
-    { id: 'st2', nickname: 'ช่างแนน', name: 'นันทนา สุขเกษม', role: 'Color Specialist', branch: 'สยามสแควร์' },
-    { id: 'st3', nickname: 'ช่างท็อป', name: 'วรพล เกียรติสกุล', role: 'Senior Barber', branch: 'ทองหล่อ' },
   ])
 
   const filteredBookings = demoBookings.filter((b) => {
@@ -117,380 +101,406 @@ export default function DemoDashboardPage() {
     setDemoBookings((prev) =>
       prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
     )
-    toast.success(lang === 'th' ? `อัปเดตสถานะคิวเป็น "${newStatus}" เรียบร้อย (โหมดทดลอง)` : `Status updated to ${newStatus}`)
+    if (newStatus === 'completed') {
+      toast.success('บันทึกเข้าใช้บริการเสร็จสิ้นแล้ว! (โหมดทดลอง)')
+    } else if (newStatus === 'cancelled') {
+      toast.error('ยกเลิกคิวนี้เรียบร้อย (โหมดทดลอง)')
+    }
   }
 
   const currentDateObj = new Date(selectedDate)
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased pb-12 transition-colors">
-      
-      {/* Interactive Demo Top Notification Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 text-white px-4 py-2.5 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 font-semibold">
-            <span className="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-bold tracking-wide uppercase">
-              Live Demo
-            </span>
-            <span>{lang === 'th' ? 'หน้าจำลองระบบจัดการคิว Q Flow (ทดลองคลิกใช้งานได้จริง)' : 'Interactive Q Flow Dashboard Demo'}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/glam-studio/book"
-              target="_blank"
-              className="text-indigo-100 hover:text-white underline text-[11px] font-medium"
-            >
-              {lang === 'th' ? 'ลองหน้าจองฝั่งลูกค้า ↗' : 'Try Customer Booking ↗'}
-            </Link>
-            <Link
-              href="/pricing"
-              className="bg-white text-indigo-700 hover:bg-indigo-50 px-3 py-1 rounded-lg font-bold text-xs transition shadow-2xs active:scale-95"
-            >
-              {lang === 'th' ? 'เปิดร้านของคุณเลย' : 'Get Started'}
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased pb-20 sm:pb-6 transition-colors">
 
-      {/* Main Top Header */}
+      {/* Top Navbar matching the exact screenshot */}
       <header className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="inline-flex items-center gap-2 group">
-              <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
+          
+          {/* Logo & Shop Name */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Link href="/" className="inline-flex items-center gap-2 group shrink-0">
+              <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
             </Link>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                  Glam Studio & Salon (Demo)
-                </h1>
-                <span className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 text-[10px] font-bold">
-                  Professional Plan
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden xs:block">
-                {lang === 'th' ? 'ระบบจัดการคิวร้านค้าอัตโนมัติ' : 'Queue Management Dashboard'}
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                Test QC
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <NavbarControls />
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Branch Selector */}
+            <div className="hidden xs:block">
+              <CustomDropdown
+                value={selectedBranchFilter}
+                onChange={(val) => setSelectedBranchFilter(val)}
+                prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                dropdownWidth="w-48"
+                options={[
+                  { value: 'all', label: 'ทุกสาขา', icon: <Building2 className="w-4 h-4 text-indigo-600" /> },
+                ]}
+              />
+            </div>
+
+            {/* External Link */}
             <Link
-              href="/onboarding"
-              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition active:scale-95"
+              href="/glam-studio/book"
+              target="_blank"
+              title="เปิดหน้าจองคิวฝั่งลูกค้า"
+              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-slate-300 dark:border-slate-800 font-semibold flex items-center justify-center transition active:scale-95 shadow-2xs aspect-square shrink-0"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{lang === 'th' ? 'สร้างร้านค้าจริง' : 'Create Shop'}</span>
+              <ExternalLink className="w-4 h-4" />
             </Link>
+
+            {/* User Avatar */}
+            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 flex items-center justify-center aspect-square shadow-2xs">
+              <div className="w-6 h-6 rounded-lg bg-[#06C755] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                <User className="w-3.5 h-3.5" />
+              </div>
+            </div>
           </div>
+
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-8 space-y-6">
-        
-        {/* Metric Cards */}
+      <main className="max-w-7xl mx-auto p-3.5 sm:p-8 space-y-4 sm:space-y-6">
+
+        {/* 4 Metric Cards in 2x2 Grid on mobile (Matching Screenshot exactly) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              {t('todayBookings')}
+              <span>คิวทั้งหมดวันนี้</span>
             </div>
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {demoBookings.length}
             </div>
-            <div className="text-[10px] text-slate-400 mt-1">คิวนัดหมายวันนี้</div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              {t('todayConfirmed')}
+              <span>ยืนยันมัดจำแล้ว</span>
             </div>
             <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
               {todayConfirmed.length}
             </div>
-            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">ตรวจสลิปผ่าน 100%</div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <DollarSign className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-              {t('todayDepositTotal')}
+              <span>ยอดมัดจำวันนี้</span>
             </div>
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               ฿{totalDeposit.toLocaleString()}
             </div>
-            <div className="text-[10px] text-cyan-600 dark:text-cyan-400 mt-1">เงินเข้าบัญชีพร้อมเพย์แล้ว</div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
               <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              {t('shopHours')}
+              <span>เวลาร้านเปิด</span>
             </div>
             <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
-              10:00 - 20:00 น.
+              10:00 - 20:00
             </div>
-            <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">พักเที่ยง 12:00 - 13:00 น.</div>
+            <div className="text-[10px] text-amber-600 dark:text-amber-400 font-normal flex items-center gap-1 mt-0.5">
+              <span>☕ Break 12:00 - 13:00</span>
+            </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5 overflow-x-auto scrollbar-none">
+        {/* Filters & Actions Bar (Matching Screenshot) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-5 rounded-3xl shadow-sm space-y-3">
+          
+          {/* Row 1: Date Navigation Bar */}
+          <div className="flex items-center gap-2 w-full">
+            <button
+              onClick={() => setSelectedDate(format(subDays(currentDateObj, 1), 'yyyy-MM-dd'))}
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition active:scale-95 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex-1 min-w-0">
+              <FormattedDateInput
+                value={selectedDate}
+                onChange={(val) => setSelectedDate(val)}
+                className="w-full text-center"
+              />
+            </div>
+
+            <button
+              onClick={() => setSelectedDate(format(addDays(currentDateObj, 1), 'yyyy-MM-dd'))}
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition active:scale-95 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Row 2: Green "ลงคิวเอง" Button */}
           <button
             type="button"
-            onClick={() => setActiveTab('bookings')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
-              activeTab === 'bookings'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+            onClick={() => setIsManualModalOpen(true)}
+            className="w-full py-2.5 px-4 bg-[#00965e] hover:bg-[#008050] active:scale-98 text-white rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
           >
-            <CalendarIcon className="w-3.5 h-3.5" />
-            <span>{t('tabBookings')} ({demoBookings.length})</span>
+            <PhoneCall className="w-4 h-4" />
+            <span>ลงคิวเอง</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('services')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
-              activeTab === 'services'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>{lang === 'th' ? 'ช่าง และบริการ' : 'Staff & Services'} ({demoServices.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('block-slots')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
-              activeTab === 'block-slots'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>{t('tabBlockSlots')}</span>
-          </button>
+
+          {/* Row 3: Branch / Staff Selector & View Mode Switcher */}
+          <div className="flex items-center gap-2 pt-1">
+            <div className="flex-1">
+              <CustomDropdown
+                value={selectedBranchFilter}
+                onChange={(val) => setSelectedBranchFilter(val)}
+                prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600" />}
+                className="w-full"
+                dropdownWidth="w-48"
+                options={[
+                  { value: 'all', label: 'ทุกสาขา' },
+                ]}
+              />
+            </div>
+
+            <div className="flex-1">
+              <CustomDropdown
+                value={selectedStaffFilter}
+                onChange={(val) => setSelectedStaffFilter(val)}
+                prefixIcon={<Users className="w-3.5 h-3.5 text-indigo-600" />}
+                className="w-full"
+                dropdownWidth="w-48"
+                options={[
+                  { value: 'all', label: 'ช่างทุกคน' },
+                  { value: 'st1', label: 'ช่างเอก' },
+                ]}
+              />
+            </div>
+
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => setBookingsViewMode('timeline')}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                  bookingsViewMode === 'timeline'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setBookingsViewMode('list')}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                  bookingsViewMode === 'list'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Row 4: Status Segmented Filter Bar */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-x-auto">
+            {[
+              { id: 'all', label: 'ทั้งหมด' },
+              { id: 'confirmed', label: 'ยืนยันสลิปแล้ว' },
+              { id: 'pending_payment', label: 'รอตรวจสลิป' },
+              { id: 'completed', label: 'เข้าใช้บริการแล้ว' },
+            ].map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => setStatusFilter(st.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer ${
+                  statusFilter === st.id
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+
         </div>
 
-        {/* TAB 1: BOOKINGS LIST */}
-        {activeTab === 'bookings' && (
-          <div className="space-y-4">
-            
-            {/* Filter Bar */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedDate(format(subDays(currentDateObj, 1), 'yyyy-MM-dd'))}
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 transition"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <div className="px-3.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold">
-                    📅 {format(currentDateObj, 'dd MMMM yyyy', { locale: lang === 'th' ? th : enUS })}
+        {/* Bookings Card List matching Screenshot cards */}
+        <div className="space-y-3">
+          {filteredBookings.map((b) => (
+            <div
+              key={b.id}
+              className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+            >
+              {/* Header: Time, Status Badge & Deposit */}
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-base font-extrabold text-slate-900 dark:text-white">
+                      {b.start_time.slice(11, 16)} - {b.end_time.slice(11, 16)} น.
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80">
+                      ยืนยันสลิปแล้ว
+                    </span>
                   </div>
-                  <button
-                    onClick={() => setSelectedDate(format(addDays(currentDateObj, 1), 'yyyy-MM-dd'))}
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 transition"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-2 flex-wrap">
+                    <span>{b.service_title}</span>
+                    <span className="text-[11px] text-slate-400 font-normal flex items-center gap-1">
+                      <span>🏢 {b.branch_count}</span>
+                      {b.staff_name && (
+                        <span className="bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded text-indigo-700 dark:text-indigo-300 font-medium">
+                          👤 {b.staff_name} ({b.staff_nickname})
+                        </span>
+                      )}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl text-xs font-bold overflow-x-auto">
-                  {[
-                    { id: 'all', label: t('all') },
-                    { id: 'confirmed', label: t('statusConfirmed') },
-                    { id: 'pending_payment', label: t('statusPending') },
-                    { id: 'completed', label: t('statusCompleted') },
-                  ].map((st) => (
-                    <button
-                      key={st.id}
-                      onClick={() => setStatusFilter(st.id)}
-                      className={`px-3 py-1.5 rounded-lg transition shrink-0 cursor-pointer ${
-                        statusFilter === st.id
-                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
+                <div className="text-right shrink-0">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">มัดจำ: </span>
+                  <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                    ฿{b.deposit_amount}
+                  </span>
                 </div>
               </div>
-            </div>
 
-            {/* Bookings Card List */}
-            <div className="space-y-3">
-              {filteredBookings.map((b) => (
-                <div
-                  key={b.id}
-                  className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-bold text-slate-900 dark:text-white">
-                          {b.start_time.slice(11, 16)} - {b.end_time.slice(11, 16)} น.
-                        </span>
-                        <span
-                          className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                            b.status === 'confirmed'
-                              ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
-                              : b.status === 'completed'
-                              ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/80'
-                              : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
-                          }`}
-                        >
-                          {b.status === 'confirmed' && t('statusConfirmed')}
-                          {b.status === 'completed' && t('statusCompleted')}
-                          {b.status === 'pending_payment' && t('statusPending')}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mt-1">
-                        {b.service_title}
-                      </h4>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">
-                        ยอดเต็ม ฿{b.total_price.toLocaleString()}
-                      </div>
-                      <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        มัดจำแล้ว ฿{b.deposit_amount.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="font-semibold text-slate-900 dark:text-white">
-                        👤 {b.customer_name} ({b.customer_phone})
-                      </div>
-                      <div className="text-slate-500">
-                        ✂️ {b.staff_name} • 🏢 {b.branch_name}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {b.status === 'confirmed' && (
-                        <button
-                          onClick={() => handleStatusChange(b.id, 'completed')}
-                          className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
-                        >
-                          {t('markCompleted')}
-                        </button>
-                      )}
-                      {b.status === 'pending_payment' && (
-                        <button
-                          onClick={() => handleStatusChange(b.id, 'confirmed')}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
-                        >
-                          อนุมัติสลิปด้วยตนเอง
-                        </button>
-                      )}
-                    </div>
-                  </div>
+              {/* Inner Customer Gray Card */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-950/70 rounded-2xl space-y-1.5 text-xs border border-slate-100 dark:border-slate-850">
+                <div>
+                  <span className="text-[10px] text-slate-400 block">ลูกค้า</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-xs">{b.customer_name}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div>
+                  <span className="text-[10px] text-slate-400 block">เบอร์โทร</span>
+                  <span className="text-slate-500 font-mono">-</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">LINE ID</span>
+                  <span className="text-slate-500 font-mono">-</span>
+                </div>
+                {b.notes && (
+                  <div className="border-t border-slate-200/60 dark:border-slate-800 pt-1.5 mt-1 text-[11px] text-slate-600 dark:text-slate-400">
+                    หมายเหตุ: {b.notes}
+                  </div>
+                )}
+              </div>
 
-        {/* TAB 2: SERVICES & STAFF */}
-        {activeTab === 'services' && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 rounded-3xl shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-indigo-600" />
-                  <span>ช่างผู้ให้บริการในระบบ ({demoStaff.length} ท่าน)</span>
-                </h3>
+              {/* Bottom Action Buttons (Matching Screenshot) */}
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <button
-                  onClick={() => toast.info('ในระบบจริงสามารถเพิ่ม/ลบ/แก้ไขช่างและเวลาเข้างานได้อิสระ')}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-indigo-600 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700"
+                  type="button"
+                  onClick={() => handleStatusChange(b.id, 'completed')}
+                  className="px-4 py-2 bg-[#008ba3] hover:bg-[#007a8f] active:scale-95 text-white rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
                 >
-                  + เพิ่มช่างใหม่
+                  เข้าบริการเสร็จสิ้น
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(b.id, 'cancelled')}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer"
+                >
+                  ยกเลิกคิว
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {demoStaff.map((st) => (
-                  <div key={st.id} className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">{st.nickname} ({st.name})</div>
-                    <div className="text-[11px] text-indigo-600 font-semibold">{st.role}</div>
-                    <div className="text-[10px] text-slate-500">ประจำสาขา: {st.branch}</div>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 rounded-3xl shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-indigo-600" />
-                  <span>รายการบริการทั้งหมด ({demoServices.length} บริการ)</span>
-                </h3>
-                <button
-                  onClick={() => toast.info('ในระบบจริงสามารถเพิ่ม/ลบ/แก้ไขบริการ และกำหนดยอดมัดจำแยกแต่ละบริการได้')}
-                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold"
-                >
-                  + เพิ่มบริการ
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {demoServices.map((s) => (
-                  <div key={s.id} className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">{s.title}</div>
-                      <div className="text-[11px] text-slate-500">⏱️ {s.duration} นาที • ช่างทำได้ {s.staffCount} ท่าน</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">฿{s.price}</div>
-                      <div className="text-[10px] font-semibold text-emerald-600">มัดจำ ฿{s.deposit}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: BLOCK SLOTS */}
-        {activeTab === 'block-slots' && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center mx-auto">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">ระบบล็อกเวลา / พักเบรก / ปิดรับคิวชั่วคราว</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              เจ้าของร้านสามารถเลือกล็อกเวลาเฉพาะช่าง หรือล็อกทั้งสาขา เช่น เวลาไปทำธุระ หรือพักรับประทานอาหาร เพื่อไม่ให้ลูกค้าจองเข้ามาในช่วงเวลาดังกล่าว
-            </p>
-          </div>
-        )}
-
-        {/* Bottom CTA Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-indigo-500/10">
-          <div className="space-y-1 text-center sm:text-left">
-            <h3 className="text-lg font-bold">พร้อมเริ่มต้นใช้งานกับร้านของคุณแล้วหรือยัง?</h3>
-            <p className="text-xs text-indigo-100">สมัครเปิดร้านฟรีใน 60 วินาที หรือรับแพ็กเกจ Professional พร้อมระบบตรวจสลิปอัตโนมัติ</p>
-          </div>
-          <Link
-            href="/onboarding"
-            className="shrink-0 px-6 py-3 bg-white text-indigo-700 hover:bg-indigo-50 rounded-xl text-xs font-bold shadow-md transition active:scale-95 flex items-center gap-1.5"
-          >
-            <span>เริ่มต้นเปิดร้านค้า</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          ))}
         </div>
 
       </main>
+
+      {/* Bottom Mobile Navigation Bar (Matching Screenshot Exactly) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md px-2 py-1.5 flex items-center justify-around shadow-lg">
+        
+        {/* Tab 1: คิวงาน */}
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="flex flex-col items-center justify-center py-1 px-3 text-indigo-600 font-bold transition cursor-pointer relative"
+        >
+          <div className="relative">
+            <CalendarIcon className="w-5 h-5" />
+            <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-indigo-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
+              3
+            </span>
+          </div>
+          <span className="text-[10px] mt-0.5 leading-tight">คิวงาน</span>
+        </button>
+
+        {/* Tab 2: บล็อกเวลา */}
+        <button
+          type="button"
+          onClick={() => toast.info('ในระบบจริงสามารถล็อคเวลาพักและปิดรับคิวได้อิสระ')}
+          className="flex flex-col items-center justify-center py-1 px-3 text-slate-400 hover:text-slate-700 transition cursor-pointer relative"
+        >
+          <Lock className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 leading-tight">บล็อกเวลา</span>
+        </button>
+
+        {/* Tab 3: ช่าง/บริการ */}
+        <button
+          type="button"
+          onClick={() => toast.info('ในระบบจริงสามารถเพิ่ม/ลบ/แก้ไขช่างและบริการได้')}
+          className="flex flex-col items-center justify-center py-1 px-3 text-slate-400 hover:text-slate-700 transition cursor-pointer relative"
+        >
+          <div className="relative">
+            <Users className="w-5 h-5" />
+            <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-emerald-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
+              1
+            </span>
+          </div>
+          <span className="text-[10px] mt-0.5 leading-tight">ช่าง/บริการ</span>
+        </button>
+
+        {/* Tab 4: ตั้งค่าร้าน */}
+        <Link
+          href="/pricing"
+          className="flex flex-col items-center justify-center py-1 px-3 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+        >
+          <Settings className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 leading-tight">ตั้งค่าร้าน</span>
+        </Link>
+
+      </div>
+
+      {/* Manual Booking Modal in Demo */}
+      {isManualModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <PhoneCall className="w-4 h-4 text-emerald-600" />
+                <span>ลงคิวเอง (โทรจอง / หน้าร้าน)</span>
+              </h3>
+              <button onClick={() => setIsManualModalOpen(false)} className="p-1 rounded-lg text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              ในระบบจริงเจ้าของร้านสามารถลงคิวให้ลูกค้าที่โทรมาจอง หรือเดินเข้ามาหน้าร้าน เพื่อล็อกคิวไม่ให้ชนกับลูกค้าที่จองผ่าน LINE
+            </p>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => {
+                  setIsManualModalOpen(false)
+                  toast.success('จำลองการลงคิวสำเร็จ!')
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl active:scale-95"
+              >
+                ตกลง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
