@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { 
-  Sparkles, 
   CheckCircle2, 
   ArrowRight, 
   Store, 
@@ -162,26 +161,12 @@ function OnboardingContent() {
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <QFlowLogo className="h-7 w-7" />
-            <span className="font-bold text-sm text-slate-900 dark:text-white">Q Flow Merchant Setup</span>
+            <span className="font-bold text-lg text-slate-900 dark:text-white">Q Flow Merchant Setup</span>
           </div>
           <NavbarControls />
-        </div>
-
-        {/* Brand Header */}
-        <div className="text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            {t('onboardingBadge')}
-          </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('onboardingTitle')}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {t('onboardingSubtitle')}
-          </p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -466,7 +451,7 @@ function OnboardingContent() {
           )}
         </AnimatePresence>
 
-        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500">
           Q Flow • 100% Mobile Ready • Auto PromptPay & SlipOK
         </div>
       </div>
