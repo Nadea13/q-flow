@@ -179,22 +179,6 @@ export default function DemoBookPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
-      {/* Top Demo Banner */}
-      <div className="max-w-md w-full mb-3 px-4 py-2 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200/80 dark:border-indigo-800/80 rounded-2xl flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300 shadow-2xs">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 bg-indigo-600 text-white rounded-md text-[10px] font-extrabold tracking-wider uppercase">
-            Demo Mode
-          </span>
-          <span className="font-semibold truncate">หน้าจองคิวจำลอง (ไม่มีการบันทึกข้อมูล)</span>
-        </div>
-        <Link
-          href="/demo/dashboard"
-          className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
-        >
-          ดูหน้าแดชบอร์ด
-        </Link>
-      </div>
-
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
