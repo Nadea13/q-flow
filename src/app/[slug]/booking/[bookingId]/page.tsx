@@ -427,7 +427,10 @@ export default function BookingDetailPage({ params }: PageProps) {
             </div>
 
             {/* Booking Recap */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 shadow-2xs">
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                {t('bookingSummary')}
+              </div>
               <div className="flex justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
@@ -443,15 +446,15 @@ export default function BookingDetailPage({ params }: PageProps) {
                 <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.customer_name} ({booking.customer_phone})</span>
               </div>
               <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
-                <span className="text-amber-600 dark:text-amber-400">{t('depositToPay')}:</span>
-                <span className="text-amber-600 dark:text-amber-400">
+                <span className="text-emerald-600 dark:text-emerald-400">{t('depositToPay')}:</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
                   ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
                 </span>
               </div>
             </div>
 
             {/* PromptPay QR Code Box */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-2xs">
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center space-y-4 shadow-2xs">
               <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                 <ShieldCheck className="w-4 h-4" />
                 {t('scanPromptPay')}
@@ -479,7 +482,7 @@ export default function BookingDetailPage({ params }: PageProps) {
                 const activePromptPayId = booking.branch?.promptpay_id || merchant.promptpay_id
                 const activePromptPayName = booking.branch?.promptpay_name || merchant.promptpay_name || merchant.name
                 return (
-                  <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
                     <div className="text-left">
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                         {t('promptpayNumber')} ({activePromptPayName})
@@ -495,7 +498,7 @@ export default function BookingDetailPage({ params }: PageProps) {
                           setTimeout(() => setCopiedPayId(false), 2000)
                         }
                       }}
-                      className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
+                      className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
                     >
                       {copiedPayId ? (
                         <>
@@ -526,7 +529,7 @@ export default function BookingDetailPage({ params }: PageProps) {
             </div>
 
             {/* Slip Upload & SlipOK Verification Section */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <UploadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -545,7 +548,7 @@ export default function BookingDetailPage({ params }: PageProps) {
               )}
 
               {/* Upload Input Zone */}
-              <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-slate-50/60 dark:bg-slate-950/40 hover:bg-slate-100/80 dark:hover:bg-slate-950/80 transition relative overflow-hidden">
+              <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-850 transition relative overflow-hidden">
                 <input
                   type="file"
                   accept="image/*"
