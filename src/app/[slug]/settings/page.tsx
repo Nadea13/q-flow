@@ -1262,9 +1262,10 @@ export default function SettingsPage({ params }: PageProps) {
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
+              initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: '100%', opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onSubmit={handleSaveBranch}
               className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
@@ -1287,7 +1288,7 @@ export default function SettingsPage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setIsBranchModalOpen(false)}
-                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold cursor-pointer"
                   aria-label="Close"
                 >
                   ✕
@@ -1399,7 +1400,7 @@ export default function SettingsPage({ params }: PageProps) {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60">
+              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60 safe-area-bottom">
                 <button
                   type="button"
                   onClick={() => setIsBranchModalOpen(false)}
@@ -1430,9 +1431,10 @@ export default function SettingsPage({ params }: PageProps) {
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
+              initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: '100%', opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onSubmit={handleCreateNewShop}
               className="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
@@ -1455,7 +1457,7 @@ export default function SettingsPage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setIsNewShopModalOpen(false)}
-                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold cursor-pointer"
                   aria-label="Close"
                 >
                   ✕
@@ -1521,7 +1523,7 @@ export default function SettingsPage({ params }: PageProps) {
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60">
+              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60 safe-area-bottom">
                 <button
                   type="button"
                   onClick={() => setIsNewShopModalOpen(false)}

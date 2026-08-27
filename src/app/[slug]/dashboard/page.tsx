@@ -2007,25 +2007,29 @@ export default function DashboardPage({ params }: PageProps) {
 
       {/* Slip Image Fullscreen Modal */}
       <AnimatePresence>
+        {/* Slip Preview Modal */}
         {selectedSlipUrl && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedSlipUrl(null)}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl"
+              initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: '100%', opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="max-w-md w-full bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 space-y-3 shadow-2xl safe-area-bottom"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-xs font-bold text-slate-900 dark:text-white">{t('viewSlip')}</span>
                 <button
+                  type="button"
                   onClick={() => setSelectedSlipUrl(null)}
-                  className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2033,7 +2037,7 @@ export default function DashboardPage({ params }: PageProps) {
               <img
                 src={selectedSlipUrl}
                 alt="Slip Fullsize"
-                className="w-full max-h-[70vh] object-contain rounded-xl border border-slate-200 dark:border-slate-800"
+                className="w-full max-h-[65vh] object-contain rounded-2xl border border-slate-200 dark:border-slate-800"
               />
             </motion.div>
           </motion.div>
@@ -2047,110 +2051,138 @@ export default function DashboardPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+              initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: '100%', opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onSubmit={handleSaveStaff}
-              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl my-8"
+              className="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <span>{editingStaff.id ? t('editStaffTitle') : t('addNewStaffBtn')}</span>
-              </h3>
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {editingStaff.id ? t('editStaffTitle') : t('addNewStaffBtn')}
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+                      {lang === 'th' ? 'กำหนดข้อมูลช่าง และบริการที่รับผิดชอบ' : 'Staff details & assigned services'}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffName')} *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="เช่น สมศักดิ์ แซ่ตั้ง"
-                    value={editingStaff.name || ''}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffNickname')}</label>
-                  <input
-                    type="text"
-                    placeholder="เช่น ช่างเอก, น้องฟ้า"
-                    value={editingStaff.nickname || ''}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, nickname: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsStaffModalOpen(false)}
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold cursor-pointer"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffRoleTitle')}</label>
-                  <input
-                    type="text"
-                    placeholder="เช่น Senior Stylist, ช่างทำเล็บ"
-                    value={editingStaff.role_title || ''}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, role_title: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                  />
+              {/* Scrollable Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('staffName')} <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="เช่น สมศักดิ์ แซ่ตั้ง"
+                      value={editingStaff.name || ''}
+                      onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffNickname')}</label>
+                    <input
+                      type="text"
+                      placeholder="เช่น ช่างเอก, น้องฟ้า"
+                      value={editingStaff.nickname || ''}
+                      onChange={(e) => setEditingStaff({ ...editingStaff, nickname: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('staffBranch')} *
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('staffRoleTitle')}</label>
+                    <input
+                      type="text"
+                      placeholder="เช่น Senior Stylist, ช่างทำเล็บ"
+                      value={editingStaff.role_title || ''}
+                      onChange={(e) => setEditingStaff({ ...editingStaff, role_title: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('staffBranch')} <span className="text-rose-500">*</span>
+                    </label>
+                    <CustomDropdown
+                      value={editingStaff.branch_id || (branches[0]?.id || '')}
+                      onChange={(val) => setEditingStaff({ ...editingStaff, branch_id: val || null })}
+                      prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                      dropdownWidth="w-full"
+                      className="w-full"
+                      options={branches.map((b) => ({
+                        value: b.id,
+                        label: b.name,
+                        sublabel: b.address || undefined,
+                        icon: <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+                      }))}
+                    />
+                  </div>
+                </div>
+
+                {/* Per-Staff Services Checklist */}
+                <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <label className="text-xs font-bold text-slate-900 dark:text-white block">
+                    {t('staffServices')} (เลือกบริการที่ช่างท่านนี้ทำได้) <span className="text-rose-500">*</span>
                   </label>
-                  <CustomDropdown
-                    value={editingStaff.branch_id || (branches[0]?.id || '')}
-                    onChange={(val) => setEditingStaff({ ...editingStaff, branch_id: val || null })}
-                    prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
-                    dropdownWidth="w-full"
-                    className="w-full"
-                    options={branches.map((b) => ({
-                      value: b.id,
-                      label: b.name,
-                      sublabel: b.address || undefined,
-                      icon: <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
-                    }))}
-                  />
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800 custom-scrollbar">
+                    {services.map((svc) => {
+                      const isChecked = editingStaff.serviceIds?.includes(svc.id)
+                      return (
+                        <label
+                          key={svc.id}
+                          className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white dark:hover:bg-slate-900 cursor-pointer text-xs transition border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const current = editingStaff.serviceIds || []
+                              const next = e.target.checked
+                                ? [...current, svc.id]
+                                : current.filter((id) => id !== svc.id)
+                              setEditingStaff({ ...editingStaff, serviceIds: next })
+                            }}
+                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                          />
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 flex-1">{svc.title}</span>
+                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">฿{Number(svc.price).toLocaleString()}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Per-Staff Services Checklist */}
-              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                <label className="text-xs font-bold text-slate-900 dark:text-white block">
-                  {t('staffServices')} (เลือกบริการที่ช่างท่านนี้ทำได้) *
-                </label>
-                <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800">
-                  {services.map((svc) => {
-                    const isChecked = editingStaff.serviceIds?.includes(svc.id)
-                    return (
-                      <label
-                        key={svc.id}
-                        className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-900 cursor-pointer text-xs transition"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            const current = editingStaff.serviceIds || []
-                            const next = e.target.checked
-                              ? [...current, svc.id]
-                              : current.filter((id) => id !== svc.id)
-                            setEditingStaff({ ...editingStaff, serviceIds: next })
-                          }}
-                          className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                        />
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 flex-1">{svc.title}</span>
-                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">฿{Number(svc.price).toLocaleString()}</span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+              {/* Footer */}
+              <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60 safe-area-bottom">
                 {editingStaff.id ? (
                   <button
                     type="button"
@@ -2160,7 +2192,7 @@ export default function DashboardPage({ params }: PageProps) {
                         setIsStaffModalOpen(false)
                       }
                     }}
-                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition"
+                    className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>{t('delete')}</span>
@@ -2171,15 +2203,16 @@ export default function DashboardPage({ params }: PageProps) {
                   <button
                     type="button"
                     onClick={() => setIsStaffModalOpen(false)}
-                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium active:scale-95 cursor-pointer"
+                    className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 cursor-pointer shadow-2xs transition"
                   >
                     {t('cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 shadow-2xs cursor-pointer"
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs cursor-pointer transition flex items-center gap-1.5"
                   >
-                    {t('save')}
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{t('save')}</span>
                   </button>
                 </div>
               </div>
@@ -2195,103 +2228,139 @@ export default function DashboardPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+              initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: '100%', opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onSubmit={handleSaveService}
-              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl"
+              className="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                {editingService.id ? t('editServiceTitle') : t('addNewServiceBtn')}
-              </h3>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('serviceName')} *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingService.title || ''}
-                  onChange={(e) => setEditingService({ ...editingService, title: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('serviceDesc')}</label>
-                <textarea
-                  rows={2}
-                  value={editingService.description || ''}
-                  onChange={(e) => setEditingService({ ...editingService, description: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('durationMin')} *</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    required
-                    value={editingService.duration_min !== undefined ? editingService.duration_min : 60}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '')
-                      setEditingService({ ...editingService, duration_min: val ? Number(val) : 0 })
-                    }}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                  />
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {editingService.id ? t('editServiceTitle') : t('addNewServiceBtn')}
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+                      {lang === 'th' ? 'กำหนดชื่อ ราคา ระยะเวลา และมัดจำ' : 'Service name, price, duration & deposit'}
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('servicePrice')} *</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    required
-                    value={editingService.price !== undefined ? editingService.price : 0}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '')
-                      setEditingService({ ...editingService, price: val ? Number(val) : 0 })
-                    }}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('serviceDeposit')}</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder={`฿${merchant.default_deposit}`}
-                  value={editingService.deposit_amount !== undefined && editingService.deposit_amount !== null ? editingService.deposit_amount : ''}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '')
-                    setEditingService({ ...editingService, deposit_amount: val ? Number(val) : undefined })
-                  }}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsServiceModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium active:scale-95"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold cursor-pointer"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('serviceName')} <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="เช่น ตัดผม + สระไดร์"
+                    value={editingService.title || ''}
+                    onChange={(e) => setEditingService({ ...editingService, title: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('serviceDesc')}</label>
+                  <textarea
+                    rows={2}
+                    placeholder="รายละเอียดเพิ่มเติมของบริการ..."
+                    value={editingService.description || ''}
+                    onChange={(e) => setEditingService({ ...editingService, description: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('durationMin')} <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      required
+                      value={editingService.duration_min !== undefined ? editingService.duration_min : 60}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '')
+                        setEditingService({ ...editingService, duration_min: val ? Number(val) : 0 })
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('servicePrice')} <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      required
+                      value={editingService.price !== undefined ? editingService.price : 0}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '')
+                        setEditingService({ ...editingService, price: val ? Number(val) : 0 })
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('serviceDeposit')}</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder={`฿${merchant.default_deposit}`}
+                    value={editingService.deposit_amount !== undefined && editingService.deposit_amount !== null ? editingService.deposit_amount : ''}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '')
+                      setEditingService({ ...editingService, deposit_amount: val ? Number(val) : undefined })
+                    }}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60 safe-area-bottom">
+                <button
+                  type="button"
+                  onClick={() => setIsServiceModalOpen(false)}
+                  className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 cursor-pointer shadow-2xs transition"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 shadow-2xs"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs cursor-pointer transition flex items-center gap-1.5"
                 >
-                  {t('save')}
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{t('save')}</span>
                 </button>
               </div>
             </motion.form>
@@ -2304,258 +2373,263 @@ export default function DashboardPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+              initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: '100%', opacity: 0, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onSubmit={handleCreateManualBooking}
-              className="max-w-lg w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 space-y-4 shadow-2xl my-8"
+              className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
                     <PhoneCall className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('manualBookingTitle')}</h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">ลงตารางนัดหมายสำหรับลูกค้าที่โทรจอง หรือจองหน้าร้าน</p>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">{t('manualBookingTitle')}</h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">ลงตารางนัดหมายสำหรับลูกค้าที่โทรจอง หรือจองหน้าร้าน</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsManualBookingModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Branch & Staff Selection (Optional / Multi-Branch) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('selectBranch')}
-                  </label>
-                  <CustomDropdown
-                    value={manualBookingForm.branch_id || ''}
-                    onChange={(val) => {
-                      setManualBookingForm({
-                        ...manualBookingForm,
-                        branch_id: val,
-                        selectedSlot: null,
-                      })
-                    }}
-                    prefixIcon={<Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                    dropdownWidth="w-full"
-                    className="w-full"
-                    options={[
-                      {
-                        value: '',
-                        label: merchant.branch_name || 'สาขาหลัก',
-                        sublabel: 'สาขาเริ่มต้นของร้าน',
-                        icon: <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
-                      },
-                      ...branches.map((b) => ({
-                        value: b.id,
-                        label: b.name,
-                        sublabel: b.address || undefined,
-                        icon: <Building2 className="w-4 h-4 text-slate-400" />,
-                      })),
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('selectStaff')}
-                  </label>
-                  <CustomDropdown
-                    value={manualBookingForm.staff_id || ''}
-                    onChange={(val) => {
-                      setManualBookingForm({
-                        ...manualBookingForm,
-                        staff_id: val,
-                        selectedSlot: null,
-                      })
-                    }}
-                    prefixIcon={<Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                    dropdownWidth="w-full"
-                    className="w-full"
-                    options={[
-                      {
-                        value: '',
-                        label: t('anyStaff'),
-                        sublabel: 'ให้ระบบเลือกช่างที่ว่างให้',
-                        icon: <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
-                      },
-                      ...staffList
-                        .filter((s) => !manualBookingForm.branch_id || s.branch_id === manualBookingForm.branch_id)
-                        .map((s) => ({
-                          value: s.id,
-                          label: s.nickname ? `${s.nickname} (${s.name})` : s.name,
-                          sublabel: s.role_title || undefined,
-                          avatarUrl: s.avatar_url || undefined,
-                          avatarFallback: s.nickname ? s.nickname.charAt(0) : s.name.charAt(0),
+              {/* Scrollable Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                {/* Branch & Staff Selection (Optional / Multi-Branch) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('selectBranch')}
+                    </label>
+                    <CustomDropdown
+                      value={manualBookingForm.branch_id || ''}
+                      onChange={(val) => {
+                        setManualBookingForm({
+                          ...manualBookingForm,
+                          branch_id: val,
+                          selectedSlot: null,
+                        })
+                      }}
+                      prefixIcon={<Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                      dropdownWidth="w-full"
+                      className="w-full"
+                      options={[
+                        {
+                          value: '',
+                          label: merchant.branch_name || 'สาขาหลัก',
+                          sublabel: 'สาขาเริ่มต้นของร้าน',
+                          icon: <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+                        },
+                        ...branches.map((b) => ({
+                          value: b.id,
+                          label: b.name,
+                          sublabel: b.address || undefined,
+                          icon: <Building2 className="w-4 h-4 text-slate-400" />,
                         })),
-                    ]}
+                      ]}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('selectStaff')}
+                    </label>
+                    <CustomDropdown
+                      value={manualBookingForm.staff_id || ''}
+                      onChange={(val) => {
+                        setManualBookingForm({
+                          ...manualBookingForm,
+                          staff_id: val,
+                          selectedSlot: null,
+                        })
+                      }}
+                      prefixIcon={<Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                      dropdownWidth="w-full"
+                      className="w-full"
+                      options={[
+                        {
+                          value: '',
+                          label: t('anyStaff'),
+                          sublabel: 'ให้ระบบเลือกช่างที่ว่างให้',
+                          icon: <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+                        },
+                        ...staffList
+                          .filter((s) => !manualBookingForm.branch_id || s.branch_id === manualBookingForm.branch_id)
+                          .map((s) => ({
+                            value: s.id,
+                            label: s.nickname ? `${s.nickname} (${s.name})` : s.name,
+                            sublabel: s.role_title || undefined,
+                            avatarUrl: s.avatar_url || undefined,
+                            avatarFallback: s.nickname ? s.nickname.charAt(0) : s.name.charAt(0),
+                          })),
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                {/* Service Selection */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('selectService')} <span className="text-rose-500">*</span>
+                  </label>
+                  <CustomDropdown
+                    value={manualBookingForm.service_id || ''}
+                    onChange={(svcId) => {
+                      const s = services.find((x) => x.id === svcId)
+                      setManualBookingForm({
+                        ...manualBookingForm,
+                        service_id: svcId,
+                        deposit_amount: String(s?.deposit_amount ?? merchant.default_deposit ?? 100),
+                        selectedSlot: null,
+                      })
+                    }}
+                    prefixIcon={<Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                    dropdownWidth="w-full"
+                    className="w-full"
+                    placeholder="-- เลือกบริการที่ต้องการ --"
+                    options={services
+                      .filter((s) => {
+                        if (!manualBookingForm.staff_id) return true
+                        const stf = staffList.find((x) => x.id === manualBookingForm.staff_id)
+                        return stf?.staff_services?.some((ss) => ss.service_id === s.id)
+                      })
+                      .map((s) => ({
+                        value: s.id,
+                        label: s.title,
+                        sublabel: `${s.duration_min} นาที • ฿${Number(s.price).toLocaleString()} (มัดจำ ฿${s.deposit_amount ?? 100})`,
+                        icon: <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+                      }))}
                   />
                 </div>
-              </div>
 
-              {/* Service Selection */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {t('selectService')} *
-                </label>
-                <CustomDropdown
-                  value={manualBookingForm.service_id || ''}
-                  onChange={(svcId) => {
-                    const s = services.find((x) => x.id === svcId)
-                    setManualBookingForm({
-                      ...manualBookingForm,
-                      service_id: svcId,
-                      deposit_amount: String(s?.deposit_amount ?? merchant.default_deposit ?? 100),
-                      selectedSlot: null,
-                    })
-                  }}
-                  prefixIcon={<Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                  dropdownWidth="w-full"
-                  className="w-full"
-                  placeholder="-- เลือกบริการที่ต้องการ --"
-                  options={services
-                    .filter((s) => {
-                      if (!manualBookingForm.staff_id) return true
-                      const stf = staffList.find((x) => x.id === manualBookingForm.staff_id)
-                      return stf?.staff_services?.some((ss) => ss.service_id === s.id)
-                    })
-                    .map((s) => ({
-                      value: s.id,
-                      label: s.title,
-                      sublabel: `${s.duration_min} นาที • ฿${Number(s.price).toLocaleString()} (มัดจำ ฿${s.deposit_amount ?? 100})`,
-                      icon: <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
-                    }))}
-                />
-              </div>
-
-              {/* Date Selection */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {t('bookingDate')} *
-                </label>
-                <FormattedDateInput
-                  value={manualBookingForm.date}
-                  onChange={(val) => setManualBookingForm({ ...manualBookingForm, date: val, selectedSlot: null })}
-                />
-              </div>
-
-              {/* Time Slot Selection Grid (Matching Screenshot) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>
-                      {lang === 'th'
-                        ? `เลือกรอบเวลาว่าง (${selectedManualService?.duration_min || 30} นาที)`
-                        : `Select Available Slot (${selectedManualService?.duration_min || 30} mins)`} *
-                    </span>
+                {/* Date Selection */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('bookingDate')} <span className="text-rose-500">*</span>
                   </label>
-                  {manualBookingForm.selectedSlot && (
-                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                      ✓ {manualBookingForm.selectedSlot.displayTime}
-                    </span>
+                  <FormattedDateInput
+                    value={manualBookingForm.date}
+                    onChange={(val) => setManualBookingForm({ ...manualBookingForm, date: val, selectedSlot: null })}
+                  />
+                </div>
+
+                {/* Time Slot Selection Grid (Matching Screenshot) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>
+                        {lang === 'th'
+                          ? `เลือกรอบเวลาว่าง (${selectedManualService?.duration_min || 30} นาที)`
+                          : `Select Available Slot (${selectedManualService?.duration_min || 30} mins)`} <span className="text-rose-500">*</span>
+                      </span>
+                    </label>
+                    {manualBookingForm.selectedSlot && (
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                        ✓ {manualBookingForm.selectedSlot.displayTime}
+                      </span>
+                    )}
+                  </div>
+
+                  {manualSlots.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-rose-500 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-200 dark:border-rose-900/60">
+                      {merchant.closed_days?.includes(new Date(manualBookingForm.date).getDay())
+                        ? 'ร้านปิดทำการในวันนี้ (วันหยุดประจำสัปดาห์)'
+                        : 'ไม่มีรอบเวลาว่างในวันที่เลือก'}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-1.5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40 custom-scrollbar">
+                      {manualSlots.map((slot) => {
+                        const isSelected = manualBookingForm.selectedSlot?.startTime === slot.startTime
+
+                        if (!slot.isAvailable) {
+                          return (
+                            <div
+                              key={slot.startTime}
+                              className="p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40 text-center opacity-40 cursor-not-allowed select-none flex flex-col items-center justify-center min-h-[48px]"
+                            >
+                              <p className="text-xs font-semibold text-slate-400 dark:text-slate-600 line-through">
+                                {slot.displayTime}
+                              </p>
+                              {slot.reason && (
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-full">
+                                  {slot.reason}
+                                </p>
+                              )}
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <button
+                            key={slot.startTime}
+                            type="button"
+                            onClick={() => setManualBookingForm({ ...manualBookingForm, selectedSlot: slot })}
+                            className={`p-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center min-h-[48px] cursor-pointer ${isSelected
+                              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/20'
+                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30'
+                              }`}
+                          >
+                            <span className="text-xs font-semibold">{slot.displayTime}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
 
-                {manualSlots.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-rose-500 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-200 dark:border-rose-900/60">
-                    {merchant.closed_days?.includes(new Date(manualBookingForm.date).getDay())
-                      ? 'ร้านปิดทำการในวันนี้ (วันหยุดประจำสัปดาห์)'
-                      : 'ไม่มีรอบเวลาว่างในวันที่เลือก'}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40">
-                    {manualSlots.map((slot) => {
-                      const isSelected = manualBookingForm.selectedSlot?.startTime === slot.startTime
+                {/* Customer Name */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('customer')} (ชื่อลูกค้า) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="เช่น คุณสมศรี (โทรจอง)"
+                    value={manualBookingForm.customer_name}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_name: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </div>
 
-                      if (!slot.isAvailable) {
-                        return (
-                          <div
-                            key={slot.startTime}
-                            className="p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40 text-center opacity-40 cursor-not-allowed select-none flex flex-col items-center justify-center min-h-[48px]"
-                          >
-                            <p className="text-xs font-semibold text-slate-400 dark:text-slate-600 line-through">
-                              {slot.displayTime}
-                            </p>
-                            {slot.reason && (
-                              <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-full">
-                                {slot.reason}
-                              </p>
-                            )}
-                          </div>
-                        )
-                      }
-
-                      return (
-                        <button
-                          key={slot.startTime}
-                          type="button"
-                          onClick={() => setManualBookingForm({ ...manualBookingForm, selectedSlot: slot })}
-                          className={`p-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center min-h-[48px] ${isSelected
-                            ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/20'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30'
-                            }`}
-                        >
-                          <span className="text-xs font-semibold">{slot.displayTime}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Customer Name */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {t('customer')} (ชื่อลูกค้า) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น คุณสมศรี (โทรจอง)"
-                  value={manualBookingForm.customer_name}
-                  onChange={(e) => setManualBookingForm({ ...manualBookingForm, customer_name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                />
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {t('notes')} / บันทึกเพิ่มเติม (ถ้ามี)
-                </label>
-                <input
-                  type="text"
-                  placeholder="เช่น ลูกค้าโทรจอง, ขอช่างพี่เอก, ชำระเงินสดหน้าร้าน"
-                  value={manualBookingForm.notes}
-                  onChange={(e) => setManualBookingForm({ ...manualBookingForm, notes: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                />
+                {/* Notes */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    {t('notes')} / บันทึกเพิ่มเติม (ถ้ามี)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="เช่น ลูกค้าโทรจอง, ขอช่างพี่เอก, ชำระเงินสดหน้าร้าน"
+                    value={manualBookingForm.notes}
+                    onChange={(e) => setManualBookingForm({ ...manualBookingForm, notes: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60 safe-area-bottom">
                 <button
                   type="button"
                   onClick={() => setIsManualBookingModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-95 transition"
+                  className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 transition cursor-pointer shadow-2xs"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs transition flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>{t('createBookingBtn')}</span>
