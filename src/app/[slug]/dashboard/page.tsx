@@ -331,6 +331,20 @@ export default function DashboardPage({ params }: PageProps) {
     await loadDashboardData()
   }
 
+  // Handle LINE Login on Desktop / Web
+  const [loggingInWithLine, setLoggingInWithLine] = useState(false)
+  async function handleLineLogin() {
+    try {
+      setLoggingInWithLine(true)
+      const { loginWithLine } = await import('@/lib/liff')
+      await loginWithLine()
+    } catch (err: unknown) {
+      setLoggingInWithLine(false)
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error('ไม่สามารถเปิดหน้า LINE Login ได้: ' + msg)
+    }
+  }
+
   // Handle Logout
   async function handleLogout() {
     await logoutMerchantAction(slug)
@@ -590,16 +604,47 @@ export default function DashboardPage({ params }: PageProps) {
                   {t('loading')}
                 </span>
               ) : (
-                lang === 'th' ? 'เข้าสู่ระบบหลังบ้าน' : 'Access Dashboard'
+                lang === 'th' ? 'เข้าสู่ระบบด้วยรหัส PIN' : 'Sign in with PIN'
               )}
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+          {/* Divider */}
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+            <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              {lang === 'th' ? 'หรือ' : 'OR'}
+            </span>
+            <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+          </div>
+
+          {/* LINE Login Button (Optimized for Web / Desktop) */}
+          <button
+            type="button"
+            onClick={handleLineLogin}
+            disabled={loggingInWithLine}
+            className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] active:bg-[#049f43] text-white font-bold rounded-2xl transition shadow-md shadow-[#06C755]/20 active:scale-98 cursor-pointer text-sm flex items-center justify-center gap-2.5 disabled:opacity-50"
+          >
+            {loggingInWithLine ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>กำลังเชื่อมต่อ LINE...</span>
+              </span>
+            ) : (
+              <>
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.035 9.608.391.082.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.573-3.844 2.573-5.292z" />
+                </svg>
+                <span>{lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Log in with LINE'}</span>
+              </>
+            )}
+          </button>
+
+          <div className="pt-2 text-center">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
               {lang === 'th'
-                ? 'หรือเปิดผ่านแอป LINE เพื่อเข้าสู่ระบบอัตโนมัติ'
-                : 'Or open via LINE app to sign in automatically'}
+                ? 'เข้าสู่ระบบสะดวกด้วยการสแกน QR Code ผ่านแอป LINE บนมือถือ'
+                : 'Scan QR code with your LINE app to log in instantly'}
             </p>
           </div>
         </motion.div>
@@ -661,8 +706,7 @@ export default function DashboardPage({ params }: PageProps) {
               </Link>
             )}
             <div className="min-w-0">
-              <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs">{merchant.name}</h1>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate hidden xs:block">{t('dashboardTitle')}</p>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs">{merchant.name}</h1>
             </div>
           </div>
 

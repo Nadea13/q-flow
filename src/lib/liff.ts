@@ -48,3 +48,24 @@ export async function initLiff(): Promise<{ success: boolean; profile?: LiffProf
     return { success: false, error: errorMsg }
   }
 }
+
+/**
+ * Triggers LINE Login via LIFF SDK (Opens LINE QR / Web Login on Desktop or App on Mobile)
+ */
+export async function loginWithLine(redirectUri?: string): Promise<void> {
+  if (typeof window === 'undefined') return
+
+  const liffId = process.env.NEXT_PUBLIC_LINE_LIFF_ID
+  if (!liffId) {
+    throw new Error('NEXT_PUBLIC_LINE_LIFF_ID not configured')
+  }
+
+  if (!isInitialized) {
+    await liff.init({ liffId })
+    isInitialized = true
+  }
+
+  if (!liff.isLoggedIn()) {
+    liff.login({ redirectUri: redirectUri || window.location.href })
+  }
+}
