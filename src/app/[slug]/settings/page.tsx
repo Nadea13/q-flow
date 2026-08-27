@@ -517,9 +517,9 @@ export default function SettingsPage({ params }: PageProps) {
                 <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
               </Link>
             )}
-            <div className="min-w-0">
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px] sm:max-w-xs">{merchant.name}</h1>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate block">{lang === 'th' ? 'การตั้งค่า & แพ็กเกจ' : 'Settings & Billing'}</p>
+            <div className="min-w-0 flex flex-col justify-center">
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight leading-tight truncate max-w-[130px] sm:max-w-xs">{merchant.name}</h1>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight truncate mt-0.5">{lang === 'th' ? 'การตั้งค่า & แพ็กเกจ' : 'Settings & Billing'}</p>
             </div>
           </div>
 
