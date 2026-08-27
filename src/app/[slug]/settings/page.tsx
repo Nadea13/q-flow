@@ -1235,6 +1235,15 @@ export default function SettingsPage({ params }: PageProps) {
             </div>
           </div>
         )}
+
+        {/* Powered by Q Flow Footer */}
+        <div className="flex justify-center items-center pt-4 pb-2 sm:pb-0">
+          <div
+            className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
+          >
+            Powered by Q Flow
+          </div>
+        </div>
       </main>
 
       {/* Branch Add/Edit Modal */}
