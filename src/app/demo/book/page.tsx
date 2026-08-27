@@ -29,12 +29,12 @@ import type { TimeSlotOption } from '@/types/database'
 // Demo Mock Data
 const DEMO_MERCHANT = {
   id: 'demo-merchant-id',
-  name: 'Barber & Spa Studio (Demo)',
+  name: 'Barber & Spa Studio',
   slug: 'demo',
   logo_url: '',
   phone: '0812345678',
   promptpay_id: '0812345678',
-  promptpay_name: 'บริษัท คิวโฟลว์ เดโม จำกัด',
+  promptpay_name: 'บริษัท คิวโฟลว์ จำกัด',
   default_deposit: 100,
   open_time: '10:00:00',
   close_time: '20:00:00',
@@ -136,9 +136,9 @@ export default function DemoBookPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlotOption | null>(null)
 
   // Customer form state
-  const [customerName, setCustomerName] = useState('คุณสมชาย (ลูกค้าทดลอง)')
+  const [customerName, setCustomerName] = useState('คุณสมชาย')
   const [customerPhone, setCustomerPhone] = useState('089-123-4567')
-  const [customerLineId, setCustomerLineId] = useState('somchai_demo')
+  const [customerLineId, setCustomerLineId] = useState('somchai_qflow')
   const [customerNotes, setCustomerNotes] = useState('ขอช่างที่เชี่ยวชาญทรงผมสั้น')
 
   // Confirmation / Payment step states
@@ -617,13 +617,13 @@ export default function DemoBookPage() {
                   type="submit"
                   className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
                 >
-                  <span>{t('confirmAndPayBtn')} (จำลองการจอง)</span>
+                  <span>{t('confirmAndPayBtn')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </motion.form>
             )}
 
-            {/* STEP 4: DEMO CONFIRMATION & SLIP VERIFICATION PAGE */}
+            {/* STEP 4: CONFIRMATION & SLIP VERIFICATION PAGE */}
             {step === 4 && selectedService && selectedSlot && (
               <motion.div
                 key="step4"
@@ -648,7 +648,7 @@ export default function DemoBookPage() {
                   </h2>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
                     {isPaidSuccess
-                      ? 'ระบบจำลองการตรวจสลิปและยืนยันคิวเรียบร้อย พร้อมส่ง LINE แจ้งเตือนลูกค้าและช่าง'
+                      ? 'ระบบตรวจสลิปและยืนยันคิวเรียบร้อย พร้อมส่ง LINE แจ้งเตือนลูกค้าและช่าง'
                       : 'สแกน QR Code พร้อมเพย์เพื่อชำระเงินมัดจำ'}
                   </p>
                 </div>
@@ -694,12 +694,12 @@ export default function DemoBookPage() {
                       {isVerifying ? (
                         <span className="flex items-center gap-2">
                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>กำลังจำลองการตรวจสลิปด้วย AI...</span>
+                          <span>กำลังตรวจสอบสลิปด้วย AI...</span>
                         </span>
                       ) : (
                         <>
                           <UploadCloud className="w-4 h-4" />
-                          <span>จำลองการแนบสลิป & ยืนยันชำระเงิน</span>
+                          <span>แนบสลิป & ยืนยันชำระเงิน</span>
                         </>
                       )}
                     </button>
@@ -710,7 +710,7 @@ export default function DemoBookPage() {
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 text-xs shadow-2xs">
                   <div className="flex justify-between">
                     <span className="text-slate-500 dark:text-slate-400">รหัสการจอง:</span>
-                    <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">#DEMO-8899</span>
+                    <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">#BK-8899</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500 dark:text-slate-400">ชื่อลูกค้า:</span>
@@ -741,17 +741,17 @@ export default function DemoBookPage() {
                       setStep(1)
                       setIsPaidSuccess(false)
                       setSelectedSlot(null)
-                      toast.info('รีเซ็ตหน้าจองคิวจำลองเรียบร้อย')
+                      toast.info('รีเซ็ตหน้าจองคิวเรียบร้อย')
                     }}
                     className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
                   >
-                    ลองจองคิวใหม่อีกรอบ (Reset Demo)
+                    จองคิวใหม่อีกรอบ (New Booking)
                   </button>
                   <Link
                     href="/demo/dashboard"
                     className="w-full py-2.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-300 font-bold rounded-xl text-xs text-center border border-indigo-200/60 dark:border-indigo-800/60 transition"
                   >
-                    ไปดูมุมมองหลังร้านใน Demo Dashboard →
+                    ไปที่หน้าแดชบอร์ดหลังร้าน →
                   </Link>
                 </div>
               </motion.div>

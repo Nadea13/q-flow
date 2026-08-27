@@ -376,7 +376,7 @@ export default function Home() {
                 })}
               </div>
 
-              {/* Demo Action Button for specific tab */}
+              {/* Action Button for specific tab */}
               <div className="flex justify-center pt-2">
                 {howItWorksTab === 'merchant' ? (
                   <Link
@@ -384,7 +384,7 @@ export default function Home() {
                     className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition active:scale-95 group"
                   >
                     <Store className="w-4 h-4" />
-                    <span>{lang === 'th' ? 'ทดลองใช้งานแดชบอร์ดหลังร้าน (Demo Dashboard)' : 'Try Merchant Dashboard Demo'}</span>
+                    <span>{lang === 'th' ? 'ดูแดชบอร์ดหลังร้าน (Dashboard)' : 'View Merchant Dashboard'}</span>
                     <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 ) : (
@@ -393,7 +393,7 @@ export default function Home() {
                     className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition active:scale-95 group"
                   >
                     <Smartphone className="w-4 h-4" />
-                    <span>{lang === 'th' ? 'ทดลองจองคิวมุมมองลูกค้า (Demo Booking)' : 'Try Customer Booking Demo'}</span>
+                    <span>{lang === 'th' ? 'ดูหน้าจองคิวลูกค้า (Booking)' : 'View Customer Booking'}</span>
                     <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 )}
