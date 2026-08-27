@@ -306,26 +306,30 @@ export async function uploadMerchantLogoAction(formData: FormData) {
 
   let logoPublicUrl: string | null = null
 
-  // 1. Try upload to Cloudflare R2
-  const { uploadToCloudflareR2 } = await import('@/lib/cloudflare-r2')
-  const r2Res = await uploadToCloudflareR2(fileBuffer, `logo_${file.name}`, file.type || 'image/jpeg')
+  // Upload to Supabase Storage 'logos' bucket
+  const fileExt = file.name.split('.').pop() || 'jpg'
+  const filePath = `${merchantId}_${Date.now()}.${fileExt}`
 
-  if (r2Res.success && r2Res.url) {
-    logoPublicUrl = r2Res.url
+  const { error: uploadError } = await supabase.storage
+    .from('logos')
+    .upload(filePath, fileBuffer, {
+      contentType: file.type || 'image/jpeg',
+      upsert: true,
+    })
+
+  if (!uploadError) {
+    const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(filePath)
+    logoPublicUrl = publicUrlData?.publicUrl || null
   } else {
-    // 2. Fallback to Supabase Storage
-    const fileExt = file.name.split('.').pop() || 'jpg'
-    const filePath = `logos/${merchantId}_${Date.now()}.${fileExt}`
-
-    const { error: uploadError } = await supabase.storage
+    // Fallback: try uploading to 'slips' bucket if 'logos' fails
+    const { error: fallbackError } = await supabase.storage
       .from('slips')
-      .upload(filePath, fileBuffer, {
+      .upload(`logos/${filePath}`, fileBuffer, {
         contentType: file.type || 'image/jpeg',
         upsert: true,
       })
-
-    if (!uploadError) {
-      const { data: publicUrlData } = supabase.storage.from('slips').getPublicUrl(filePath)
+    if (!fallbackError) {
+      const { data: publicUrlData } = supabase.storage.from('slips').getPublicUrl(`logos/${filePath}`)
       logoPublicUrl = publicUrlData?.publicUrl || null
     }
   }
