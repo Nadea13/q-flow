@@ -128,6 +128,17 @@ export default function BookingPage({ params }: PageProps) {
 
     loadShop()
 
+    // 1.1 Load cached customer info from localStorage
+    try {
+      const savedInfo = localStorage.getItem('qflow_customer_info')
+      if (savedInfo) {
+        const parsed = JSON.parse(savedInfo)
+        if (parsed.name) setCustomerName(parsed.name)
+        if (parsed.phone) setCustomerPhone(parsed.phone)
+        if (parsed.lineId) setCustomerLineId(parsed.lineId)
+      }
+    } catch { }
+
     // Try to auto-fill LINE Profile via LIFF
     async function checkLiff() {
       try {
@@ -135,8 +146,8 @@ export default function BookingPage({ params }: PageProps) {
         const res = await initLiff()
         if (res.success && res.profile) {
           setLineCustomerProfile(res.profile)
-          if (res.profile.displayName) setCustomerName(res.profile.displayName)
-          if (res.profile.userId) setCustomerLineId(res.profile.userId)
+          if (res.profile.displayName) setCustomerName((prev) => prev || res.profile?.displayName || '')
+          if (res.profile.userId) setCustomerLineId((prev) => prev || res.profile?.userId || '')
         }
       } catch {
         // LIFF fallback
@@ -181,6 +192,18 @@ export default function BookingPage({ params }: PageProps) {
 
     setSubmitting(true)
     setErrorMessage(null)
+
+    // Save customer contact info in localStorage for future bookings
+    try {
+      localStorage.setItem(
+        'qflow_customer_info',
+        JSON.stringify({
+          name: customerName,
+          phone: customerPhone,
+          lineId: customerLineId,
+        })
+      )
+    } catch { }
 
     const res = await createBookingAction({
       merchantSlug: slug,
