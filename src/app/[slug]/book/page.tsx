@@ -231,66 +231,65 @@ export default function BookingPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 transition-colors">
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {step > 1 && (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+        
+        {/* Header (Matching Onboarding & Checkout Layout) */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {step > 1 ? (
               <button
+                type="button"
                 onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95"
+                className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-            )}
-            <div>
-              <div className="flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <h1 className="text-sm font-bold text-slate-900 dark:text-white">{merchant.name}</h1>
+            ) : (
+              <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+                <Store className="h-5 w-5" />
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)}
+            )}
+            <div className="min-w-0">
+              <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
+                {merchant.name}
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
                 {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
-                  <span className="text-amber-600 dark:text-amber-400 ml-1.5 font-medium">
+                  <span className="text-amber-600 dark:text-amber-400 ml-1">
                     (Break {merchant.break_start_time.slice(0, 5)}-{merchant.break_end_time.slice(0, 5)})
                   </span>
                 )}
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <NavbarControls />
-            <span className="text-[10px] font-bold tracking-wider text-indigo-600 dark:text-indigo-400 uppercase hidden sm:inline">
-              {t('stepOf', { step })}
-            </span>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-200 dark:bg-slate-800 h-1">
-          <div
-            className="bg-indigo-600 dark:bg-indigo-500 h-1 transition-all duration-300"
-            style={{ width: `${(step / 3) * 100}%` }}
-          />
+        {/* Progress Bar & Step Subtitle */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span className="text-slate-800 dark:text-slate-200">
+              {step === 1 && t('step1Title')}
+              {step === 2 && t('step2Title')}
+              {step === 3 && t('step3Title')}
+            </span>
+            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+              {t('stepOf', { step })}
+            </span>
+          </div>
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all duration-300"
+              style={{ width: `${(step / 3) * 100}%` }}
+            />
+          </div>
         </div>
-      </header>
 
-      <main className="max-w-xl mx-auto px-4 pt-6">
-        {/* Step Indicator Header */}
-        <div className="mb-5">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {step === 1 && t('step1Title')}
-            {step === 2 && t('step2Title')}
-            {step === 3 && t('step3Title')}
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {step === 1 && t('step1Subtitle')}
-            {step === 2 && t('step2Subtitle')}
-            {step === 3 && t('step3Subtitle')}
-          </p>
-        </div>
+        <main className="w-full">
 
         <AnimatePresence mode="wait">
           {/* STEP 1: BRANCH, STAFF & SERVICE SELECTION */}
@@ -762,6 +761,7 @@ export default function BookingPage({ params }: PageProps) {
           )}
         </AnimatePresence>
       </main>
+      </div>
     </div>
   )
 }
