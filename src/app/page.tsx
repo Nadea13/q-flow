@@ -158,13 +158,10 @@ export default function Home() {
       <nav className="border-b border-slate-200/80 dark:border-slate-850/80 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <QFlowLogo className="h-9 w-9 group-hover:scale-105 transition-transform" />
+            <QFlowLogo className="h-9 w-9 transition-transform" />
             <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                 {t('appName')}
-              </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium -mt-1 tracking-wide">
-                Smart Queue & Auto-Slip
               </span>
             </div>
           </Link>
@@ -201,7 +198,7 @@ export default function Home() {
               href="/onboarding"
               className="text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white px-3.5 sm:px-4 py-2 rounded-xl shadow-sm shadow-indigo-600/20 transition-all flex items-center gap-1.5"
             >
-              <span>{t('openShop60s')}</span>
+              <span>{t('openShopNow')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -339,43 +336,68 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              className="space-y-8"
             >
-              {(howItWorksTab === 'merchant' ? merchantSteps : customerSteps).map((item, idx) => {
-                const IconComponent = item.icon
-                return (
-                  <div
-                    key={idx}
-                    className="p-6 sm:p-7 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-2xs relative hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                          <IconComponent className="w-5 h-5" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(howItWorksTab === 'merchant' ? merchantSteps : customerSteps).map((item, idx) => {
+                  const IconComponent = item.icon
+                  return (
+                    <div
+                      key={idx}
+                      className="p-6 sm:p-7 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-2xs relative hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                            <IconComponent className="w-5 h-5" />
+                          </div>
+                          <span className="font-mono text-2xl font-extrabold text-slate-300 dark:text-slate-700">
+                            {item.step}
+                          </span>
                         </div>
-                        <span className="font-mono text-2xl font-extrabold text-slate-300 dark:text-slate-700">
-                          {item.step}
+
+                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-1">
+                          {item.badge}
                         </span>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                          {item.desc}
+                        </p>
                       </div>
 
-                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-1">
-                        {item.badge}
-                      </span>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                        {item.desc}
-                      </p>
+                      <div className="pt-5 mt-5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                        <span>{lang === 'th' ? `สเต็ปที่ ${idx + 1}` : `Step ${idx + 1}`}</span>
+                        <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </div>
                     </div>
+                  )
+                })}
+              </div>
 
-                    <div className="pt-5 mt-5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                      <span>{lang === 'th' ? `สเต็ปที่ ${idx + 1}` : `Step ${idx + 1}`}</span>
-                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                    </div>
-                  </div>
-                )
-              })}
+              {/* Demo Action Button for specific tab */}
+              <div className="flex justify-center pt-2">
+                {howItWorksTab === 'merchant' ? (
+                  <Link
+                    href="/demo/dashboard"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition active:scale-95 group"
+                  >
+                    <Store className="w-4 h-4" />
+                    <span>{lang === 'th' ? 'ทดลองใช้งานแดชบอร์ดหลังร้าน (Demo Dashboard)' : 'Try Merchant Dashboard Demo'}</span>
+                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                ) : (
+                  <Link
+                    href="/demo/book"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition active:scale-95 group"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span>{lang === 'th' ? 'ทดลองจองคิวมุมมองลูกค้า (Demo Booking)' : 'Try Customer Booking Demo'}</span>
+                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -566,7 +588,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4 text-[11px]">
-            <Link href="/onboarding" className="hover:text-indigo-600 dark:hover:text-indigo-400">{t('openShop60s')}</Link>
+            <Link href="/onboarding" className="hover:text-indigo-600 dark:hover:text-indigo-400">{t('openShopNow')}</Link>
             <Link href="/glam-studio/book" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Booking</Link>
             <Link href="/glam-studio/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Dashboard</Link>
           </div>
