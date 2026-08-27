@@ -762,18 +762,19 @@ export default function BookingPage({ params }: PageProps) {
           )}
         </AnimatePresence>
       </main>
-      </div>
 
-      {/* Powered by Q Flow Footer */}
-      <footer className="mt-4 text-center">
+      {/* Powered by Q Flow Footer inside card (Matching Onboarding) */}
+      <div className="text-center border-t border-slate-100 dark:border-slate-800/80">
         <Link
           href="/"
           target="_blank"
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
+          className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
         >
           powered by Q Flow
         </Link>
-      </footer>
+      </div>
+
+      </div>
     </div>
   )
 }
