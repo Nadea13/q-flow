@@ -210,7 +210,7 @@ export const translations = {
     serviceDeposit: 'ยอดเงินมัดจำ (เว้นว่างเพื่อใช้ค่าเริ่มต้นของร้าน)',
 
     // Settings Tab
-    shopSettingsTitle: 'ตั้งค่าร้านค้า & วันหยุดประจำสัปดาห์',
+    shopSettingsTitle: 'ตั้งค่าร้านค้า & สาขา',
     shopLogoLabel: 'รูปโปรไฟล์ / โลโก้ร้านค้า',
     uploadLogoBtn: 'เปลี่ยนรูปโปรไฟล์',
     uploadingLogo: 'กำลังอัปโหลด...',
@@ -438,7 +438,7 @@ export const translations = {
     serviceDeposit: 'Deposit (Leave blank for shop default)',
 
     // Settings Tab
-    shopSettingsTitle: 'Shop Settings & Weekly Closed Days',
+    shopSettingsTitle: 'Shop & Branches',
     shopLogoLabel: 'Shop Profile / Logo',
     uploadLogoBtn: 'Change Profile Picture',
     uploadingLogo: 'Uploading...',

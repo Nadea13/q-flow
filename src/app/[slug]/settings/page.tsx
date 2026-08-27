@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Clock,
-  ExternalLink,
   Settings,
   Sparkles,
   Coffee,
@@ -27,7 +26,9 @@ import {
   User,
   Share2,
   Camera,
-  Upload
+  Upload,
+  Copy,
+  Check
 } from 'lucide-react'
 import { QFlowLogo } from '@/components/QFlowLogo'
 import { format } from 'date-fns'
@@ -518,8 +519,7 @@ export default function SettingsPage({ params }: PageProps) {
               </Link>
             )}
             <div className="min-w-0 flex flex-col justify-center">
-              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight leading-tight truncate max-w-[130px] sm:max-w-xs">{merchant.name}</h1>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight truncate mt-0.5">{lang === 'th' ? 'การตั้งค่า & แพ็กเกจ' : 'Settings & Billing'}</p>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight truncate max-w-[130px] sm:max-w-xs">{merchant.name}</h1>
             </div>
           </div>
 
@@ -534,16 +534,26 @@ export default function SettingsPage({ params }: PageProps) {
               <span className="hidden xs:inline">{lang === 'th' ? 'แดชบอร์ด' : 'Dashboard'}</span>
             </Link>
 
-            {/* External Customer Booking Link (1:1 Aspect Ratio - Matches Dropdown height) */}
-            <Link
-              href={`/${slug}/book`}
-              target="_blank"
-              aria-label={t('openCustomerBooking')}
-              title={t('openCustomerBooking')}
-              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-slate-300 dark:border-slate-800 font-semibold flex items-center justify-center transition active:scale-95 shadow-2xs aspect-square shrink-0"
+            {/* Copy Customer Booking Link Button (1:1 Aspect Ratio - Matches Dropdown height) */}
+            <button
+              type="button"
+              onClick={() => {
+                const bookUrl = `${window.location.origin}/${slug}/book`
+                navigator.clipboard.writeText(bookUrl)
+                setCopiedLink(true)
+                toast.success(lang === 'th' ? 'คัดลอกลิงก์จองคิวเรียบร้อยแล้ว!' : 'Booking link copied to clipboard!')
+                setTimeout(() => setCopiedLink(false), 2000)
+              }}
+              aria-label={lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link'}
+              title={copiedLink ? (lang === 'th' ? 'คัดลอกแล้ว!' : 'Copied!') : (lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link')}
+              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-2xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${
+                copiedLink
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
+                  : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border-slate-300 dark:border-slate-800'
+              }`}
             >
-              <ExternalLink className="w-4 h-4" />
-            </Link>
+              {copiedLink ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            </button>
 
             {/* Profile Dropdown Menu (1:1 Aspect Ratio - Matches Dropdown height) */}
             <div className="relative shrink-0" ref={userMenuRef}>
@@ -721,7 +731,7 @@ export default function SettingsPage({ params }: PageProps) {
         {/* TAB 1: SHOP & BRANCH SETTINGS */}
         {activeTab === 'shop' && (
           <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 space-y-6 w-full shadow-2xs">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -897,7 +907,7 @@ export default function SettingsPage({ params }: PageProps) {
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{t('noBranchesYet')}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {branches.map((b) => {
                       const branchStaffCount = staffList.filter((s) => s.branch_id === b.id).length
                       return (

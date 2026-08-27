@@ -12,7 +12,6 @@ import {
   Plus,
   Trash2,
   Edit3,
-  ExternalLink,
   Lock,
   Settings,
   Image as ImageIcon,
@@ -32,7 +31,9 @@ import {
   Moon,
   Globe,
   LayoutGrid,
-  List
+  List,
+  Copy,
+  Check
 } from 'lucide-react'
 import { format, startOfToday, addDays, subDays, parseISO } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -678,16 +679,26 @@ export default function DashboardPage({ params }: PageProps) {
               />
             )}
 
-            {/* External Customer Booking Link (1:1 Aspect Ratio - Matches Dropdown height) */}
-            <Link
-              href={`/${slug}/book`}
-              target="_blank"
-              aria-label={t('openCustomerBooking')}
-              title={t('openCustomerBooking')}
-              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-slate-300 dark:border-slate-800 font-semibold flex items-center justify-center transition active:scale-95 shadow-2xs aspect-square shrink-0"
+            {/* Copy Customer Booking Link Button (1:1 Aspect Ratio - Matches Dropdown height) */}
+            <button
+              type="button"
+              onClick={() => {
+                const bookUrl = `${window.location.origin}/${slug}/book`
+                navigator.clipboard.writeText(bookUrl)
+                setCopiedLink(true)
+                toast.success(lang === 'th' ? 'คัดลอกลิงก์จองคิวเรียบร้อยแล้ว!' : 'Booking link copied to clipboard!')
+                setTimeout(() => setCopiedLink(false), 2000)
+              }}
+              aria-label={lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link'}
+              title={copiedLink ? (lang === 'th' ? 'คัดลอกแล้ว!' : 'Copied!') : (lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link')}
+              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-2xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${
+                copiedLink
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
+                  : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border-slate-300 dark:border-slate-800'
+              }`}
             >
-              <ExternalLink className="w-4 h-4" />
-            </Link>
+              {copiedLink ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            </button>
 
             {/* Profile Dropdown Menu (1:1 Aspect Ratio - Matches Dropdown height) */}
             <div className="relative shrink-0" ref={userMenuRef}>
