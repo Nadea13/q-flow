@@ -640,7 +640,7 @@ export default function DashboardPage({ params }: PageProps) {
               <img
                 src={merchant.logo_url}
                 alt={merchant.name}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+                className="w-8 h-8 sm:w-9 sm:h-9 aspect-square rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
               />
             ) : (
               <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">

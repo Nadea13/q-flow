@@ -250,7 +250,7 @@ export default function BookingPage({ params }: PageProps) {
               <img
                 src={merchant.logo_url}
                 alt={merchant.name}
-                className="w-8 h-8 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+                className="w-8 h-8 aspect-square rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
               />
             ) : (
               <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">

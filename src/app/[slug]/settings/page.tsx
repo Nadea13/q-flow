@@ -747,15 +747,15 @@ export default function SettingsPage({ params }: PageProps) {
             {/* SHOP LOGO / PROFILE SECTION */}
             <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="relative group">
+                <div className="relative group shrink-0">
                   {settingsForm.logo_url || merchant?.logo_url ? (
                     <img
                       src={settingsForm.logo_url || merchant?.logo_url || ''}
                       alt={settingsForm.name}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500/40 shadow-sm"
+                      className="w-16 h-16 aspect-square rounded-2xl object-cover border-2 border-indigo-500/40 shadow-sm shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-800/80 shadow-2xs">
+                    <div className="w-16 h-16 aspect-square rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-800/80 shadow-2xs shrink-0">
                       <Store className="w-8 h-8" />
                     </div>
                   )}
