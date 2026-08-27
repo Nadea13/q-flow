@@ -61,10 +61,15 @@ export default function ShopSelectionPortalPage() {
           if (res.success && res.merchants) {
             setMerchants(res.merchants)
           }
+          setLoading(false)
+        } else {
+          // If not logged in, immediately redirect to LINE Login
+          const { loginWithLine } = await import('@/lib/liff')
+          const redirectUri = `${window.location.origin}/dashboard`
+          await loginWithLine(redirectUri)
         }
       } catch (err) {
         console.error('Failed to load user shops:', err)
-      } finally {
         setLoading(false)
       }
     }
@@ -147,34 +152,12 @@ export default function ShopSelectionPortalPage() {
             </p>
           </div>
 
-          {loading ? (
+          {loading || !lineProfile ? (
             <div className="py-16 flex flex-col items-center justify-center space-y-3">
               <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs text-slate-400">กำลังโหลดรายการร้านค้าของคุณ...</p>
-            </div>
-          ) : !lineProfile ? (
-            /* Not Logged in state */
-            <div className="max-w-md mx-auto p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-              <div className="w-12 h-12 rounded-2xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center mx-auto">
-                <svg className="w-7 h-7 fill-[#06C755]" viewBox="0 0 24 24">
-                  <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.608.391.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.993z" />
-                </svg>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">เข้าสู่ระบบเพื่อดูร้านค้าของคุณ</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  กรุณาเข้าสู่ระบบด้วย LINE เพื่อเชื่อมต่อร้านค้าที่คุณเป็นเจ้าของ
-                </p>
-              </div>
-              <button
-                onClick={handleLineLogin}
-                className="w-full py-3.5 px-4 bg-[#06C755] hover:bg-[#05b34c] active:scale-98 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-[#06C755]/25 transition cursor-pointer"
-              >
-                <svg className="w-5 h-5 fill-white shrink-0" viewBox="0 0 24 24">
-                  <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.608.391.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.993z" />
-                </svg>
-                <span>เข้าสู่ระบบด้วย LINE</span>
-              </button>
+              <p className="text-xs text-slate-400">
+                {!lineProfile ? 'กำลังนำคุณไปหน้าเข้าสู่ระบบ LINE...' : 'กำลังโหลดรายการร้านค้าของคุณ...'}
+              </p>
             </div>
           ) : (
             /* Shops Grid */
