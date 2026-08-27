@@ -41,6 +41,16 @@ export function TurnstileWidget({
   const { theme: appTheme } = useTheme()
   const currentTheme = themeProp || appTheme || 'auto'
 
+  const onVerifyRef = useRef(onVerify)
+  const onErrorRef = useRef(onError)
+  const onExpireRef = useRef(onExpire)
+
+  useEffect(() => {
+    onVerifyRef.current = onVerify
+    onErrorRef.current = onError
+    onExpireRef.current = onExpire
+  })
+
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
   const siteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || '0x4AAAAAA'
@@ -62,13 +72,13 @@ export function TurnstileWidget({
           const id = window.turnstile.render(containerRef.current, {
             sitekey: siteKey,
             callback: (token: string) => {
-              onVerify(token)
+              onVerifyRef.current?.(token)
             },
             'error-callback': () => {
-              onError?.()
+              onErrorRef.current?.()
             },
             'expired-callback': () => {
-              onExpire?.()
+              onExpireRef.current?.()
             },
             theme: currentTheme,
             size: 'flexible',
@@ -106,7 +116,7 @@ export function TurnstileWidget({
         widgetIdRef.current = null
       }
     }
-  }, [siteKey, onVerify, onError, onExpire, currentTheme])
+  }, [siteKey, currentTheme])
 
   if (!siteKey || siteKey === '0x4AAAAAA') {
     return null
