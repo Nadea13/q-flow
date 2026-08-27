@@ -167,28 +167,7 @@ export default function Home() {
     }
   }, [isLoginModalOpen])
 
-  async function handleStartLogin() {
-    // Check if user is already logged in with LINE
-    try {
-      const { initLiff } = await import('@/lib/liff')
-      const res = await initLiff()
-      if (res.success && res.profile) {
-        localStorage.setItem('qflow_admin_line_profile', JSON.stringify(res.profile))
-        window.location.href = '/pricing'
-        return
-      }
-    } catch { }
-
-    // Check cached profile in localStorage
-    try {
-      const cached = localStorage.getItem('qflow_admin_line_profile')
-      if (cached) {
-        window.location.href = '/pricing'
-        return
-      }
-    } catch { }
-
-    // If not logged in, open the Login Modal
+  function handleStartLogin() {
     setIsLoginModalOpen(true)
   }
 
