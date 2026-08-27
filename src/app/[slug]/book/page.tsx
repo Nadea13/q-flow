@@ -3,7 +3,6 @@
 import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { QFlowLogo } from '@/components/QFlowLogo'
 import { 
   Clock, 
   ChevronRight, 
@@ -766,17 +765,13 @@ export default function BookingPage({ params }: PageProps) {
       </div>
 
       {/* Powered by Q Flow Footer */}
-      <footer className="mt-5 text-center">
+      <footer className="mt-4 text-center">
         <Link
           href="/"
           target="_blank"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
         >
-          <span>Powered by</span>
-          <div className="inline-flex items-center gap-1 font-bold text-slate-700 dark:text-slate-200">
-            <QFlowLogo className="w-3.5 h-3.5" />
-            <span>Q Flow</span>
-          </div>
+          powered by Q Flow
         </Link>
       </footer>
     </div>
