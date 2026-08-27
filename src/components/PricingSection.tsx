@@ -23,17 +23,23 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
 
   async function handleSelectPlan(planId: PlanType) {
-    if (!merchantSlug) {
-      // Redirect to onboarding
-      router.push(`/onboarding?plan=${planId}&billing=${billingCycle}`)
-      return
-    }
-
     setLoadingPlan(planId)
+
+    // Retrieve line user ID if available
+    let lineUserId: string | undefined = undefined
+    try {
+      const cached = localStorage.getItem('qflow_admin_line_profile')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        lineUserId = parsed.userId
+      }
+    } catch { }
+
     const res = await createStripeCheckoutSessionAction({
-      merchantSlug,
+      merchantSlug: merchantSlug || 'public',
       planId,
       billingCycle,
+      lineUserId,
     })
     setLoadingPlan(null)
 
@@ -44,8 +50,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
 
     if (res.url) {
       if (res.simulated) {
-        toast.success(`อัปเกรดเป็นแพ็กเกจ ${PRICING_PLANS[planId].name} (${billingCycle === 'yearly' ? 'รายปี' : 'รายเดือน'}) เรียบร้อยแล้ว!`)
-        if (onPlanSelected) onPlanSelected()
+        toast.success(`กำลังพาคุณไปหน้าสร้างร้านพร้อมแพ็กเกจ ${PRICING_PLANS[planId].name}...`)
+        router.push(res.url)
       } else {
         window.location.assign(res.url)
       }
