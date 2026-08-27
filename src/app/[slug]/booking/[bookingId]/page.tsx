@@ -224,15 +224,30 @@ export default function BookingDetailPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 transition-colors">
-      {/* Top Header */}
-      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800/80 sticky top-0 z-40">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Store className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <h1 className="text-sm font-bold text-slate-900 dark:text-white">{merchant.name}</h1>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+        
+        {/* Header (Matching Book & Onboarding Layout) */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+              <Store className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
+                {merchant.name}
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
+                {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
+                  <span className="text-amber-600 dark:text-amber-400 ml-1">
+                    (Break {merchant.break_start_time.slice(0, 5)}-{merchant.break_end_time.slice(0, 5)})
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <NavbarControls />
             <span
               className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
@@ -251,9 +266,8 @@ export default function BookingDetailPage({ params }: PageProps) {
             </span>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-xl mx-auto px-4 pt-6 space-y-5">
+        <main className="w-full space-y-5">
         {/* 1. SUCCESS CONFIRMED STATE */}
         {isConfirmed ? (
           <motion.div 
@@ -592,6 +606,19 @@ export default function BookingDetailPage({ params }: PageProps) {
           </div>
         )}
       </main>
+
+      {/* Powered by Q Flow Footer inside card (Matching Book & Onboarding) */}
+      <div className="flex justify-center items-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
+        <Link
+          href="/"
+          target="_blank"
+          className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
+        >
+          powered by Q Flow
+        </Link>
+      </div>
+
+      </div>
     </div>
   )
 }
