@@ -227,7 +227,7 @@ export default function BookingDetailPage({ params }: PageProps) {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
         
-        {/* Header (Matching Book & Onboarding Layout) */}
+        {/* Header (Matching Onboarding & Booking Card Layout) */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
@@ -249,25 +249,32 @@ export default function BookingDetailPage({ params }: PageProps) {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <NavbarControls />
-            <span
-              className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                isConfirmed
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
-                  : isCancelledOrExpired
-                  ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80'
-                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
-              }`}
-            >
-              {isConfirmed
-                ? t('confirmedBooking')
-                : isCancelledOrExpired
-                ? 'หลุดจอง / ยกเลิก'
-                : t('pendingPayment')}
-            </span>
           </div>
         </div>
 
-        <main className="w-full space-y-5">
+        {/* Status Badge Bar */}
+        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 p-2.5 rounded-2xl">
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            {t('status')}:
+          </span>
+          <span
+            className={`text-xs px-2.5 py-0.5 rounded-full font-bold tracking-wider ${
+              isConfirmed
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
+                : isCancelledOrExpired
+                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80'
+                : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
+            }`}
+          >
+            {isConfirmed
+              ? t('confirmedBooking')
+              : isCancelledOrExpired
+              ? 'หลุดจอง / ยกเลิก'
+              : t('pendingPayment')}
+          </span>
+        </div>
+
+        <main className="w-full space-y-4">
         {/* 1. SUCCESS CONFIRMED STATE */}
         {isConfirmed ? (
           <motion.div 
@@ -607,8 +614,8 @@ export default function BookingDetailPage({ params }: PageProps) {
         )}
       </main>
 
-      {/* Powered by Q Flow Footer inside card (Matching Book & Onboarding) */}
-      <div className="flex justify-center items-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
+      {/* Powered by Q Flow Footer inside card (Matching Onboarding & Book) */}
+      <div className="flex justify-center items-center pt-1">
         <Link
           href="/"
           target="_blank"
