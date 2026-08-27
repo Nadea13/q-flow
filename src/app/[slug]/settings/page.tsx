@@ -111,6 +111,18 @@ export default function SettingsPage({ params }: PageProps) {
     branch_phone: '',
   })
 
+  // Lock background scroll when any modal is open
+  const isAnyModalOpen = Boolean(isBranchModalOpen || isNewShopModalOpen)
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalStyle
+      }
+    }
+  }, [isAnyModalOpen])
+
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     name: '',
@@ -1259,6 +1271,7 @@ export default function SettingsPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setIsBranchModalOpen(false)}
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
@@ -1266,6 +1279,7 @@ export default function SettingsPage({ params }: PageProps) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: '100%', opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
               onSubmit={handleSaveBranch}
               className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
@@ -1428,6 +1442,7 @@ export default function SettingsPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setIsNewShopModalOpen(false)}
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
@@ -1435,6 +1450,7 @@ export default function SettingsPage({ params }: PageProps) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: '100%', opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
               onSubmit={handleCreateNewShop}
               className="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >

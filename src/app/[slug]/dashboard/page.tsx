@@ -188,6 +188,18 @@ export default function DashboardPage({ params }: PageProps) {
     })
   }, [merchant, selectedManualBranch, manualBookingForm.staff_id, manualBookingForm.date, selectedManualService, bookings, slots])
 
+  // Lock background scroll when any modal is open
+  const isAnyModalOpen = Boolean(selectedSlipUrl || isStaffModalOpen || isServiceModalOpen || isManualBookingModalOpen)
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalStyle
+      }
+    }
+  }, [isAnyModalOpen])
+
   // Active Selected Branch for display & calculations
   const activeSelectedBranch = selectedBranchFilter === 'all'
     ? null
@@ -2051,6 +2063,7 @@ export default function DashboardPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setIsStaffModalOpen(false)}
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
@@ -2058,6 +2071,7 @@ export default function DashboardPage({ params }: PageProps) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: '100%', opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
               onSubmit={handleSaveStaff}
               className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
@@ -2228,6 +2242,7 @@ export default function DashboardPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setIsServiceModalOpen(false)}
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
@@ -2235,6 +2250,7 @@ export default function DashboardPage({ params }: PageProps) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: '100%', opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
               onSubmit={handleSaveService}
               className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
@@ -2373,6 +2389,7 @@ export default function DashboardPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setIsManualBookingModalOpen(false)}
             className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
@@ -2380,6 +2397,7 @@ export default function DashboardPage({ params }: PageProps) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: '100%', opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
               onSubmit={handleCreateManualBooking}
               className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
