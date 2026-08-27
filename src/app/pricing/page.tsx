@@ -25,21 +25,6 @@ export default function PricingPage() {
   const { t, lang } = useLanguage()
   const router = useRouter()
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [pendingPlanId, setPendingPlanId] = useState<PlanType | null>(null)
-  const [loggingInWithLine, setLoggingInWithLine] = useState(false)
-
-  // Lock scroll when login modal is open
-  useEffect(() => {
-    if (isLoginModalOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isLoginModalOpen])
 
   async function proceedToCheckout(planId: PlanType, lineUid?: string) {
     setLoadingPlan(planId)
@@ -66,7 +51,7 @@ export default function PricingPage() {
   }
 
   async function handleSubscribe(planId: PlanType) {
-    // 1. Check if LIFF profile is present
+    // 1. Check if LIFF profile is already present
     try {
       const { initLiff } = await import('@/lib/liff')
       const liffRes = await initLiff()
@@ -89,21 +74,12 @@ export default function PricingPage() {
       }
     } catch { }
 
-    // 3. Prompt LINE login modal
-    setPendingPlanId(planId)
-    setIsLoginModalOpen(true)
-  }
-
-  async function handleLineLoginSubmit() {
+    // 3. Directly redirect to LINE Login
     try {
-      setLoggingInWithLine(true)
       const { loginWithLine } = await import('@/lib/liff')
-      const redirectUri = pendingPlanId 
-        ? `${window.location.origin}/pricing?plan=${pendingPlanId}` 
-        : `${window.location.origin}/pricing`
+      const redirectUri = `${window.location.origin}/pricing?plan=${planId}`
       await loginWithLine(redirectUri)
     } catch (err: unknown) {
-      setLoggingInWithLine(false)
       const msg = err instanceof Error ? err.message : String(err)
       toast.error('ไม่สามารถเปิด LINE Login ได้: ' + msg)
     }
@@ -620,63 +596,6 @@ export default function PricingPage() {
           </div>
         </div>
       </footer>
-
-      {/* LINE LOGIN MODAL (REQUIRED BEFORE PRICING / STRIPE) */}
-      <AnimatePresence>
-        {isLoginModalOpen && (
-          <div
-            onClick={() => setIsLoginModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 15 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-center relative"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center mx-auto">
-                <svg className="w-7 h-7 fill-[#06C755]" viewBox="0 0 24 24">
-                  <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.608.391.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.993z" />
-                </svg>
-              </div>
-
-              <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  {lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Login with LINE'}
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                  {lang === 'th'
-                    ? 'กรุณาเข้าสู่ระบบผ่านบัญชี LINE ของคุณก่อน เพื่อผูกบัญชีเจ้าของร้านและดำเนินการชำระเงิน'
-                    : 'Please log in with your LINE account first to link as shop owner and proceed to checkout.'}
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <button
-                  onClick={handleLineLoginSubmit}
-                  disabled={loggingInWithLine}
-                  className="w-full py-3.5 px-4 bg-[#06C755] hover:bg-[#05b34c] active:scale-98 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-[#06C755]/25 transition disabled:opacity-50 cursor-pointer"
-                >
-                  <svg className="w-5 h-5 fill-white shrink-0" viewBox="0 0 24 24">
-                    <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.608.391.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.993z" />
-                  </svg>
-                  <span>{loggingInWithLine ? t('loading') : (lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Log in with LINE')}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsLoginModalOpen(false)}
-                  className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition font-medium"
-                >
-                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

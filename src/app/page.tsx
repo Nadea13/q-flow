@@ -152,34 +152,12 @@ export default function Home() {
     }
   ]
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [loggingInWithLine, setLoggingInWithLine] = useState(false)
-
-  // Lock scroll when login modal is open
-  useEffect(() => {
-    if (isLoginModalOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isLoginModalOpen])
-
-  function handleStartLogin() {
-    setIsLoginModalOpen(true)
-  }
-
-  async function handleLineLoginSubmit() {
+  async function handleStartLogin() {
     try {
-      setLoggingInWithLine(true)
       const { loginWithLine } = await import('@/lib/liff')
-      // Redirect to /pricing after successful LINE login
       const redirectUri = `${window.location.origin}/pricing`
       await loginWithLine(redirectUri)
     } catch (err: unknown) {
-      setLoggingInWithLine(false)
       const msg = err instanceof Error ? err.message : String(err)
       alert('ไม่สามารถเปิด LINE Login ได้: ' + msg)
     }
@@ -599,65 +577,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LINE LOGIN MODAL (REQUIRED BEFORE PRICING / PAYMENT) */}
-      <AnimatePresence>
-        {isLoginModalOpen && (
-          <div
-            onClick={() => setIsLoginModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 15 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-center relative"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#06C755]/10 text-[#06C755] flex items-center justify-center mx-auto">
-                <svg className="w-7 h-7 fill-[#06C755]" viewBox="0 0 24 24">
-                  <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.608.391.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.993z" />
-                </svg>
-              </div>
-
-              <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  {lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Login with LINE'}
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                  {lang === 'th'
-                    ? 'กรุณาเข้าสู่ระบบผ่านบัญชี LINE ของคุณก่อนเพื่อผูกเป็นเจ้าของร้าน จากนั้นระบบจะพาคุณไปเลือกแพ็กเกจและชำระเงิน'
-                    : 'Please log in with your LINE account first to link as shop owner, then proceed to select your plan & checkout.'}
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <button
-                  onClick={handleLineLoginSubmit}
-                  disabled={loggingInWithLine}
-                  className="w-full py-3.5 px-4 bg-[#06C755] hover:bg-[#05b34c] active:scale-98 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-[#06C755]/25 transition disabled:opacity-50 cursor-pointer"
-                >
-                  <svg className="w-5 h-5 fill-white shrink-0" viewBox="0 0 24 24">
-                    <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.608.391.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.843 2.589-5.993z" />
-                  </svg>
-                  <span>{loggingInWithLine ? t('loading') : (lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Log in with LINE')}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsLoginModalOpen(false)}
-                  className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition font-medium"
-                >
-                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* FOOTER */}
-      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-sans">
+      <footer className="border-t border-slate-200/80 dark:border-slate-850/80 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-sans">
         {/* Main Footer Content */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-8">
