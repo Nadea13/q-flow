@@ -518,8 +518,8 @@ export default function SettingsPage({ params }: PageProps) {
               </Link>
             )}
             <div className="min-w-0">
-              <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs">{merchant.name}</h1>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate hidden xs:block">{lang === 'th' ? 'การตั้งค่า & แพ็กเกจ' : 'Settings & Billing'}</p>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px] sm:max-w-xs">{merchant.name}</h1>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate block">{lang === 'th' ? 'การตั้งค่า & แพ็กเกจ' : 'Settings & Billing'}</p>
             </div>
           </div>
 
@@ -697,11 +697,10 @@ export default function SettingsPage({ params }: PageProps) {
           <button
             type="button"
             onClick={() => setActiveTab('shop')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${
-              activeTab === 'shop'
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'shop'
                 ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
           >
             <Settings className="w-3.5 h-3.5 shrink-0" />
             <span>{lang === 'th' ? 'ตั้งค่าร้านค้า & สาขา' : 'Shop & Branch Settings'}</span>
@@ -709,11 +708,10 @@ export default function SettingsPage({ params }: PageProps) {
           <button
             type="button"
             onClick={() => setActiveTab('billing')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${
-              activeTab === 'billing'
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'billing'
                 ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
           >
             <CreditCard className="w-3.5 h-3.5 shrink-0" />
             <span>{lang === 'th' ? 'แพ็กเกจ & บิลลิ่ง' : 'Plans & Billing'}</span>
@@ -1106,6 +1104,12 @@ export default function SettingsPage({ params }: PageProps) {
             >
               {t('saveSettingsBtn')}
             </button>
+            {/* Powered by Q Flow Footer */}
+            <div className="flex justify-center items-center">
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition">
+                Powered by Q Flow
+              </div>
+            </div>
           </form>
         )}
 
@@ -1235,15 +1239,6 @@ export default function SettingsPage({ params }: PageProps) {
             </div>
           </div>
         )}
-
-        {/* Powered by Q Flow Footer */}
-        <div className="flex justify-center items-center pt-4 pb-2 sm:pb-0">
-          <div
-            className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
-          >
-            Powered by Q Flow
-          </div>
-        </div>
       </main>
 
       {/* Branch Add/Edit Modal */}
@@ -1479,11 +1474,10 @@ export default function SettingsPage({ params }: PageProps) {
               setActiveTab('shop')
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${
-              activeTab === 'shop'
+            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${activeTab === 'shop'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             <div className="relative">
               <Settings className="w-5 h-5" />
@@ -1501,11 +1495,10 @@ export default function SettingsPage({ params }: PageProps) {
               setActiveTab('billing')
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${
-              activeTab === 'billing'
+            className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${activeTab === 'billing'
                 ? 'text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             <div className="relative">
               <CreditCard className="w-5 h-5" />
