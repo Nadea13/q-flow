@@ -35,7 +35,7 @@ export default function Home() {
   const merchantSteps = [
     {
       step: '01',
-      title: lang === 'th' ? 'ตั้งค่าร้านใน 60 วินาที' : 'Setup Shop in 60s',
+      title: lang === 'th' ? 'ตั้งค่าร้าน' : 'Setup Shop',
       desc: lang === 'th' 
         ? 'กรอกชื่อร้าน เลขพร้อมเพย์รับเงิน และยอดมัดจำที่ต้องการ ไม่ต้องเขียนโค้ด ไม่ต้องโหลดแอป'
         : 'Enter your shop name, PromptPay ID, and deposit amount. No coding or app downloads needed.',
@@ -247,7 +247,7 @@ export default function Home() {
               className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 active:scale-98 flex items-center justify-center gap-2 transition"
             >
               <Zap className="w-4 h-4 fill-white" />
-              {t('startFree60s')}
+              {t('start')}
             </Link>
           </motion.div>
         </div>
@@ -537,47 +537,155 @@ export default function Home() {
       </section>
 
       {/* FINAL CALL TO ACTION BANNER */}
-      <section className="py-16 px-4 sm:px-6 max-w-5xl mx-auto">
-        <div className="rounded-3xl bg-gradient-to-tr from-indigo-600 to-indigo-800 dark:from-indigo-900 dark:to-slate-900 p-8 sm:p-12 text-center text-white shadow-xl shadow-indigo-600/10 relative overflow-hidden border border-indigo-500/30">
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3">
-            {lang === 'th' ? 'พร้อมยกระดับระบบจองคิวร้านคุณหรือยัง?' : 'Ready to streamline your bookings?'}
-          </h2>
-          <p className="text-xs sm:text-sm text-indigo-100 max-w-xl mx-auto mb-8 leading-relaxed font-normal">
-            {lang === 'th'
-              ? 'เปิดร้านและรับลิงก์จองคิวพร้อมระบบตรวจสลิปอัตโนมัติได้ฟรีใน 60 วินาที ไม่ต้องผูกบัตรเครดิต'
-              : 'Launch your queue booking engine and auto-deposit slip checker in 60 seconds. No credit card required.'}
-          </p>
+      <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-5xl mx-auto">
+        <div className="rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-indigo-900 p-8 sm:p-14 text-center text-white shadow-2xl shadow-indigo-600/20 relative overflow-hidden border border-indigo-500/30">
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/onboarding"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 font-bold text-sm shadow-md transition active:scale-98 flex items-center justify-center gap-2"
-            >
-              <Zap className="w-4 h-4 fill-indigo-600 text-indigo-600" />
-              <span>{t('startFree60s')}</span>
-            </Link>
-            <Link
-              href="/glam-studio/book"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-indigo-700/60 hover:bg-indigo-700/80 text-white border border-indigo-400/40 font-semibold text-sm transition active:scale-98"
-            >
-              {lang === 'th' ? 'ดูตัวอย่างหน้าจอง' : 'Explore Live Demo'}
-            </Link>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold mb-4 backdrop-blur-xs border border-white/20">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>{lang === 'th' ? 'ทดลองใช้ฟรี ไม่มีข้อผูกมัด' : 'Free 14-Day Trial • No Card Required'}</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
+              {lang === 'th' ? 'พร้อมยกระดับระบบจองคิวร้านคุณหรือยัง?' : 'Ready to Transform Your Booking Engine?'}
+            </h2>
+            <p className="text-xs sm:text-base text-indigo-100 max-w-xl mx-auto mb-8 leading-relaxed font-normal">
+              {lang === 'th'
+                ? 'เปิดร้านและรับลิงก์จองคิวพร้อมระบบตรวจสลิปอัตโนมัติ 100% ภายใน 60 วินาที เพิ่มยอดขาย ลดปัญหาลูกค้าเบี้ยวคิว'
+                : 'Launch your queue booking engine and auto-deposit slip checker in 60 seconds. Eliminate no-shows and grow your business today.'}
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/onboarding"
+                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 font-extrabold text-sm shadow-xl transition active:scale-98 flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4 fill-indigo-600 text-indigo-600" />
+                <span>{lang === 'th' ? 'เริ่มใช้งานฟรีใน 60 วินาที' : 'Start Free in 60s'}</span>
+              </Link>
+              <Link
+                href="/pricing"
+                className="w-full sm:w-auto px-7 py-4 rounded-xl bg-indigo-800/60 hover:bg-indigo-800/90 text-white border border-indigo-400/40 font-semibold text-sm transition active:scale-98"
+              >
+                {lang === 'th' ? 'ดูแพ็กเกจราคา' : 'View Pricing Plans'}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-slate-200 dark:border-slate-850 py-10 bg-white dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <QFlowLogo className="h-6 w-6" />
-            <span className="font-bold text-slate-800 dark:text-slate-200">Q Flow</span>
-          </div>
+      {/* PROFESSIONAL FOOTER */}
+      <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-sans transition-colors">
+        {/* Main Footer Links */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:gap-12">
+            {/* Brand Column */}
+            <div className="md:col-span-2 space-y-4">
+              <Link href="/" className="inline-flex items-center gap-2.5 group">
+                <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
+                <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Q Flow</span>
+              </Link>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                {lang === 'th'
+                  ? 'ระบบจองคิวออนไลน์และตรวจสอบสลิปมัดจำอัตโนมัติผ่าน LINE & Web ออกแบบมาเพื่อธุรกิจบริการ คลินิก ร้านทำผม นวดสปา และสตูดิโอ'
+                  : 'Automated queue booking & instant deposit slip verification platform for salons, clinics, studios, and wellness businesses.'}
+              </p>
+              <div className="flex items-center gap-3 pt-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-xs font-semibold border border-emerald-200/80 dark:border-emerald-900/60">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>ระบบพร้อมใช้งาน 99.99%</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-4 text-[11px]">
-            <Link href="/onboarding" className="hover:text-indigo-600 dark:hover:text-indigo-400">{t('openShopNow')}</Link>
-            <Link href="/glam-studio/book" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Booking</Link>
-            <Link href="/glam-studio/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Dashboard</Link>
+            {/* Col 1: Product / ฟีเจอร์ */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                {lang === 'th' ? 'ผลิตภัณฑ์' : 'Product'}
+              </h4>
+              <ul className="space-y-2.5 text-xs">
+                <li>
+                  <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                    {lang === 'th' ? 'ฟีเจอร์เด่น' : 'Features'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#how-it-works" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                    {lang === 'th' ? 'วิธีใช้งาน 3 สเต็ป' : 'How It Works'}
+                  </a>
+                </li>
+                <li>
+                  <Link href="/pricing" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                    {lang === 'th' ? 'แพ็กเกจราคา' : 'Pricing'}
+                  </Link>
+                </li>
+                <li>
+                  <a href="#audiences" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                    {lang === 'th' ? 'สำหรับธุรกิจบริการ' : 'For Businesses'}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 2: Demos / ทดลองใช้งาน */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                {lang === 'th' ? 'ทดลองระบบ (Demo)' : 'Experience'}
+              </h4>
+              <ul className="space-y-2.5 text-xs">
+                <li>
+                  <Link href="/demo/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1.5">
+                    <Store className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{lang === 'th' ? 'แดชบอร์ดหลังร้าน' : 'Merchant Dashboard'}</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/demo/book" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{lang === 'th' ? 'หน้าจองคิวลูกค้า' : 'Customer Booking'}</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/onboarding" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition font-semibold text-indigo-600 dark:text-indigo-400">
+                    {lang === 'th' ? 'เปิดร้านใหม่ฟรี 60 วิ' : 'Start Free (60s)'}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Support & Security */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                {lang === 'th' ? 'ความปลอดภัย & ซัพพอร์ต' : 'Security & Help'}
+              </h4>
+              <ul className="space-y-2.5 text-xs">
+                <li>
+                  <a href="#faq" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                    {lang === 'th' ? 'คำถามที่พบบ่อย (FAQ)' : 'FAQ'}
+                  </a>
+                </li>
+                <li className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Cloudflare & SSL 256-bit</span>
+                </li>
+                <li className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>PromptPay & SlipOK Ready</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Sub-Footer */}
+        <div className="border-t border-slate-100 dark:border-slate-900 py-6 bg-slate-50/50 dark:bg-slate-950/80">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <p>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</p>
+            <div className="flex items-center gap-6 text-xs">
+              <span className="text-slate-400 dark:text-slate-600">Built for Modern Businesses in Thailand 🇹🇭</span>
+            </div>
           </div>
         </div>
       </footer>
