@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { QFlowLogo } from '@/components/QFlowLogo'
 import { listMerchantsByLineUserIdAction } from '@/app/actions/portal'
-import { Plus, Sparkles } from 'lucide-react'
+import { Plus, Sparkles, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NavbarControls } from '@/components/NavbarControls'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface MerchantItem {
   id: string
@@ -20,6 +21,7 @@ interface MerchantItem {
 }
 
 export default function ShopSelectionPortalPage() {
+  const { t, lang } = useLanguage()
   const router = useRouter()
   const [merchants, setMerchants] = useState<MerchantItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -238,9 +240,145 @@ export default function ShopSelectionPortalPage() {
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/80 dark:border-slate-850/80 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-        <p>© {new Date().getFullYear()} Q Flow Platform • Secure Multi-Store Portal</p>
+      {/* FOOTER */}
+      <footer className="border-t border-slate-200/80 dark:border-slate-850/80 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-sans mt-auto">
+        {/* Main Footer Content */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-8">
+            {/* Brand & Mission Column */}
+            <div className="md:col-span-5 space-y-4">
+              <Link href="/" className="inline-flex items-center gap-2.5 group">
+                <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
+                <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  Q Flow
+                </span>
+              </Link>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+                {lang === 'th'
+                  ? 'ระบบจองคิวออนไลน์และตรวจสลิปมัดจำอัตโนมัติ 100% ผ่าน LINE OA & Web สำหรับร้านบริการ SME ยุคใหม่'
+                  : 'Automated queue booking & instant deposit slip verification via LINE OA & Web for modern service businesses.'}
+              </p>
+
+              {/* Status & Security Badges */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Systems Operational</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/80 text-[11px] font-semibold text-indigo-700 dark:text-indigo-400">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Secure Multi-Store Portal</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Links Columns */}
+            <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+              {/* Col 1: ผลิตภัณฑ์ (Product) */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {lang === 'th' ? 'ผลิตภัณฑ์' : 'Product'}
+                </h4>
+                <ul className="space-y-2 text-xs">
+                  <li>
+                    <Link href="/#features" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'ฟีเจอร์ทั้งหมด' : 'Features'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/#how-it-works" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'ขั้นตอนการทำงาน' : 'How It Works'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/pricing" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'แพ็กเกจราคา' : 'Pricing Plans'}
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={handleCreateNewShop}
+                      className="hover:text-indigo-600 dark:hover:text-indigo-400 transition font-semibold text-indigo-600 dark:text-indigo-400 text-left cursor-pointer"
+                    >
+                      {lang === 'th' ? 'เปิดร้านค้าใหม่' : 'Create New Shop'}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Col 2: สำหรับธุรกิจ (Solutions) */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {lang === 'th' ? 'เหมาะกับใคร' : 'Solutions'}
+                </h4>
+                <ul className="space-y-2 text-xs">
+                  <li>
+                    <Link href="/#audiences" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'ร้านตัดผม & ซาลอน' : 'Hair Salons'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/#audiences" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'คลินิกความงาม' : 'Beauty Clinics'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/#audiences" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'สปา & นวดเพื่อสุขภาพ' : 'Spa & Wellness'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/#audiences" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'สตูดิโอทำเล็บ & ขนตา' : 'Nails & Lashes'}
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Col 3: ตัวอย่าง & ซัพพอร์ต (Demos & Support) */}
+              <div className="space-y-3 col-span-2 sm:col-span-1">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {lang === 'th' ? 'ทดลอง & ซัพพอร์ต' : 'Demo & Support'}
+                </h4>
+                <ul className="space-y-2 text-xs">
+                  <li>
+                    <Link href="/demo/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'แดชบอร์ดหลังร้าน (Demo)' : 'Dashboard Demo'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/demo/book" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'หน้าจองคิวลูกค้า (Demo)' : 'Booking Demo'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/#faq" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                      {lang === 'th' ? 'คำถามที่พบบ่อย (FAQ)' : 'Help Center'}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition font-semibold text-indigo-600 dark:text-indigo-400">
+                      {lang === 'th' ? 'เลือกร้านค้าของคุณ' : 'Store Portal'}
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Copyright & Legal Sub-footer */}
+        <div className="border-t border-slate-200/80 dark:border-slate-850/80 bg-slate-50/50 dark:bg-slate-900/40">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-500">
+            <div className="flex items-center gap-2">
+              <span>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span>Powered by Q Flow Next-Gen Engine</span>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   )
