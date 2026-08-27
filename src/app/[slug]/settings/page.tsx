@@ -1252,115 +1252,167 @@ export default function SettingsPage({ params }: PageProps) {
       </main>
 
       {/* Branch Add/Edit Modal */}
+      {/* Branch Add/Edit Modal */}
       <AnimatePresence>
         {isBranchModalOpen && editingBranch && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 10 }}
+              initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+              exit={{ scale: 0.95, y: 20 }}
               onSubmit={handleSaveBranch}
-              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl my-8"
+              className="w-full sm:max-w-lg bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <span>{editingBranch.id ? t('editBranchTitle') : t('addNewBranchBtn')}</span>
-              </h3>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('branchName')} *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น สาขาสยามสแควร์, สาขาเซ็นทรัลลาดพร้าว"
-                  value={editingBranch.name || ''}
-                  onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('branchPhone')}</label>
-                <input
-                  type="text"
-                  placeholder="เช่น 02-123-4567, 081-234-5678"
-                  value={editingBranch.phone || ''}
-                  onChange={(e) => setEditingBranch({ ...editingBranch, phone: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
-                <div>
-                  <label className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 block mb-1">
-                    {lang === 'th' ? 'เลขพร้อมเพย์เฉพาะสาขา' : 'Branch PromptPay ID'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เว้นว่างไว้หากใช้บัญชีหลักร้าน"
-                    value={editingBranch.promptpay_id || ''}
-                    onChange={(e) => setEditingBranch({ ...editingBranch, promptpay_id: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono"
-                  />
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {editingBranch.id ? t('editBranchTitle') : t('addNewBranchBtn')}
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+                      {lang === 'th' ? 'กำหนดข้อมูล ที่อยู่ และเวลาทำการของสาขา' : 'Branch details, address & operating hours'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 block mb-1">
-                    {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์สาขา' : 'Branch PromptPay Name'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="เช่น ร้าน... สาขา 2"
-                    value={editingBranch.promptpay_name || ''}
-                    onChange={(e) => setEditingBranch({ ...editingBranch, promptpay_name: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('branchAddress')}</label>
-                <ThaiAddressSelector
-                  initialAddress={editingBranch.address || ''}
-                  onChange={(fullAddr) => setEditingBranch({ ...editingBranch, address: fullAddr })}
-                  lang={lang}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('openTime')}</label>
-                  <TimePicker24h
-                    value={editingBranch.open_time || '10:00'}
-                    onChange={(val) => setEditingBranch({ ...editingBranch, open_time: val })}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('closeTime')}</label>
-                  <TimePicker24h
-                    value={editingBranch.close_time || '20:00'}
-                    onChange={(val) => setEditingBranch({ ...editingBranch, close_time: val })}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsBranchModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium active:scale-95 cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Scrollable Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                {/* Branch Name & Phone */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('branchName')} <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="เช่น สาขาสยามสแควร์, สาขา 2"
+                      value={editingBranch.name || ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('branchPhone')}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="เช่น 02-123-4567, 081-234-5678"
+                      value={editingBranch.phone || ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, phone: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                {/* PromptPay Info for Branch (Optional) */}
+                <div className="p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-3">
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                      {lang === 'th' ? 'บัญชีพร้อมเพย์เฉพาะสาขานี้ (ไม่บังคับ)' : 'Branch PromptPay (Optional)'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
+                        {lang === 'th' ? 'เลขพร้อมเพย์สาขา' : 'Branch PromptPay ID'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="เว้นว่างไว้หากใช้บัญชีหลักร้าน"
+                        value={editingBranch.promptpay_id || ''}
+                        onChange={(e) => setEditingBranch({ ...editingBranch, promptpay_id: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
+                        {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์สาขา' : 'Branch Account Name'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="เช่น ร้าน... สาขา 2"
+                        value={editingBranch.promptpay_name || ''}
+                        onChange={(e) => setEditingBranch({ ...editingBranch, promptpay_name: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Branch Location & Address Selector */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    {t('branchAddress')}
+                  </label>
+                  <ThaiAddressSelector
+                    initialAddress={editingBranch.address || ''}
+                    onChange={(fullAddr) => setEditingBranch({ ...editingBranch, address: fullAddr })}
+                    lang={lang}
+                  />
+                </div>
+
+                {/* Operating Hours */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('openTime')}
+                    </label>
+                    <TimePicker24h
+                      value={editingBranch.open_time || '10:00'}
+                      onChange={(val) => setEditingBranch({ ...editingBranch, open_time: val })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('closeTime')}
+                    </label>
+                    <TimePicker24h
+                      value={editingBranch.close_time || '20:00'}
+                      onChange={(val) => setEditingBranch({ ...editingBranch, close_time: val })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60">
+                <button
+                  type="button"
+                  onClick={() => setIsBranchModalOpen(false)}
+                  className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 cursor-pointer shadow-2xs transition"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 shadow-2xs cursor-pointer"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs cursor-pointer transition flex items-center gap-1.5"
                 >
-                  {t('save')}
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{t('save')}</span>
                 </button>
               </div>
             </motion.form>
@@ -1375,98 +1427,121 @@ export default function SettingsPage({ params }: PageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
           >
             <motion.form
-              initial={{ scale: 0.95, y: 10 }}
+              initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+              exit={{ scale: 0.95, y: 20 }}
               onSubmit={handleCreateNewShop}
-              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 space-y-4 shadow-xl my-8"
+              className="w-full sm:max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-                  <Store className="w-5 h-5" />
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                    <Store className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {lang === 'th' ? 'สร้างร้านค้าใหม่' : 'Create New Shop'}
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+                      {lang === 'th' ? 'เพิ่มร้านค้าใหม่ภายใต้บัญชีนี้' : 'Add a new merchant under your account'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {lang === 'th' ? 'สร้างร้านค้าใหม่' : 'Create New Shop'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    {lang === 'th' ? 'เพิ่มร้านค้าใหม่ภายใต้บัญชีนี้' : 'Add a new merchant under your account'}
-                  </p>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsNewShopModalOpen(false)}
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition active:scale-95 text-xs font-bold"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {lang === 'th' ? 'ชื่อร้านค้าใหม่ *' : 'New Shop Name *'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น Barbershop & Spa"
-                  value={newShopForm.name}
-                  onChange={(e) => setNewShopForm({ ...newShopForm, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              {/* Scrollable Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('promptpayNumber')} *
+                    {lang === 'th' ? 'ชื่อร้านค้าใหม่' : 'New Shop Name'} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="0812345678"
-                    value={newShopForm.promptpay_id}
-                    onChange={(e) => setNewShopForm({ ...newShopForm, promptpay_id: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono"
+                    placeholder="เช่น Barbershop & Spa"
+                    value={newShopForm.name}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, name: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('promptpayNumber')} <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="0812345678"
+                      value={newShopForm.promptpay_id}
+                      onChange={(e) => setNewShopForm({ ...newShopForm, promptpay_id: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                      {t('promptpayAccountName')}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="นาย..."
+                      value={newShopForm.promptpay_name}
+                      onChange={(e) => setNewShopForm({ ...newShopForm, promptpay_name: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    {t('promptpayAccountName')}
+                    {lang === 'th' ? 'ลิงก์ร้าน (URL Slug - ถ้าไม่ใส่จะสุ่มให้อัตโนมัติ)' : 'Custom URL Slug (Optional)'}
                   </label>
                   <input
                     type="text"
-                    placeholder="นาย..."
-                    value={newShopForm.promptpay_name}
-                    onChange={(e) => setNewShopForm({ ...newShopForm, promptpay_name: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
+                    placeholder="เช่น my-awesome-shop"
+                    value={newShopForm.slug}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                  {lang === 'th' ? 'ลิงก์ร้าน (URL Slug - ถ้าไม่ใส่จะสุ่มให้อัตโนมัติ)' : 'Custom URL Slug (Optional)'}
-                </label>
-                <input
-                  type="text"
-                  placeholder="เช่น my-awesome-shop"
-                  value={newShopForm.slug}
-                  onChange={(e) => setNewShopForm({ ...newShopForm, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              {/* Footer */}
+              <div className="flex justify-end gap-2 px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/70 dark:bg-slate-950/60">
                 <button
                   type="button"
                   onClick={() => setIsNewShopModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-medium active:scale-95 cursor-pointer"
+                  className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 cursor-pointer shadow-2xs transition"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={creatingShop}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold active:scale-95 shadow-2xs disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs disabled:opacity-50 cursor-pointer transition flex items-center gap-1.5"
                 >
-                  {creatingShop ? (lang === 'th' ? 'กำลังสร้างร้าน...' : 'Creating...') : (lang === 'th' ? 'ยืนยันสร้างร้าน' : 'Create Shop')}
+                  {creatingShop ? (
+                    <span>{lang === 'th' ? 'กำลังสร้างร้าน...' : 'Creating...'}</span>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{lang === 'th' ? 'ยืนยันสร้างร้าน' : 'Create Shop'}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </motion.form>

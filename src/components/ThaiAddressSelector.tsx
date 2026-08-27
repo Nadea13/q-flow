@@ -299,7 +299,7 @@ export function ThaiAddressSelector({
           </div>
 
           {/* 3 Cascading Modern Dropdowns: Province -> District -> Subdistrict */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {/* Province */}
             <div>
               <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
@@ -346,7 +346,7 @@ export function ThaiAddressSelector({
             </div>
 
             {/* Subdistrict */}
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block mb-1">
                 {isBKK ? (lang === 'th' ? 'แขวง' : 'Subdistrict (Khwaeng)') : (lang === 'th' ? 'ตำบล' : 'Subdistrict (Tambon)')}
               </label>
