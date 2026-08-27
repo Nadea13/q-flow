@@ -582,13 +582,9 @@ export default function BookingCheckingPage({ params }: PageProps) {
 
       {/* Powered by Q Flow Footer inside card */}
       <div className="flex justify-center items-center mt-0 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-        <Link
-          href="/"
-          target="_blank"
-          className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
-        >
-          powered by Q Flow
-        </Link>
+        <div className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition">
+          Powered by Q Flow
+        </div>
       </div>
 
       </div>

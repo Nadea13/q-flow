@@ -636,9 +636,17 @@ export default function DashboardPage({ params }: PageProps) {
       <header className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
-              <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
-            </Link>
+            {merchant.logo_url ? (
+              <img
+                src={merchant.logo_url}
+                alt={merchant.name}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+              />
+            ) : (
+              <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
+                <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
+              </Link>
+            )}
             <div className="min-w-0">
               <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs">{merchant.name}</h1>
               <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate hidden xs:block">{t('dashboardTitle')}</p>

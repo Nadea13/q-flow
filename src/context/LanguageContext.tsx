@@ -211,6 +211,9 @@ export const translations = {
 
     // Settings Tab
     shopSettingsTitle: 'ตั้งค่าร้านค้า & วันหยุดประจำสัปดาห์',
+    shopLogoLabel: 'รูปโปรไฟล์ / โลโก้ร้านค้า',
+    uploadLogoBtn: 'เปลี่ยนรูปโปรไฟล์',
+    uploadingLogo: 'กำลังอัปโหลด...',
     shopName: 'ชื่อร้าน',
     shopPhone: 'เบอร์ติดต่อร้าน',
     promptpayAccountName: 'ชื่อบัญชีพร้อมเพย์',
@@ -436,6 +439,9 @@ export const translations = {
 
     // Settings Tab
     shopSettingsTitle: 'Shop Settings & Weekly Closed Days',
+    shopLogoLabel: 'Shop Profile / Logo',
+    uploadLogoBtn: 'Change Profile Picture',
+    uploadingLogo: 'Uploading...',
     shopName: 'Shop Name',
     shopPhone: 'Contact Phone',
     promptpayAccountName: 'PromptPay Account Name',

@@ -230,9 +230,17 @@ export default function BookingDetailPage({ params }: PageProps) {
         {/* Header (Matching [slug]/book & Onboarding Layout) */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
-              <Store className="h-5 w-5" />
-            </div>
+            {merchant.logo_url ? (
+              <img
+                src={merchant.logo_url}
+                alt={merchant.name}
+                className="w-8 h-8 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+              />
+            ) : (
+              <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+                <Store className="h-5 w-5" />
+              </div>
+            )}
             <div className="min-w-0">
               <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
                 {merchant.name}
@@ -603,19 +611,12 @@ export default function BookingDetailPage({ params }: PageProps) {
             </div>
           </div>
         )}
-      </main>
-
-      {/* Powered by Q Flow Footer inside card (Matching [slug]/book & Onboarding) */}
-      <div className="flex justify-center items-center mt-0 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-        <Link
-          href="/"
-          target="_blank"
-          className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
-        >
-          powered by Q Flow
-        </Link>
-      </div>
-
+        </main>
+        <div className="text-center mt-6">
+          <div className="text-xs text-slate-400 hover:text-indigo-600 transition">
+            Powered by Q Flow
+          </div>
+        </div>
       </div>
     </div>
   )

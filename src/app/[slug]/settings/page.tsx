@@ -25,7 +25,9 @@ import {
   Sun,
   Moon,
   User,
-  Share2
+  Share2,
+  Camera,
+  Upload
 } from 'lucide-react'
 import { QFlowLogo } from '@/components/QFlowLogo'
 import { format } from 'date-fns'
@@ -34,6 +36,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import {
   updateMerchantSettingsAction,
+  uploadMerchantLogoAction,
   saveBranchAction,
   deleteBranchAction
 } from '@/app/actions/dashboard'
@@ -110,6 +113,7 @@ export default function SettingsPage({ params }: PageProps) {
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     name: '',
+    logo_url: '',
     phone: '',
     promptpay_id: '',
     promptpay_name: '',
@@ -126,6 +130,34 @@ export default function SettingsPage({ params }: PageProps) {
     slot_interval_min: '30',
     line_notify_token: '',
   })
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !merchant) return
+
+    setUploadingLogo(true)
+    const formData = new FormData()
+    formData.append('merchantId', merchant.id)
+    formData.append('merchantSlug', slug)
+    formData.append('logo', file)
+
+    const res = await uploadMerchantLogoAction(formData)
+    setUploadingLogo(false)
+
+    if (res.success && res.url) {
+      toast.success(lang === 'th' ? 'อัปเดตรูปโปรไฟล์ร้านเรียบร้อยแล้ว!' : 'Shop profile photo updated!')
+      setSettingsForm((prev) => ({ ...prev, logo_url: res.url || '' }))
+      setMerchant((prev) => prev ? { ...prev, logo_url: res.url } : null)
+    } else {
+      toast.error(res.error || 'เกิดข้อผิดพลาดในการอัปโหลดรูป')
+    }
+
+    if (logoInputRef.current) {
+      logoInputRef.current.value = ''
+    }
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -205,6 +237,7 @@ export default function SettingsPage({ params }: PageProps) {
     setMerchant(mData)
     setSettingsForm({
       name: mData.name || '',
+      logo_url: mData.logo_url || '',
       phone: mData.phone || '',
       promptpay_id: mData.promptpay_id || '',
       promptpay_name: mData.promptpay_name || '',
@@ -268,6 +301,7 @@ export default function SettingsPage({ params }: PageProps) {
       merchantId: merchant.id,
       merchantSlug: slug,
       name: settingsForm.name,
+      logo_url: settingsForm.logo_url || null,
       phone: settingsForm.phone,
       promptpay_id: settingsForm.promptpay_id,
       promptpay_name: settingsForm.promptpay_name,
@@ -472,9 +506,17 @@ export default function SettingsPage({ params }: PageProps) {
       <header className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
-              <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
-            </Link>
+            {merchant.logo_url ? (
+              <img
+                src={merchant.logo_url}
+                alt={merchant.name}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+              />
+            ) : (
+              <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
+                <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
+              </Link>
+            )}
             <div className="min-w-0">
               <h1 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[100px] xs:max-w-[140px] sm:max-w-xs">{merchant.name}</h1>
               <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate hidden xs:block">{lang === 'th' ? 'การตั้งค่า & แพ็กเกจ' : 'Settings & Billing'}</p>
@@ -700,6 +742,62 @@ export default function SettingsPage({ params }: PageProps) {
                 <Plus className="w-3.5 h-3.5" />
                 <span>{lang === 'th' ? 'เพิ่มร้านค้าใหม่' : '+ Add New Shop'}</span>
               </button>
+            </div>
+
+            {/* SHOP LOGO / PROFILE SECTION */}
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative group">
+                  {settingsForm.logo_url || merchant?.logo_url ? (
+                    <img
+                      src={settingsForm.logo_url || merchant?.logo_url || ''}
+                      alt={settingsForm.name}
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500/40 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-800/80 shadow-2xs">
+                      <Store className="w-8 h-8" />
+                    </div>
+                  )}
+                  {uploadingLogo && (
+                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center text-white">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>{t('shopLogoLabel')}</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-sm">
+                    {lang === 'th'
+                      ? 'รูปโปรไฟล์ร้านจะแสดงในหน้าจองคิวลูกค้า, หน้าตั๋วคิว และหน้าแดชบอร์ด (รองรับ JPG, PNG สูงสุด 5MB)'
+                      : 'Shop profile picture will appear on customer booking, ticket, and dashboard pages (JPG, PNG up to 5MB)'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  onChange={handleLogoUpload}
+                  disabled={uploadingLogo}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  disabled={uploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  <Upload className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>{uploadingLogo ? t('uploadingLogo') : t('uploadLogoBtn')}</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

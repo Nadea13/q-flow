@@ -229,6 +229,7 @@ export async function updateMerchantSettingsAction(input: {
   merchantId: string
   merchantSlug: string
   name: string
+  logo_url?: string | null
   phone?: string
   promptpay_id: string
   promptpay_name?: string
@@ -251,6 +252,7 @@ export async function updateMerchantSettingsAction(input: {
     .from('merchants')
     .update({
       name: input.name.trim(),
+      logo_url: input.logo_url !== undefined ? input.logo_url : undefined,
       phone: input.phone?.trim() || null,
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || null,
@@ -275,7 +277,81 @@ export async function updateMerchantSettingsAction(input: {
   }
 
   revalidatePath(`/${input.merchantSlug}/dashboard`)
+  revalidatePath(`/${input.merchantSlug}/settings`)
+  revalidatePath(`/${input.merchantSlug}/book`)
   return { success: true }
+}
+
+export async function uploadMerchantLogoAction(formData: FormData) {
+  const supabase = await createClient()
+  const merchantId = formData.get('merchantId') as string
+  const merchantSlug = formData.get('merchantSlug') as string
+  const file = formData.get('logo') as File
+
+  if (!merchantId || !merchantSlug) {
+    return { success: false, error: 'Merchant identifier missing' }
+  }
+
+  if (!file || file.size === 0) {
+    return { success: false, error: 'กรุณาเลือกรูปภาพโปรไฟล์ร้าน' }
+  }
+
+  // Validate size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: 'ขนาดรูปภาพต้องไม่เกิน 5 MB' }
+  }
+
+  const fileBytes = await file.arrayBuffer()
+  const fileBuffer = Buffer.from(fileBytes)
+
+  let logoPublicUrl: string | null = null
+
+  // 1. Try upload to Cloudflare R2
+  const { uploadToCloudflareR2 } = await import('@/lib/cloudflare-r2')
+  const r2Res = await uploadToCloudflareR2(fileBuffer, `logo_${file.name}`, file.type || 'image/jpeg')
+
+  if (r2Res.success && r2Res.url) {
+    logoPublicUrl = r2Res.url
+  } else {
+    // 2. Fallback to Supabase Storage
+    const fileExt = file.name.split('.').pop() || 'jpg'
+    const filePath = `logos/${merchantId}_${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('slips')
+      .upload(filePath, fileBuffer, {
+        contentType: file.type || 'image/jpeg',
+        upsert: true,
+      })
+
+    if (!uploadError) {
+      const { data: publicUrlData } = supabase.storage.from('slips').getPublicUrl(filePath)
+      logoPublicUrl = publicUrlData?.publicUrl || null
+    }
+  }
+
+  if (!logoPublicUrl) {
+    return { success: false, error: 'ไม่สามารถอัปโหลดรูปภาพได้ กรุณาลองใหม่อีกครั้ง' }
+  }
+
+  // Update merchant record
+  const { error: updateError } = await supabase
+    .from('merchants')
+    .update({
+      logo_url: logoPublicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', merchantId)
+
+  if (updateError) {
+    return { success: false, error: updateError.message }
+  }
+
+  revalidatePath(`/${merchantSlug}/dashboard`)
+  revalidatePath(`/${merchantSlug}/settings`)
+  revalidatePath(`/${merchantSlug}/book`)
+
+  return { success: true, url: logoPublicUrl }
 }
 
 // -------------------------------------------------------------

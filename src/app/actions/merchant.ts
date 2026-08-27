@@ -12,6 +12,7 @@ interface CreateMerchantInput {
   admin_pin?: string
   line_user_id?: string
   phone?: string
+  logo_url?: string
   open_time?: string
   close_time?: string
   customSlug?: string
@@ -52,6 +53,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
     .insert({
       name: input.name.trim(),
       slug: slug,
+      logo_url: input.logo_url?.trim() || undefined,
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || input.name.trim(),
       default_deposit: Number(input.default_deposit) || 100,

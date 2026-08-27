@@ -246,6 +246,12 @@ export default function BookingPage({ params }: PageProps) {
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
+            ) : merchant.logo_url ? (
+              <img
+                src={merchant.logo_url}
+                alt={merchant.name}
+                className="w-8 h-8 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+              />
             ) : (
               <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
                 <Store className="h-5 w-5" />
@@ -770,7 +776,7 @@ export default function BookingPage({ params }: PageProps) {
           target="_blank"
           className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
         >
-          powered by Q Flow
+          Powered by Q Flow
         </Link>
       </div>
 

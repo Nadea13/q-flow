@@ -6,6 +6,7 @@ export interface Merchant {
   id: string
   slug: string
   name: string
+  logo_url?: string | null
   phone: string | null
   promptpay_id: string
   promptpay_name: string | null
