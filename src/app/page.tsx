@@ -712,7 +712,7 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-4">
-              <span>Powered by Q Flow Next-Gen Engine</span>
+              <span>Powered by Q Flow</span>
             </div>
           </div>
         </div>
