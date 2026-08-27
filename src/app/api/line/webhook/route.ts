@@ -10,18 +10,20 @@ export async function POST(request: Request) {
 
     const supabase = await createClient()
 
-    // Load default demo merchant
+    // Find the merchant connected to this bot/event
     const { data: merchant } = await supabase
       .from('merchants')
       .select('*')
-      .eq('slug', 'glam-studio')
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     const { data: services } = await supabase
       .from('services')
       .select('*')
       .eq('merchant_id', merchant?.id || '')
       .eq('is_active', true)
+      .order('sort_order', { ascending: true })
       .limit(3)
 
     for (const event of events) {

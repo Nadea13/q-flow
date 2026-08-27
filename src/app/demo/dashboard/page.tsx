@@ -221,9 +221,9 @@ export default function DemoDashboardPage() {
 
             {/* External Link */}
             <Link
-              href="/glam-studio/book"
+              href="/demo/book"
               target="_blank"
-              title="เปิดหน้าจองคิวฝั่งลูกค้า"
+              title="เปิดหน้าจองคิวฝั่งลูกค้า (Demo)"
               className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-slate-300 dark:border-slate-800 font-semibold flex items-center justify-center transition active:scale-95 shadow-2xs aspect-square shrink-0"
             >
               <ExternalLink className="w-4 h-4" />

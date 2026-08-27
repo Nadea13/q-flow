@@ -550,8 +550,8 @@ export default function PricingPage() {
           <div className="flex items-center gap-4 text-[11px]">
             <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400">Home</Link>
             <Link href="/onboarding" className="hover:text-indigo-600 dark:hover:text-indigo-400">{t('openShopNow')}</Link>
-            <Link href="/glam-studio/book" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Booking</Link>
-            <Link href="/glam-studio/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Dashboard</Link>
+            <Link href="/demo/book" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Booking</Link>
+            <Link href="/demo/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400">Demo Dashboard</Link>
           </div>
         </div>
       </footer>

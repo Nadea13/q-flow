@@ -557,10 +557,10 @@ export default function Home() {
               <span>{t('start')}</span>
             </Link>
             <Link
-              href="/glam-studio/book"
+              href="/demo/book"
               className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-indigo-700/60 hover:bg-indigo-700/80 text-white border border-indigo-400/40 font-semibold text-sm transition active:scale-98"
             >
-              {lang === 'th' ? 'ดูตัวอย่างหน้าจอง' : 'Explore Live Demo'}
+              {lang === 'th' ? 'ทดลองจองคิว (Demo)' : 'Try Demo Booking'}
             </Link>
           </div>
         </div>
