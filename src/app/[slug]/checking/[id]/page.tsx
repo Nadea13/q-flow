@@ -5,18 +5,16 @@ import Link from 'next/link'
 import { 
   CheckCircle2, 
   Copy, 
-  Download, 
+  Download,
   UploadCloud, 
   AlertCircle, 
-  Store, 
-  Check,
-  ShieldCheck,
-  MessageSquare,
-  Clock,
-  Hourglass,
-  RefreshCw,
-  ExternalLink,
-  ArrowLeft
+  Check, 
+  ShieldCheck, 
+  MessageSquare, 
+  Clock, 
+  Hourglass, 
+  RefreshCw, 
+  ArrowLeft 
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
@@ -48,7 +46,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
   // PromptPay QR state
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copiedPayId, setCopiedPayId] = useState(false)
-  const [copiedLink, setCopiedLink] = useState(false)
 
   // Slip upload state
   const [slipFile, setSlipFile] = useState<File | null>(null)
@@ -173,23 +170,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
     } catch {}
   }
 
-  function copyPromptPay() {
-    if (merchant?.promptpay_id) {
-      navigator.clipboard.writeText(merchant.promptpay_id)
-      setCopiedPayId(true)
-      setTimeout(() => setCopiedPayId(false), 2000)
-    }
-  }
-
-  function copyPaymentLink() {
-    if (typeof window !== 'undefined') {
-      const url = `${window.location.origin}/${slug}/booking/${id}`
-      navigator.clipboard.writeText(url)
-      setCopiedLink(true)
-      setTimeout(() => setCopiedLink(false), 2000)
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
@@ -223,7 +203,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
   const isConfirmed = booking.status === 'confirmed'
   const isCompleted = booking.status === 'completed'
   const isCancelledOrExpired = isExpired || booking.status === 'cancelled'
-  const isPending = booking.status === 'pending_payment' && !isExpired
 
   const startTime = new Date(booking.start_time)
   const endTime = new Date(booking.end_time)
@@ -235,23 +214,30 @@ export default function BookingCheckingPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 transition-colors">
-      {/* Top Header */}
-      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800/80 sticky top-0 z-40">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link href={`/${slug}/book`} className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Link
+              href={`/${slug}/book`}
+              className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95 shrink-0"
+            >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="flex items-center gap-1.5">
-              <Store className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <h1 className="text-sm font-bold text-slate-900 dark:text-white">{merchant.name}</h1>
+            <div className="min-w-0">
+              <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
+                {merchant.name}
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <NavbarControls />
+          <div className="flex items-center gap-2 shrink-0">
             <span
-              className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                 isConfirmed || isCompleted
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
                   : isCancelledOrExpired
@@ -267,42 +253,33 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 ? 'หลุดจอง / ยกเลิก'
                 : 'รอชำระมัดจำ'}
             </span>
+            <NavbarControls />
           </div>
         </div>
-      </header>
 
-      <main className="max-w-xl mx-auto px-4 pt-6 space-y-5">
-        {/* Title Bar */}
-        <div className="text-center space-y-1">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            ตรวจสอบสถานะการจองคิว
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            Booking ID: #{booking.id.slice(0, 8).toUpperCase()}
-          </p>
-        </div>
-
-        {/* 1. CONFIRMED OR COMPLETED STATE */}
-        {(isConfirmed || isCompleted) && (
+        <main className="w-full space-y-4">
+        {/* 1. SUCCESS / CONFIRMED / COMPLETED STATE */}
+        {isConfirmed || isCompleted ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6"
+            transition={{ duration: 0.3 }}
+            className="space-y-5"
           >
-            <div className="text-center">
-              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle2 className="w-7 h-7" />
+            <div className="text-center pt-2">
+              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {isCompleted ? 'เข้าใช้บริการเรียบร้อยแล้ว 🎉' : t('bookingSuccessTitle')}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isCompleted ? 'ขอบคุณที่ไว้วางใจใช้บริการกับเรา' : t('bookingSuccessSubtitle')}
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {isCompleted ? 'รับบริการเสร็จสิ้นแล้ว' : 'ยืนยันการจองคิวสำเร็จ'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {isCompleted ? 'ขอบคุณที่เลือกใช้บริการของเรา' : 'ระบบได้รับและตรวจสอบยอดมัดจำเรียบร้อยแล้ว'}
               </p>
             </div>
 
             {/* Voucher Card */}
-            <div className="bg-slate-50/80 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3.5 relative overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 relative overflow-hidden">
               <div className="border-b border-slate-200 dark:border-slate-800 pb-3 flex justify-between items-center">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t('bookingId')}
@@ -326,7 +303,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">{t('selectTimeSlot')}:</span>
                   <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                    {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น. ({service.duration_min} {t('minutes')})
+                    {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -340,16 +317,16 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-2.5 font-bold text-sm">
                   <span className="text-emerald-600 dark:text-emerald-400">{t('depositAmount')}:</span>
                   <span className="text-emerald-600 dark:text-emerald-400">
-                    ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')} (ชำระแล้ว)
+                    ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 pt-1">
               <a
                 href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                  `🎉 ตั๋วคิวการจอง Q Flow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูสถานะคิว: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                  `🎉 ตั๋วคิวการจอง Q Flow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -367,55 +344,55 @@ export default function BookingCheckingPage({ params }: PageProps) {
               </Link>
             </div>
           </motion.div>
-        )}
-
-        {/* 2. EXPIRED / CANCELLED STATE */}
-        {isCancelledOrExpired && (
+        ) : isCancelledOrExpired ? (
+          /* 2. EXPIRED / CANCELLED STATE */
           <motion.div 
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 text-center"
+            className="space-y-5 text-center pt-2"
           >
-            <div className="w-14 h-14 bg-rose-50 dark:bg-rose-950/60 text-rose-500 rounded-2xl flex items-center justify-center mx-auto shadow-2xs">
+            <div className="w-14 h-14 bg-rose-50 dark:bg-rose-950/60 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-2xs">
               <Hourglass className="w-8 h-8" />
             </div>
 
             <div className="space-y-1.5">
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {t('bookingExpiredTitle')}
-              </h3>
+              </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                 {t('bookingExpiredDesc')}
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs space-y-2 max-w-sm mx-auto text-left">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs space-y-2 text-left">
               <div className="flex justify-between">
-                <span className="text-slate-500">{t('service')}:</span>
+                <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{t('dateTime')}:</span>
+                <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                   {format(startTime, 'dd/MM/yyyy HH:mm')} น.
                 </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{booking.customer_name}</span>
               </div>
             </div>
 
             <Link
               href={`/${slug}/book`}
-              className="w-full max-w-sm mx-auto py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition active:scale-98"
+              className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition active:scale-98"
             >
               <RefreshCw className="w-4 h-4" />
               <span>{t('bookAgainBtn')}</span>
             </Link>
           </motion.div>
-        )}
-
-        {/* 3. PENDING PAYMENT & COUNTDOWN ACTIVE */}
-        {isPending && (
+        ) : (
+          /* 3. PENDING PAYMENT & SLIP UPLOAD WITH 10-MIN COUNTDOWN */
           <div className="space-y-4">
-            {/* 10-MINUTE COUNTDOWN BANNER */}
+            {/* 10-MINUTE COUNTDOWN URGENCY BANNER */}
             <div className={`p-4 rounded-2xl border transition-colors flex items-center justify-between gap-3 shadow-2xs ${
               isUrgent
                 ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
@@ -431,7 +408,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-bold">{t('payWithin10Min')}</p>
-                  <p className="text-[11px] opacity-80 mt-0.5">{t('expiredWarning')}</p>
                 </div>
               </div>
 
@@ -444,35 +420,8 @@ export default function BookingCheckingPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Quick Share Link Box */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-2 shadow-2xs">
-              <div className="truncate text-xs">
-                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">ลิงก์หน้าชำระเงิน:</span>
-                <span className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold truncate block">
-                  {typeof window !== 'undefined' ? `${window.location.origin}/${slug}/booking/${id}` : `.../booking/${id}`}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={copyPaymentLink}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition active:scale-95"
-                >
-                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedLink ? t('copied') : t('copy')}</span>
-                </button>
-                <Link
-                  href={`/${slug}/booking/${id}`}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>เปิดหน้าชำระเงิน</span>
-                </Link>
-              </div>
-            </div>
-
             {/* Booking Recap */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 shadow-2xs">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 text-left">
               <div className="flex justify-between text-xs">
                 <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
                 <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
@@ -483,20 +432,10 @@ export default function BookingCheckingPage({ params }: PageProps) {
                   {format(startTime, 'dd/MM/yyyy')} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.)
                 </span>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
-                <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.customer_name} ({booking.customer_phone})</span>
-              </div>
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
-                <span className="text-amber-600 dark:text-amber-400">{t('depositToPay')}:</span>
-                <span className="text-amber-600 dark:text-amber-400">
-                  ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
-                </span>
-              </div>
             </div>
 
             {/* PromptPay QR Code Box */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-2xs">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center space-y-4 shadow-2xs">
               <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                 <ShieldCheck className="w-4 h-4" />
                 {t('scanPromptPay')}
@@ -520,31 +459,37 @@ export default function BookingCheckingPage({ params }: PageProps) {
               )}
 
               {/* PromptPay Details */}
-              <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
-                <div className="text-left">
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                    {t('promptpayNumber')} ({merchant.promptpay_name || merchant.name})
+              {merchant.promptpay_id && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs flex items-center justify-between">
+                  <div className="text-left">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                      {t('promptpayNumber')} ({merchant.name})
+                    </div>
+                    <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{merchant.promptpay_id}</div>
                   </div>
-                  <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{merchant.promptpay_id}</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(merchant.promptpay_id)
+                      setCopiedPayId(true)
+                      setTimeout(() => setCopiedPayId(false), 2000)
+                    }}
+                    className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
+                  >
+                    {copiedPayId ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        <span>{t('copied')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-slate-500" />
+                        <span>{t('copy')}</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={copyPromptPay}
-                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95"
-                >
-                  {copiedPayId ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('copied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3 text-slate-500" />
-                      <span>{t('copy')}</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              )}
 
               {qrDataUrl && (
                 <a
@@ -559,7 +504,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
             </div>
 
             {/* Slip Upload & Verification Section */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <UploadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -578,7 +523,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
               )}
 
               {/* Upload Input Zone */}
-              <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-slate-50/60 dark:bg-slate-950/40 hover:bg-slate-100/80 dark:hover:bg-slate-950/80 transition relative overflow-hidden">
+              <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-850 transition relative overflow-hidden">
                 <input
                   type="file"
                   accept="image/*"
@@ -634,6 +579,19 @@ export default function BookingCheckingPage({ params }: PageProps) {
           </div>
         )}
       </main>
+
+      {/* Powered by Q Flow Footer inside card */}
+      <div className="flex justify-center items-center mt-0 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+        <Link
+          href="/"
+          target="_blank"
+          className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
+        >
+          powered by Q Flow
+        </Link>
+      </div>
+
+      </div>
     </div>
   )
 }
