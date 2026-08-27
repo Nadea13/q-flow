@@ -948,7 +948,7 @@ export default function DashboardPage({ params }: PageProps) {
         </div>
 
         {/* Tab Navigation - Desktop Segmented Pill (Hidden on Mobile) */}
-        <div className="hidden sm:flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5 overflow-x-auto scrollbar-none no-scrollbar flex-nowrap">
+        <div className="hidden sm:flex gap-2 overflow-x-auto scrollbar-none no-scrollbar flex-nowrap">
           <button
             type="button"
             onClick={() => setActiveTab('bookings')}
