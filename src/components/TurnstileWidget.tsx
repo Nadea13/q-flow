@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 
 interface TurnstileWidgetProps {
   onVerify: (token: string) => void
@@ -34,9 +35,12 @@ export function TurnstileWidget({
   onVerify,
   onError,
   onExpire,
-  theme = 'auto',
+  theme: themeProp,
   className = '',
 }: TurnstileWidgetProps) {
+  const { theme: appTheme } = useTheme()
+  const currentTheme = themeProp || appTheme || 'auto'
+
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
   const siteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || '0x4AAAAAA'
@@ -47,8 +51,14 @@ export function TurnstileWidget({
     let script = document.getElementById(scriptId) as HTMLScriptElement | null
 
     function renderWidget() {
-      if (window.turnstile && containerRef.current && !widgetIdRef.current) {
+      if (window.turnstile && containerRef.current) {
         try {
+          // If already rendered, remove old widget first (e.g. on theme change)
+          if (widgetIdRef.current) {
+            window.turnstile.remove(widgetIdRef.current)
+            widgetIdRef.current = null
+          }
+
           const id = window.turnstile.render(containerRef.current, {
             sitekey: siteKey,
             callback: (token: string) => {
@@ -60,7 +70,7 @@ export function TurnstileWidget({
             'expired-callback': () => {
               onExpire?.()
             },
-            theme,
+            theme: currentTheme,
             size: 'flexible',
           })
           widgetIdRef.current = id
@@ -96,15 +106,15 @@ export function TurnstileWidget({
         widgetIdRef.current = null
       }
     }
-  }, [siteKey, onVerify, onError, onExpire, theme])
+  }, [siteKey, onVerify, onError, onExpire, currentTheme])
 
   if (!siteKey || siteKey === '0x4AAAAAA') {
     return null
   }
 
   return (
-    <div className={`flex justify-center my-2 ${className}`}>
-      <div ref={containerRef} className="min-h-[65px]" />
+    <div className={`w-full my-2.5 overflow-hidden ${className}`}>
+      <div ref={containerRef} className="w-full min-h-[65px]" />
     </div>
   )
 }

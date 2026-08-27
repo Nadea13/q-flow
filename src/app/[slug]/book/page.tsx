@@ -764,7 +764,7 @@ export default function BookingPage({ params }: PageProps) {
       </main>
 
       {/* Powered by Q Flow Footer inside card (Matching Onboarding) */}
-      <div className="text-center border-t border-slate-100 dark:border-slate-800/80">
+      <div className="flex justify-center items-center mt-0">
         <Link
           href="/"
           target="_blank"
