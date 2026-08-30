@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use, useMemo, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -118,9 +119,34 @@ export default function DashboardPage({ params }: PageProps) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [slots, setSlots] = useState<Slot[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<'bookings' | 'block-slots' | 'services'>('bookings')
+  // Active Tab synced with URL
+  const tabParam = searchParams.get('tab')
+  const initialTab: 'bookings' | 'block-slots' | 'services' = 
+    tabParam === 'block-slots' || tabParam === 'services' ? tabParam : 'bookings'
+
+  const [activeTab, setActiveTabState] = useState<'bookings' | 'block-slots' | 'services'>(initialTab)
+
+  // Ensure default URL query ?tab=bookings if no tab param is present or if URL changes
+  useEffect(() => {
+    if (!tabParam) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('tab', 'bookings')
+      router.replace(`/${slug}/dashboard?${params.toString()}`, { scroll: false })
+      setActiveTabState('bookings')
+    } else if (tabParam === 'bookings' || tabParam === 'block-slots' || tabParam === 'services') {
+      setActiveTabState(tabParam)
+    }
+  }, [tabParam, router, slug, searchParams])
+
+  function setActiveTab(tab: 'bookings' | 'block-slots' | 'services') {
+    setActiveTabState(tab)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.replace(`/${slug}/dashboard?${params.toString()}`, { scroll: false })
+  }
 
   // Date Filter for Bookings
   const today = startOfToday()
@@ -263,7 +289,7 @@ export default function DashboardPage({ params }: PageProps) {
 
     // 1. Merchant
     const { data: mData } = await supabase
-      .from('merchants')
+      .from('shops')
       .select('*')
       .eq('slug', slug)
       .single()
@@ -277,11 +303,11 @@ export default function DashboardPage({ params }: PageProps) {
 
     // Fetch all related dashboard collections in parallel
     const [branchRes, staffRes, serviceRes, bookingRes, slotRes] = await Promise.all([
-      supabase.from('branches').select('*').eq('merchant_id', mData.id).order('created_at', { ascending: true }),
-      supabase.from('staff').select('*, branch:branches(*), staff_services(*, service:services(*))').eq('merchant_id', mData.id).order('created_at', { ascending: true }),
-      supabase.from('services').select('*').eq('merchant_id', mData.id).order('sort_order', { ascending: true }),
-      supabase.from('bookings').select('*, services(*), branch:branches(*), staff:staff(*)').eq('merchant_id', mData.id).order('start_time', { ascending: true }),
-      supabase.from('slots').select('*').eq('merchant_id', mData.id).order('start_time', { ascending: true }),
+      supabase.from('branches').select('*').eq('shop_id', mData.id).order('created_at', { ascending: true }),
+      supabase.from('staff').select('*, branch:branches(*), staff_services(*, service:services(*))').eq('shop_id', mData.id).order('created_at', { ascending: true }),
+      supabase.from('services').select('*').eq('shop_id', mData.id).order('sort_order', { ascending: true }),
+      supabase.from('bookings').select('*, services(*), branch:branches(*), staff:staff(*)').eq('shop_id', mData.id).order('start_time', { ascending: true }),
+      supabase.from('slots').select('*').eq('shop_id', mData.id).order('start_time', { ascending: true }),
     ])
 
     const branchData = branchRes.data || []
@@ -1717,14 +1743,34 @@ export default function DashboardPage({ params }: PageProps) {
                 </div>
 
                 {staffList.length === 0 ? (
-                  <div className="p-6 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2 shadow-2xs">
+                  <div className="p-6 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 shadow-2xs">
                     <Users className="w-8 h-8 text-slate-400 mx-auto" />
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {lang === 'th' ? 'ยังไม่มีรายชื่อช่าง / ผู้ให้บริการ' : 'No staff members added yet'}
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {lang === 'th' ? 'กดปุ่ม "+ เพิ่มช่าง / ผู้ให้บริการ" ด้านบนเพื่อเพิ่มช่าง' : 'Click "+ Add Staff" above to add your first provider'}
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {lang === 'th' ? 'ยังไม่มีรายชื่อช่าง / ผู้ให้บริการ' : 'No staff members added yet'}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {lang === 'th' ? 'เพิ่มช่างเพื่อจัดตารางคิวและผูกกับบริการของร้าน' : 'Add staff members to assign bookings and services'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingStaff({
+                          name: '',
+                          nickname: '',
+                          role_title: 'ช่างผู้ให้บริการ',
+                          branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : (branches[0]?.id || null),
+                          is_active: true,
+                          serviceIds: services.map((s) => s.id),
+                        })
+                        setIsStaffModalOpen(true)
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer mx-auto"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>{t('addNewStaffBtn')}</span>
+                    </button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -1876,18 +1922,55 @@ export default function DashboardPage({ params }: PageProps) {
 
                 if (displayedServices.length === 0) {
                   return (
-                    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2 shadow-2xs">
+                    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 shadow-2xs">
                       <Sparkles className="w-8 h-8 text-slate-400 mx-auto" />
-                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {selectedStaffFilter === 'all'
-                          ? (lang === 'th' ? 'ยังไม่มีรายการบริการ' : 'No services created yet')
-                          : (lang === 'th' ? 'ช่างท่านนี้ยังไม่ได้เลือกให้บริการเมนูใด' : 'This specialist does not offer any services yet')}
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        {selectedStaffFilter === 'all'
-                          ? 'กดปุ่ม "+ เพิ่มบริการใหม่" ด้านบนเพื่อเพิ่มบริการ'
-                          : 'กดปุ่ม "ปรับรายการบริการ" ด้านบนเพื่อติ๊กเลือกบริการที่ช่างท่านนี้ทำได้'}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          {selectedStaffFilter === 'all'
+                            ? (lang === 'th' ? 'ยังไม่มีรายการบริการ' : 'No services created yet')
+                            : (lang === 'th' ? 'ช่างท่านนี้ยังไม่ได้เลือกให้บริการเมนูใด' : 'This specialist does not offer any services yet')}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {selectedStaffFilter === 'all'
+                            ? (lang === 'th' ? 'สร้างเมนูบริการ กำหนดระยะเวลา และราคาเพื่อให้ลูกค้าเลือกจอง' : 'Add services with duration and pricing for customers to book')
+                            : (lang === 'th' ? 'กดปุ่ม "ปรับรายการบริการ" ด้านบนเพื่อติ๊กเลือกบริการที่ช่างท่านนี้ทำได้' : 'Click "Edit Services" above to select services for this staff')}
+                        </p>
+                      </div>
+                      {selectedStaffFilter === 'all' ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingService({ duration_min: 60, price: 500, deposit_amount: 100, is_active: true })
+                            setIsServiceModalOpen(true)
+                          }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer mx-auto"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>{t('addNewServiceBtn')}</span>
+                        </button>
+                      ) : (
+                        (() => {
+                          const curStaff = staffList.find((s) => s.id === selectedStaffFilter)
+                          if (!curStaff) return null
+                          const curStaffServiceIds = curStaff.staff_services?.map((ss) => ss.service_id) || []
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStaff({
+                                  ...curStaff,
+                                  serviceIds: curStaffServiceIds,
+                                })
+                                setIsStaffModalOpen(true)
+                              }}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer mx-auto"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>{lang === 'th' ? 'ปรับรายการบริการ' : 'Edit Services'}</span>
+                            </button>
+                          )
+                        })()
+                      )}
                     </div>
                   )
                 }

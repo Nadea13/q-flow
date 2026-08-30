@@ -10,7 +10,7 @@ export async function verifyMerchantPinAction(slug: string, pin: string) {
   const supabase = await createClient()
 
   const { data: merchant, error } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('id, slug, admin_pin')
     .eq('slug', slug)
     .single()
@@ -45,7 +45,7 @@ export async function verifyMerchantLiffAction(slug: string, lineUserId: string)
 
   const supabase = await createClient()
   const { data: merchant, error } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('id, slug, line_user_id')
     .eq('slug', slug)
     .single()
@@ -57,7 +57,7 @@ export async function verifyMerchantLiffAction(slug: string, lineUserId: string)
   // If merchant has no line_user_id linked yet, link this first admin line user!
   if (!merchant.line_user_id) {
     await supabase
-      .from('merchants')
+      .from('shops')
       .update({ line_user_id: lineUserId })
       .eq('id', merchant.id)
   } else if (merchant.line_user_id !== lineUserId) {

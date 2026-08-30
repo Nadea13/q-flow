@@ -32,13 +32,13 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
-        const merchantId = session.metadata?.merchant_id
+        const merchantId = session.metadata?.shop_id
         const planId = session.metadata?.plan_id as PlanType
 
         if (merchantId && planId && PRICING_PLANS[planId]) {
           const plan = PRICING_PLANS[planId]
           await supabase
-            .from('merchants')
+            .from('shops')
             .update({
               plan: plan.id,
               subscription_status: 'active',
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         const status = subscription.status // active, past_due, canceled
 
         await supabase
-          .from('merchants')
+          .from('shops')
           .update({
             subscription_status: status,
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         const customerId = subscription.customer as string
 
         await supabase
-          .from('merchants')
+          .from('shops')
           .update({
             subscription_status: 'canceled',
           })

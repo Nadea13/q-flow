@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, use, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, use, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Clock,
@@ -66,6 +66,7 @@ export default function SettingsPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const slug = resolvedParams.slug
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t, lang, toggleLang } = useLanguage()
   const { theme, toggleTheme } = useTheme()
 
@@ -90,8 +91,29 @@ export default function SettingsPage({ params }: PageProps) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Active Sub-Tab: 'shop' (ตั้งค่าร้าน) | 'billing' (แพ็กเกจ & บิลลิ่ง)
-  const [activeTab, setActiveTab] = useState<'shop' | 'billing'>('shop')
+  // Active Sub-Tab synced with URL: 'shop' (ตั้งค่าร้าน) | 'billing' (แพ็กเกจ & บิลลิ่ง)
+  const tabParam = searchParams.get('tab')
+  const initialTab: 'shop' | 'billing' = tabParam === 'billing' ? 'billing' : 'shop'
+  const [activeTab, setActiveTabState] = useState<'shop' | 'billing'>(initialTab)
+
+  // Ensure default URL query ?tab=shop if no tab param is present or if URL changes
+  useEffect(() => {
+    if (!tabParam) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('tab', 'shop')
+      router.replace(`/${slug}/settings?${params.toString()}`, { scroll: false })
+      setActiveTabState('shop')
+    } else if (tabParam === 'shop' || tabParam === 'billing') {
+      setActiveTabState(tabParam)
+    }
+  }, [tabParam, router, slug, searchParams])
+
+  function setActiveTab(tab: 'shop' | 'billing') {
+    setActiveTabState(tab)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.replace(`/${slug}/settings?${params.toString()}`, { scroll: false })
+  }
 
   // Branch Edit/New Modal state
   const [editingBranch, setEditingBranch] = useState<Partial<Branch> | null>(null)
@@ -237,7 +259,7 @@ export default function SettingsPage({ params }: PageProps) {
     const supabase = createClient()
 
     const { data: mData } = await supabase
-      .from('merchants')
+      .from('shops')
       .select('*')
       .eq('slug', slug)
       .single()
@@ -269,9 +291,9 @@ export default function SettingsPage({ params }: PageProps) {
     })
 
     const [branchRes, staffRes, bookingRes] = await Promise.all([
-      supabase.from('branches').select('*').eq('merchant_id', mData.id).order('created_at', { ascending: true }),
-      supabase.from('staff').select('*, branch:branches(*), staff_services(*, service:services(*))').eq('merchant_id', mData.id).order('created_at', { ascending: true }),
-      supabase.from('bookings').select('*, services(*), branch:branches(*), staff:staff(*)').eq('merchant_id', mData.id).order('start_time', { ascending: true }),
+      supabase.from('branches').select('*').eq('shop_id', mData.id).order('created_at', { ascending: true }),
+      supabase.from('staff').select('*, branch:branches(*), staff_services(*, service:services(*))').eq('shop_id', mData.id).order('created_at', { ascending: true }),
+      supabase.from('bookings').select('*, services(*), branch:branches(*), staff:staff(*)').eq('shop_id', mData.id).order('start_time', { ascending: true }),
     ])
 
     setBranches(branchRes.data || [])
@@ -913,22 +935,6 @@ export default function SettingsPage({ params }: PageProps) {
                   value={settingsForm.promptpay_name}
                   onChange={(e) => setSettingsForm({ ...settingsForm, promptpay_name: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('openTime')}</label>
-                <TimePicker24h
-                  value={settingsForm.open_time}
-                  onChange={(val) => setSettingsForm({ ...settingsForm, open_time: val })}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">{t('closeTime')}</label>
-                <TimePicker24h
-                  value={settingsForm.close_time}
-                  onChange={(val) => setSettingsForm({ ...settingsForm, close_time: val })}
                 />
               </div>
 

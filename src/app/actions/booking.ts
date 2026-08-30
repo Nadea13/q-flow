@@ -31,7 +31,7 @@ export async function createBookingAction(input: CreateBookingInput) {
 
   // 1. Fetch merchant
   const { data: merchant, error: mError } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('*')
     .eq('slug', input.merchantSlug)
     .single()
@@ -45,7 +45,7 @@ export async function createBookingAction(input: CreateBookingInput) {
     .from('services')
     .select('*')
     .eq('id', input.serviceId)
-    .eq('merchant_id', merchant.id)
+    .eq('shop_id', merchant.id)
     .single()
 
   if (sError || !service) {
@@ -56,7 +56,7 @@ export async function createBookingAction(input: CreateBookingInput) {
   let conflictQuery = supabase
     .from('bookings')
     .select('id, start_time, end_time, status')
-    .eq('merchant_id', merchant.id)
+    .eq('shop_id', merchant.id)
     .neq('status', 'cancelled')
     .lt('start_time', input.endTime)
     .gt('end_time', input.startTime)
@@ -88,7 +88,7 @@ export async function createBookingAction(input: CreateBookingInput) {
     const { data: firstBranch } = await supabase
       .from('branches')
       .select('id')
-      .eq('merchant_id', merchant.id)
+      .eq('shop_id', merchant.id)
       .order('created_at', { ascending: true })
       .limit(1)
       .single()
@@ -103,7 +103,7 @@ export async function createBookingAction(input: CreateBookingInput) {
   const { data: booking, error: bError } = await supabase
     .from('bookings')
     .insert({
-      merchant_id: merchant.id,
+      shop_id: merchant.id,
       service_id: service.id,
       branch_id: resolvedBranchId,
       staff_id: input.staffId || null,
@@ -137,7 +137,7 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
   // 1. Fetch booking with service, merchant, and branch
   const { data: booking, error: bError } = await supabase
     .from('bookings')
-    .select('*, merchants(*), services(*), branch:branches(*)')
+    .select('*, shops(*), services(*), branch:branches(*)')
     .eq('id', bookingId)
     .single()
 
@@ -193,7 +193,7 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
   } else {
     // Fallback: Supabase Storage
     const fileExt = file.name.split('.').pop() || 'jpg'
-    const filePath = `${booking.merchant_id}/${booking.id}_${Date.now()}.${fileExt}`
+    const filePath = `${booking.shop_id}/${booking.id}_${Date.now()}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
       .from('slips')
@@ -209,7 +209,7 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
   }
 
   // 3. Verify with SlipOK (using branch PromptPay if set, else merchant PromptPay)
-  const merchant = booking.merchants
+  const merchant = (booking.shops || booking.merchants)
   const branchPromptPay = booking.branch?.promptpay_id
   const targetPromptPayId = branchPromptPay || merchant.promptpay_id
 
@@ -283,7 +283,7 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
         slip_url: slipPublicUrl,
         slip_trans_ref: verification.transRef || null,
       },
-      merchant: booking.merchants,
+      merchant: (booking.shops || booking.merchants),
       service: booking.services,
     })
   } catch (notifyErr) {

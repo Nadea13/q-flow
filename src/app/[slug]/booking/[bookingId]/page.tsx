@@ -59,7 +59,7 @@ export default function BookingDetailPage({ params }: PageProps) {
       const supabase = createClient()
       const { data: bData, error } = await supabase
         .from('bookings')
-        .select('*, merchants(*), services(*), branch:branches(*), staff:staff(*)')
+        .select('*, shops(*), services(*), branch:branches(*), staff:staff(*)')
         .eq('id', bookingId)
         .single()
 
@@ -69,7 +69,7 @@ export default function BookingDetailPage({ params }: PageProps) {
       }
 
       setBooking(bData)
-      setMerchant(bData.merchants)
+      setMerchant((bData.shops || bData.merchants))
       setService(bData.services)
 
       // Check if already expired or cancelled
@@ -85,10 +85,10 @@ export default function BookingDetailPage({ params }: PageProps) {
       }
 
       // Generate PromptPay QR (Use branch promptpay_id if available, otherwise merchant's)
-      if (bData.status === 'pending_payment' && bData.merchants && diff > 0) {
+      if (bData.status === 'pending_payment' && (bData.shops || bData.merchants) && diff > 0) {
         try {
           const branchPromptPay = bData.branch?.promptpay_id
-          const activePromptPayId = branchPromptPay || bData.merchants.promptpay_id
+          const activePromptPayId = branchPromptPay || (bData.shops || bData.merchants).promptpay_id
           const qrRes = await generatePromptPayQR(
             activePromptPayId,
             Number(bData.deposit_amount)

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   // 1. Fetch merchant
   const { data: merchant, error: mError } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('*')
     .eq('slug', merchantSlug)
     .single()
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
   let bookingsQuery = supabase
     .from('bookings')
     .select('*')
-    .eq('merchant_id', merchant.id)
+    .eq('shop_id', merchant.id)
     .neq('status', 'cancelled')
     .gte('start_time', startOfDay)
     .lte('start_time', endOfDay)
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
   const { data: blockedSlots } = await supabase
     .from('slots')
     .select('*')
-    .eq('merchant_id', merchant.id)
+    .eq('shop_id', merchant.id)
     .gte('start_time', startOfDay)
     .lte('start_time', endOfDay)
 

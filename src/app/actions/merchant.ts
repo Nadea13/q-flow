@@ -49,7 +49,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
 
   // 1. Insert merchant
   const { data: merchant, error: mError } = await supabase
-    .from('merchants')
+    .from('shops')
     .insert({
       name: input.name.trim(),
       slug: slug,
@@ -94,7 +94,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
   await supabase
     .from('branches')
     .insert({
-      merchant_id: merchant.id,
+      shop_id: merchant.id,
       name: branchName,
       address: branchAddress,
       phone: branchPhone,

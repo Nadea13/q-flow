@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -32,7 +32,7 @@ export function StripeEmbeddedForm({ planName, priceTHB, planId, lineUserId, isS
         toast.success('ชำระเงินสำเร็จ (โหมดทดสอบ)')
         setTimeout(() => {
           const lineQuery = lineUserId ? `&line_uid=${encodeURIComponent(lineUserId)}` : ''
-          router.replace(`/onboarding?plan=${planId}&status=success${lineQuery}`)
+          router.replace(`/create-shop?plan=${planId}&status=success${lineQuery}`)
         }, 1200)
       }, 1000)
       return
@@ -47,7 +47,7 @@ export function StripeEmbeddedForm({ planName, priceTHB, planId, lineUserId, isS
 
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
     const lineQuery = lineUserId ? `&line_uid=${encodeURIComponent(lineUserId)}` : ''
-    const returnUrl = `${siteUrl}/onboarding?plan=${planId}&status=success${lineQuery}`
+    const returnUrl = `${siteUrl}/create-shop?plan=${planId}&status=success${lineQuery}`
 
     const { error } = await stripe.confirmPayment({
       elements,

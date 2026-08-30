@@ -27,7 +27,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
   let merchant = null
   if (input.merchantSlug && input.merchantSlug !== 'public') {
     const { data: mData } = await supabase
-      .from('merchants')
+      .from('shops')
       .select('id, slug, name, stripe_customer_id, plan')
       .eq('slug', input.merchantSlug)
       .single()
@@ -38,7 +38,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
 
   const successUrl = merchant
     ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
-    : `${siteUrl}/onboarding?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}${lineQuery}`
+    : `${siteUrl}/create-shop?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}${lineQuery}`
   
   const cancelUrl = merchant
     ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing`
@@ -48,7 +48,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
   if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('mock')) {
     if (merchant) {
       await supabase
-        .from('merchants')
+        .from('shops')
         .update({
           plan: plan.id,
           subscription_status: 'active',
@@ -65,7 +65,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
 
     return {
       success: true,
-      url: `${siteUrl}/onboarding?plan=${plan.id}`,
+      url: `${siteUrl}/create-shop?plan=${plan.id}`,
       simulated: true,
     }
   }
@@ -76,13 +76,13 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     const customer = await stripe.customers.create({
       name: merchant.name,
       metadata: {
-        merchant_id: merchant.id,
+        shop_id: merchant.id,
         merchant_slug: merchant.slug,
       },
     })
     customerId = customer.id
     await supabase
-      .from('merchants')
+      .from('shops')
       .update({ stripe_customer_id: customerId })
       .eq('id', merchant.id)
   }
@@ -115,7 +115,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
       customer: customerId || undefined,
       customer_email: undefined,
       metadata: {
-        merchant_id: merchant?.id || '',
+        shop_id: merchant?.id || '',
         merchant_slug: input.merchantSlug || '',
         plan_id: plan.id,
         billing_cycle: input.billingCycle || 'monthly',
@@ -139,7 +139,7 @@ export async function createStripeCustomerPortalAction(merchantSlug: string) {
   const supabase = await createClient()
 
   const { data: merchant } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('id, name, stripe_customer_id, slug, phone')
     .eq('slug', merchantSlug)
     .single()
@@ -167,13 +167,13 @@ export async function createStripeCustomerPortalAction(merchantSlug: string) {
         name: merchant.name,
         phone: merchant.phone || undefined,
         metadata: {
-          merchant_id: merchant.id,
+          shop_id: merchant.id,
           merchant_slug: merchant.slug,
         },
       })
       customerId = customer.id
       await supabase
-        .from('merchants')
+        .from('shops')
         .update({ stripe_customer_id: customerId })
         .eq('id', merchant.id)
     }
@@ -200,7 +200,7 @@ export async function upgradeMerchantPlanAction(merchantSlug: string, planId: Pl
   if (!plan) return { success: false, error: 'Invalid plan' }
 
   const { error } = await supabase
-    .from('merchants')
+    .from('shops')
     .update({
       plan: plan.id,
       subscription_status: 'active',

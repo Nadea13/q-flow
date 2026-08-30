@@ -2,7 +2,7 @@ export type BookingStatus = 'pending_payment' | 'confirmed' | 'cancelled' | 'com
 export type PlanType = 'professional' | 'business' | 'enterprise' | 'starter' | 'growth'
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
-export interface Merchant {
+export interface Shop {
   id: string
   slug: string
   name: string
@@ -36,9 +36,14 @@ export interface Merchant {
   updated_at: string
 }
 
+// Backward-compatibility alias
+export type Merchant = Shop
+
 export interface Branch {
   id: string
-  merchant_id: string
+  shop_id: string
+  /** @deprecated use shop_id */
+  merchant_id?: string
   name: string
   address: string | null
   phone: string | null
@@ -57,7 +62,9 @@ export interface Branch {
 
 export interface Staff {
   id: string
-  merchant_id: string
+  shop_id: string
+  /** @deprecated use shop_id */
+  merchant_id?: string
   branch_id: string | null
   name: string
   nickname: string | null
@@ -84,7 +91,9 @@ export interface StaffService {
 
 export interface Service {
   id: string
-  merchant_id: string
+  shop_id: string
+  /** @deprecated use shop_id */
+  merchant_id?: string
   title: string
   description: string | null
   duration_min: number
@@ -98,7 +107,9 @@ export interface Service {
 
 export interface Slot {
   id: string
-  merchant_id: string
+  shop_id: string
+  /** @deprecated use shop_id */
+  merchant_id?: string
   start_time: string
   end_time: string
   reason: string | null
@@ -108,7 +119,9 @@ export interface Slot {
 
 export interface Booking {
   id: string
-  merchant_id: string
+  shop_id: string
+  /** @deprecated use shop_id */
+  merchant_id?: string
   service_id: string
   branch_id?: string | null
   staff_id?: string | null
@@ -130,8 +143,10 @@ export interface Booking {
   // joined relations
   service?: Service
   services?: Service
-  merchant?: Merchant
-  merchants?: Merchant
+  shop?: Shop
+  shops?: Shop
+  merchant?: Shop
+  merchants?: Shop
   branch?: Branch
   staff?: Staff
 }
@@ -143,4 +158,3 @@ export interface TimeSlotOption {
   isAvailable: boolean
   reason?: string
 }
-

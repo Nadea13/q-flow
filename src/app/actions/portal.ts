@@ -10,7 +10,7 @@ export async function findMerchantByLineUserIdAction(lineUserId: string) {
   const supabase = await createClient()
 
   const { data: merchant, error } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('id, name, slug')
     .eq('line_user_id', lineUserId)
     .order('created_at', { ascending: false })
@@ -32,7 +32,7 @@ export async function listMerchantsByLineUserIdAction(lineUserId: string) {
   const supabase = await createClient()
 
   const { data: merchants, error } = await supabase
-    .from('merchants')
+    .from('shops')
     .select('id, name, slug, logo_url, plan, subscription_status, created_at')
     .eq('line_user_id', lineUserId)
     .order('created_at', { ascending: false })

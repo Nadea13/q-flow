@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     // Find the merchant connected to this bot/event
     const { data: merchant } = await supabase
-      .from('merchants')
+      .from('shops')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const { data: services } = await supabase
       .from('services')
       .select('*')
-      .eq('merchant_id', merchant?.id || '')
+      .eq('shop_id', merchant?.id || '')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
       .limit(3)
@@ -57,16 +57,16 @@ export async function POST(request: Request) {
           if (lineUserId) {
             const { data: userBooking } = await supabase
               .from('bookings')
-              .select('*, merchants(*), services(*)')
+              .select('*, shops(*), services(*)')
               .eq('customer_line_id', lineUserId)
               .order('start_time', { ascending: false })
               .limit(1)
               .maybeSingle()
 
-            if (userBooking && userBooking.merchants && userBooking.services) {
+            if (userBooking && (userBooking.shops || userBooking.merchants) && userBooking.services) {
               const ticketFlex = buildBookingSuccessFlex(
                 userBooking,
-                userBooking.merchants,
+                (userBooking.shops || userBooking.merchants),
                 userBooking.services
               )
               await sendLineReplyMessage(replyToken, [ticketFlex])

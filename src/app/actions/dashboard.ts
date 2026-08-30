@@ -58,7 +58,7 @@ export async function createManualBookingAction(input: {
     const { data: firstBranch } = await supabase
       .from('branches')
       .select('id')
-      .eq('merchant_id', input.merchantId)
+      .eq('shop_id', input.merchantId)
       .order('created_at', { ascending: true })
       .limit(1)
       .single()
@@ -70,7 +70,7 @@ export async function createManualBookingAction(input: {
   const { data, error } = await supabase
     .from('bookings')
     .insert({
-      merchant_id: input.merchantId,
+      shop_id: input.merchantId,
       service_id: input.serviceId,
       branch_id: resolvedBranchId,
       staff_id: input.staffId || null,
@@ -106,7 +106,7 @@ export async function createBlockedSlotAction(input: {
   const { data, error } = await supabase
     .from('slots')
     .insert({
-      merchant_id: input.merchantId,
+      shop_id: input.merchantId,
       start_time: input.startTime,
       end_time: input.endTime,
       reason: input.reason || 'แอดมินปิดรับคิว',
@@ -168,7 +168,7 @@ export async function saveServiceAction(input: {
   } else {
     // Create
     const { error } = await supabase.from('services').insert({
-      merchant_id: input.merchantId,
+      shop_id: input.merchantId,
       title: input.title.trim(),
       description: input.description?.trim() || null,
       duration_min: Number(input.duration_min) || 60,
@@ -208,7 +208,7 @@ export async function updateMerchantBranchAction(input: {
   const supabase = await createClient()
 
   const { error } = await supabase
-    .from('merchants')
+    .from('shops')
     .update({
       branch_name: input.branch_name.trim(),
       branch_address: input.branch_address?.trim() || null,
@@ -249,7 +249,7 @@ export async function updateMerchantSettingsAction(input: {
   const supabase = await createClient()
 
   const { error } = await supabase
-    .from('merchants')
+    .from('shops')
     .update({
       name: input.name.trim(),
       logo_url: input.logo_url !== undefined ? input.logo_url : undefined,
@@ -340,7 +340,7 @@ export async function uploadMerchantLogoAction(formData: FormData) {
 
   // Update merchant record
   const { error: updateError } = await supabase
-    .from('merchants')
+    .from('shops')
     .update({
       logo_url: logoPublicUrl,
       updated_at: new Date().toISOString(),
@@ -383,7 +383,7 @@ export async function saveBranchAction(input: {
   // Enforce branch limit based on merchant plan
   if (!input.id) {
     const { data: merchant } = await supabase
-      .from('merchants')
+      .from('shops')
       .select('plan')
       .eq('id', input.merchantId)
       .single()
@@ -394,7 +394,7 @@ export async function saveBranchAction(input: {
     const { count } = await supabase
       .from('branches')
       .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', input.merchantId)
+      .eq('shop_id', input.merchantId)
 
     if (count !== null && count >= maxBranches) {
       return {
@@ -405,7 +405,7 @@ export async function saveBranchAction(input: {
   }
 
   const payload = {
-    merchant_id: input.merchantId,
+    shop_id: input.merchantId,
     name: input.name.trim(),
     address: input.address?.trim() || null,
     phone: input.phone?.trim() || null,
@@ -469,7 +469,7 @@ export async function saveStaffAction(input: {
   // Enforce staff limit based on merchant plan
   if (!input.id) {
     const { data: merchant } = await supabase
-      .from('merchants')
+      .from('shops')
       .select('plan')
       .eq('id', input.merchantId)
       .single()
@@ -480,7 +480,7 @@ export async function saveStaffAction(input: {
     const { count } = await supabase
       .from('staff')
       .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', input.merchantId)
+      .eq('shop_id', input.merchantId)
 
     if (count !== null && count >= maxStaff) {
       return {
@@ -491,7 +491,7 @@ export async function saveStaffAction(input: {
   }
 
   const payload = {
-    merchant_id: input.merchantId,
+    shop_id: input.merchantId,
     branch_id: input.branchId || null,
     name: input.name.trim(),
     nickname: input.nickname?.trim() || null,

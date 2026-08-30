@@ -78,7 +78,7 @@ export default function BookingPage({ params }: PageProps) {
     async function loadShop() {
       const supabase = createClient()
       const { data: mData, error: mErr } = await supabase
-        .from('merchants')
+        .from('shops')
         .select('*')
         .eq('slug', slug)
         .single()
@@ -94,7 +94,7 @@ export default function BookingPage({ params }: PageProps) {
       const { data: bData } = await supabase
         .from('branches')
         .select('*')
-        .eq('merchant_id', mData.id)
+        .eq('shop_id', mData.id)
         .eq('is_active', true)
         .order('created_at', { ascending: true })
 
@@ -108,7 +108,7 @@ export default function BookingPage({ params }: PageProps) {
       const { data: stData } = await supabase
         .from('staff')
         .select('*, branch:branches(*), staff_services(*, service:services(*))')
-        .eq('merchant_id', mData.id)
+        .eq('shop_id', mData.id)
         .eq('is_active', true)
         .order('created_at', { ascending: true })
 
@@ -118,7 +118,7 @@ export default function BookingPage({ params }: PageProps) {
       const { data: sData } = await supabase
         .from('services')
         .select('*')
-        .eq('merchant_id', mData.id)
+        .eq('shop_id', mData.id)
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
 
