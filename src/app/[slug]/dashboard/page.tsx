@@ -496,6 +496,8 @@ export default function DashboardPage({ params }: PageProps) {
       setIsServiceModalOpen(false)
       setEditingService(null)
       loadDashboardData()
+    } else {
+      toast.error(res.error || 'เกิดข้อผิดพลาดในการบันทึกบริการ')
     }
   }
 
