@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 
 const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID
 const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID
@@ -54,10 +54,10 @@ export async function uploadToCloudflareR2(
 
     await r2Client.send(command)
 
-    // Generate public CDN URL
-    const fileUrl = publicUrl 
+    // Serve via internal proxy endpoint /api/slips/view?key=... if no public CDN domain is set
+    const fileUrl = publicUrl && !publicUrl.includes('.r2.cloudflarestorage.com')
       ? `${publicUrl.replace(/\/$/, '')}/${key}`
-      : `https://${bucketName}.${accountId}.r2.cloudflarestorage.com/${key}`
+      : `/api/slips/view?key=${encodeURIComponent(key)}`
 
     return {
       success: true,
@@ -71,5 +71,22 @@ export async function uploadToCloudflareR2(
       success: false,
       error: errorMsg,
     }
+  }
+}
+
+/**
+ * Retrieves an object stream from Cloudflare R2 bucket
+ */
+export async function getObjectFromCloudflareR2(key: string) {
+  if (!r2Client) return null
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    })
+    return await r2Client.send(command)
+  } catch (err) {
+    console.error('Failed to get object from Cloudflare R2:', err)
+    return null
   }
 }
