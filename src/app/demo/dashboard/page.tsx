@@ -382,28 +382,30 @@ export default function DemoDashboardPage() {
             </div>
           </div>
 
-          {/* Row 4: Status Segmented Filter Bar */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-x-auto">
-            {[
-              { id: 'all', label: 'ทั้งหมด' },
-              { id: 'confirmed', label: 'ยืนยันสลิปแล้ว' },
-              { id: 'pending_payment', label: 'รอตรวจสลิป' },
-              { id: 'completed', label: 'เข้าใช้บริการแล้ว' },
-            ].map((st) => (
-              <button
-                key={st.id}
-                type="button"
-                onClick={() => setStatusFilter(st.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer ${
-                  statusFilter === st.id
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {st.label}
-              </button>
-            ))}
-          </div>
+          {/* Row 4: Status Segmented Filter Bar - Only visible in List view */}
+          {bookingsViewMode === 'list' && (
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-x-auto">
+              {[
+                { id: 'all', label: 'ทั้งหมด' },
+                { id: 'confirmed', label: 'ยืนยันสลิปแล้ว' },
+                { id: 'pending_payment', label: 'รอตรวจสลิป' },
+                { id: 'completed', label: 'เข้าใช้บริการแล้ว' },
+              ].map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => setStatusFilter(st.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer ${
+                    statusFilter === st.id
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              ))}
+            </div>
+          )}
 
         </div>
 

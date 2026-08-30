@@ -1198,29 +1198,31 @@ export default function DashboardPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                {/* Mobile: Row 2 / Desktop: Right Side (Status Filter Segmented Badges) */}
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs overflow-x-auto max-w-full shrink-0">
-                  {[
-                    { id: 'all', label: t('all') },
-                    { id: 'confirmed', label: t('statusConfirmed') },
-                    { id: 'pending_payment', label: t('statusPending') },
-                    { id: 'completed', label: t('statusCompleted') },
-                    { id: 'cancelled', label: t('statusCancelled') },
-                  ].map((st) => (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onClick={() => setStatusFilter(st.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer active:scale-95 ${
-                        statusFilter === st.id
-                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
-                </div>
+                {/* Mobile: Row 2 / Desktop: Right Side (Status Filter Segmented Badges) - Only visible in List view */}
+                {bookingsViewMode === 'list' && (
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs overflow-x-auto max-w-full shrink-0">
+                    {[
+                      { id: 'all', label: t('all') },
+                      { id: 'confirmed', label: t('statusConfirmed') },
+                      { id: 'pending_payment', label: t('statusPending') },
+                      { id: 'completed', label: t('statusCompleted') },
+                      { id: 'cancelled', label: t('statusCancelled') },
+                    ].map((st) => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setStatusFilter(st.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer active:scale-95 ${
+                          statusFilter === st.id
+                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
