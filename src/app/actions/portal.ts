@@ -24,22 +24,26 @@ export async function findMerchantByLineUserIdAction(lineUserId: string) {
   return { success: true, slug: merchant.slug, name: merchant.name }
 }
 
-export async function listMerchantsByLineUserIdAction(lineUserId: string) {
+export async function listShopsByLineUserIdAction(lineUserId: string) {
   if (!lineUserId) {
-    return { success: false, error: 'Missing LINE User ID', merchants: [] }
+    return { success: false, error: 'Missing LINE User ID', shops: [], merchants: [] }
   }
 
   const supabase = await createClient()
 
-  const { data: merchants, error } = await supabase
+  const { data: shops, error } = await supabase
     .from('shops')
     .select('id, name, slug, logo_url, plan, subscription_status, created_at')
     .eq('line_user_id', lineUserId)
     .order('created_at', { ascending: false })
 
   if (error) {
-    return { success: false, error: error.message, merchants: [] }
+    return { success: false, error: error.message, shops: [], merchants: [] }
   }
 
-  return { success: true, merchants: merchants || [] }
+  return { success: true, shops: shops || [], merchants: shops || [] }
 }
+
+export const findShopByLineUserIdAction = findMerchantByLineUserIdAction
+export const listMerchantsByLineUserIdAction = listShopsByLineUserIdAction
+
