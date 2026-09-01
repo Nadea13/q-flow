@@ -11,7 +11,7 @@ export async function verifyMerchantPinAction(slug: string, pin: string) {
 
   const { data: merchant, error } = await supabase
     .from('shops')
-    .select('id, slug, admin_pin')
+    .select('id, slug')
     .eq('slug', slug)
     .single()
 
@@ -19,7 +19,7 @@ export async function verifyMerchantPinAction(slug: string, pin: string) {
     return { success: false, error: 'ไม่พบร้านค้านี้' }
   }
 
-  const validPin = merchant.admin_pin || '1234'
+  const validPin = '1234'
   if (pin.trim() !== validPin) {
     return { success: false, error: 'รหัส PIN ไม่ถูกต้อง' }
   }

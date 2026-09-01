@@ -103,7 +103,6 @@ function CreateShopContent() {
             setFormData((prev) => ({
               ...prev,
               name: prev.name ? prev.name : `${parsed.displayName || 'Shop'}'s Studio`,
-              promptpay_name: prev.promptpay_name ? prev.promptpay_name : (parsed.displayName || ''),
               staff_name: prev.staff_name ? prev.staff_name : (parsed.displayName || 'ช่างประจำร้าน'),
             }))
           }
@@ -123,7 +122,6 @@ function CreateShopContent() {
           setFormData((prev) => ({
             ...prev,
             name: prev.name ? prev.name : `${lineNameParam}'s Studio`,
-            promptpay_name: prev.promptpay_name ? prev.promptpay_name : lineNameParam,
             staff_name: prev.staff_name ? prev.staff_name : lineNameParam,
           }))
         }
@@ -146,7 +144,6 @@ function CreateShopContent() {
           setFormData((prev) => ({
             ...prev,
             name: prev.name ? prev.name : `${res.profile?.displayName || 'Shop'}'s Studio`,
-            promptpay_name: prev.promptpay_name ? prev.promptpay_name : (res.profile?.displayName || ''),
             staff_name: prev.staff_name ? prev.staff_name : (res.profile?.displayName || 'ช่างประจำร้าน'),
           }))
           return
@@ -208,7 +205,6 @@ function CreateShopContent() {
       promptpay_id: formData.promptpay_id,
       promptpay_name: formData.promptpay_name.trim() || undefined,
       default_deposit: formData.default_deposit !== '' && !isNaN(Number(formData.default_deposit)) ? Number(formData.default_deposit) : 100,
-      admin_pin: '1234',
       line_user_id: lineAdminProfile?.userId,
       customSlug: formData.slug || undefined,
       branch_name: formData.branch_name || undefined,

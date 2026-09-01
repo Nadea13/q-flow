@@ -506,7 +506,6 @@ export default function SettingsPage({ params }: PageProps) {
       promptpay_id: newShopForm.promptpay_id,
       promptpay_name: newShopForm.promptpay_name || undefined,
       default_deposit: newShopForm.default_deposit !== '' && !isNaN(Number(newShopForm.default_deposit)) ? Number(newShopForm.default_deposit) : 100,
-      admin_pin: merchant?.admin_pin || '1234',
       line_user_id: merchant?.line_user_id || undefined,
       customSlug: newShopForm.slug || undefined,
       branch_name: newShopForm.branch_name || undefined,

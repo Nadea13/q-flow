@@ -10,7 +10,6 @@ interface CreateMerchantInput {
   promptpay_id: string
   promptpay_name?: string
   default_deposit: number
-  admin_pin?: string
   line_user_id?: string
   phone?: string
   logo_url?: string
@@ -48,7 +47,6 @@ export async function createMerchantAction(input: CreateMerchantInput) {
   const supabase = await createClient()
 
   const slug = input.customSlug?.trim() || generateSlug(input.name)
-  const pin = input.admin_pin?.trim() || '1234'
   const branchName = input.branch_name?.trim() || 'สาขาหลัก (Main Branch)'
   const branchAddress = input.branch_address?.trim() || null
   const branchPhone = input.branch_phone?.trim() || input.phone?.trim() || input.promptpay_id.trim()
@@ -67,7 +65,6 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || input.name.trim(),
       default_deposit: input.default_deposit !== undefined && !isNaN(Number(input.default_deposit)) ? Number(input.default_deposit) : 100,
-      admin_pin: pin,
       line_user_id: input.line_user_id || undefined,
       phone: input.phone?.trim() || input.promptpay_id.trim(),
       open_time: input.open_time || '10:00:00',
