@@ -250,8 +250,8 @@ function CreateShopContent() {
           <div className="pt-1">
             <div className="flex items-center justify-between relative mb-2">
               <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0" />
-              <div 
-                className="absolute top-4 left-6 h-0.5 bg-indigo-600 dark:bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-300" 
+              <div
+                className="absolute top-4 left-6 h-0.5 bg-indigo-600 dark:bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-300"
                 style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? 'calc(50% - 12px)' : 'calc(100% - 48px)' }}
               />
 
@@ -266,10 +266,10 @@ function CreateShopContent() {
                         if (s.num < currentStep) setCurrentStep(s.num as 1 | 2 | 3)
                       }}
                       className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${isDone
-                          ? 'bg-emerald-600 text-white shadow-sm'
-                          : isActive
-                            ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 dark:ring-indigo-950/60 shadow-md'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : isActive
+                          ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 dark:ring-indigo-950/60 shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700'
                         }`}
                     >
                       {isDone ? <Check className="w-4 h-4 stroke-[3]" /> : s.num}
@@ -403,9 +403,9 @@ function CreateShopContent() {
                   transition={{ duration: 0.2 }}
                   className="space-y-4"
                 >
-                  <div className="pb-1 border-b border-slate-100 dark:border-slate-800">
+                  <div>
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                      {lang === 'th' ? '1. ข้อมูลร้านค้า & ลิงก์ URL' : '1. Shop Profile & URL'}
+                      {lang === 'th' ? 'ข้อมูลร้านค้า & ลิงก์ URL' : 'Shop Profile & URL'}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {lang === 'th' ? 'กำหนดชื่อร้าน URL และบัญชีพร้อมเพย์สำหรับรับเงินมัดจำ' : 'Set your store name, booking URL, and PromptPay details'}
@@ -454,49 +454,50 @@ function CreateShopContent() {
                     </p>
                   </div>
 
-                  {/* PromptPay ID */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                      {t('promptpayLabel')} <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                        <QrCode className="w-4 h-4" />
+                  {/* PromptPay ID & PromptPay Account Name (Same Row) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                        {t('promptpayLabel')} <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                          <QrCode className="w-4 h-4" />
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          placeholder={t('promptpayPlaceholder')}
+                          value={formData.promptpay_id}
+                          onChange={(e) => setFormData({ ...formData, promptpay_id: e.target.value })}
+                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        required
-                        placeholder={t('promptpayPlaceholder')}
-                        value={formData.promptpay_id}
-                        onChange={(e) => setFormData({ ...formData, promptpay_id: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
-                      />
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                        {t('promptpayHint')}
+                      </p>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                      {t('promptpayHint')}
-                    </p>
-                  </div>
 
-                  {/* PromptPay Account Name */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                      {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์รับเงิน' : 'PromptPay Account Name'}
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                        <User className="w-4 h-4" />
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                        {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์รับเงิน' : 'PromptPay Account Name'}
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                          <User className="w-4 h-4" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder={lang === 'th' ? 'เช่น นาย สมชาย ใจดี, ร้าน นวดแผนไทย' : 'e.g. Somchai Jaidee, Thai Massage Shop'}
+                          value={formData.promptpay_name}
+                          onChange={(e) => setFormData({ ...formData, promptpay_name: e.target.value })}
+                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        placeholder={lang === 'th' ? 'เช่น นาย สมชาย ใจดี, ร้าน นวดแผนไทย' : 'e.g. Somchai Jaidee, Thai Massage Shop'}
-                        value={formData.promptpay_name}
-                        onChange={(e) => setFormData({ ...formData, promptpay_name: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                      />
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                        {lang === 'th' ? 'แสดงให้ลูกค้าตรวจสอบชื่อบัญชีก่อนสแกนโอนเงิน' : 'Display account holder name for customers to verify'}
+                      </p>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                      {lang === 'th' ? 'แสดงให้ลูกค้าตรวจสอบชื่อบัญชีก่อนสแกนโอนเงิน' : 'Display account holder name for customers to verify'}
-                    </p>
                   </div>
 
                   {/* Deposit Amount */}
@@ -548,51 +549,52 @@ function CreateShopContent() {
                   transition={{ duration: 0.2 }}
                   className="space-y-4"
                 >
-                  <div className="pb-1 border-b border-slate-100 dark:border-slate-800">
+                  <div>
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                      {lang === 'th' ? '2. ข้อมูลสาขาแรก & เวลาทำการ' : '2. First Branch & Operating Hours'}
+                      {lang === 'th' ? 'ข้อมูลสาขาแรก & เวลาทำการ' : 'First Branch & Operating Hours'}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {lang === 'th' ? 'ตั้งค่าสาขาแรกและเวลาเปิด-ปิดร้านเพื่อเปิดรอบคิว' : 'Configure first branch location and daily operating hours'}
                     </p>
                   </div>
 
-                  {/* Branch Name */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                      {lang === 'th' ? 'ชื่อสาขา' : 'Branch Name'} <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                        <Building2 className="w-4 h-4" />
+                  {/* Branch Name & Branch Phone (Same Row) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                        {lang === 'th' ? 'ชื่อสาขา' : 'Branch Name'} <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          placeholder="เช่น สาขาหลัก, สาขาสยามสแควร์"
+                          value={formData.branch_name}
+                          onChange={(e) => setFormData({ ...formData, branch_name: e.target.value })}
+                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        required
-                        placeholder="เช่น สาขาหลัก, สาขาสยามสแควร์"
-                        value={formData.branch_name}
-                        onChange={(e) => setFormData({ ...formData, branch_name: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                      />
                     </div>
-                  </div>
 
-                  {/* Branch Phone */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                      {lang === 'th' ? 'เบอร์โทรศัพท์สาขา (ถ้ามี)' : 'Branch Phone (Optional)'}
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                        <Phone className="w-3.5 h-3.5" />
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                        {lang === 'th' ? 'เบอร์โทรศัพท์สาขา (ถ้ามี)' : 'Branch Phone (Optional)'}
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                          <Phone className="w-3.5 h-3.5" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="เช่น 02-123-4567, 081-234-5678"
+                          value={formData.branch_phone}
+                          onChange={(e) => setFormData({ ...formData, branch_phone: e.target.value })}
+                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        placeholder="เช่น 02-123-4567, 081-234-5678"
-                        value={formData.branch_phone}
-                        onChange={(e) => setFormData({ ...formData, branch_phone: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
-                      />
                     </div>
                   </div>
 
@@ -657,16 +659,11 @@ function CreateShopContent() {
                   </div>
 
                   {/* Branch Geo Address */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                      {lang === 'th' ? 'ที่ตั้งสาขา' : 'Branch Location'}
-                    </label>
-                    <ThaiAddressSelector
-                      initialAddress={formData.branch_address}
-                      onChange={(fullAddr) => setFormData({ ...formData, branch_address: fullAddr })}
-                      lang={lang}
-                    />
-                  </div>
+                  <ThaiAddressSelector
+                    initialAddress={formData.branch_address}
+                    onChange={(fullAddr) => setFormData({ ...formData, branch_address: fullAddr })}
+                    lang={lang}
+                  />
 
                   {/* Step 2 Actions */}
                   <div className="grid grid-cols-2 gap-2.5 pt-2">
@@ -700,9 +697,9 @@ function CreateShopContent() {
                   transition={{ duration: 0.2 }}
                   className="space-y-4"
                 >
-                  <div className="pb-1 border-b border-slate-100 dark:border-slate-800">
+                  <div>
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                      {lang === 'th' ? '3. ตั้งค่าช่าง & บริการแรก' : '3. Staff Specialist & First Service'}
+                      {lang === 'th' ? 'ตั้งค่าช่าง & บริการแรก' : 'Staff Specialist & First Service'}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {lang === 'th' ? 'เพิ่มผู้ให้บริการและบริการแรกของคุณ (เพิ่มหรือแก้ไขเพิ่มเติมได้ใน Dashboard)' : 'Add your first service specialist and service catalog item'}
