@@ -188,7 +188,7 @@ export function ThaiAddressSelector({
   const isBKK = addressState.province === 'กรุงเทพมหานคร'
 
   return (
-    <div className="space-y-3 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5">
+    <div className="space-y-3 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
       {/* Header with Mode Switcher */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
