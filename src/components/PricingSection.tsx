@@ -324,12 +324,12 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
 
               <div className="text-center space-y-1.5">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {lang === 'th' ? 'ยืนยันการเลือกแพ็กเกจฟรี?' : 'Confirm Free Plan Selection?'}
+                  {lang === 'th' ? 'ยืนยันการเลือกแพ็กเกจ Q Flow Basic?' : 'Confirm Q Flow Basic Selection?'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {lang === 'th' 
-                    ? 'แพ็กเกจฟรี (Q Flow Free) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?' 
-                    : 'The Free Plan includes 30 bookings/month, 1 shop, 1 branch, and 1 staff member. Do you wish to proceed?'}
+                    ? 'แพ็กเกจ Q Flow Basic (ฟรี) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?' 
+                    : 'The Q Flow Basic Plan includes 30 bookings/month, 1 shop, 1 branch, and 1 staff member. Do you wish to proceed?'}
                 </p>
               </div>
 
@@ -358,7 +358,7 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                   disabled={loadingPlan !== null}
                   className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs transition shadow-md cursor-pointer disabled:opacity-50"
                 >
-                  {lang === 'th' ? 'ยืนยันเลือกแพ็กเกจฟรี' : 'Confirm Free Plan'}
+                  {lang === 'th' ? 'ยืนยันเลือกแพ็กเกจ Basic' : 'Confirm Basic Plan'}
                 </button>
               </div>
             </motion.div>

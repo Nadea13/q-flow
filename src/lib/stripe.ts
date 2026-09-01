@@ -26,7 +26,7 @@ export interface PricingPlan {
 export const PRICING_PLANS: Record<string, PricingPlan> = {
   free: {
     id: 'free',
-    name: 'Q Flow Free',
+    name: 'Q Flow Basic',
     tagline: 'เหมาะสำหรับร้านค้าขนาดเล็กเริ่มต้นทดลองใช้ระบบ',
     priceTHB: 0,
     priceYearlyTHB: 0,
