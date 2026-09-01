@@ -334,8 +334,8 @@ export default function ShopsPortalPage() {
             <div>
               <span>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</span>
             </div>
-            <div>
-              <span>Powered by Q Flow Next-Gen Engine</span>
+            <div className="flex items-center justify-center gap-4">
+              <span>Powered by <span className='font-bold'>Q Flow</span></span>
             </div>
           </div>
         </div>

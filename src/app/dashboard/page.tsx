@@ -358,7 +358,7 @@ export default function ShopSelectionPortalPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              <span>Powered by Q Flow Next-Gen Engine</span>
+              <span>Powered by <span className='font-bold'>Q Flow</span></span>
             </div>
           </div>
         </div>

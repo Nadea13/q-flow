@@ -56,7 +56,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       logo_url: input.logo_url?.trim() || undefined,
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || input.name.trim(),
-      default_deposit: Number(input.default_deposit) || 100,
+      default_deposit: input.default_deposit !== undefined && !isNaN(Number(input.default_deposit)) ? Number(input.default_deposit) : 100,
       admin_pin: pin,
       line_user_id: input.line_user_id || undefined,
       phone: input.phone?.trim() || input.promptpay_id.trim(),

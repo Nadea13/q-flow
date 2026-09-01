@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { 
   Sparkles, 
   CheckCircle2, 
@@ -29,6 +30,7 @@ import { PricingSection } from '@/components/PricingSection'
 import { QFlowLogo } from '@/components/QFlowLogo'
 
 export default function Home() {
+  const router = useRouter()
   const { t, lang } = useLanguage()
   const [howItWorksTab, setHowItWorksTab] = useState<'merchant' | 'customer'>('merchant')
 
@@ -154,8 +156,30 @@ export default function Home() {
 
   async function handleStartLogin() {
     try {
-      const { loginWithLine } = await import('@/lib/liff')
+      const { initLiff, loginWithLine } = await import('@/lib/liff')
       const redirectUri = `${window.location.origin}/pricing`
+
+      // 1. Check if LIFF profile is already present / logged in
+      const liffRes = await initLiff()
+      if (liffRes?.success && liffRes.profile?.userId) {
+        localStorage.setItem('qflow_admin_line_profile', JSON.stringify(liffRes.profile))
+        router.push('/pricing')
+        return
+      }
+
+      // 2. Check cached profile in localStorage
+      try {
+        const cached = localStorage.getItem('qflow_admin_line_profile')
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed.userId) {
+            router.push('/pricing')
+            return
+          }
+        }
+      } catch { }
+
+      // 3. Trigger LINE Login redirecting to /pricing
       await loginWithLine(redirectUri)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -712,7 +736,7 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-4">
-              <span>Powered by Q Flow</span>
+              <span>Powered by <span className='font-bold'>Q Flow</span></span>
             </div>
           </div>
         </div>

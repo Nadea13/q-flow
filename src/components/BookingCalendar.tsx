@@ -160,7 +160,7 @@ export function BookingCalendar({
                   ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm ring-2 ring-indigo-500/30 font-bold scale-[1.03]'
                   : isCurrentDay
                   ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 active:scale-95'
-                  : 'text-slate-700 dark:text-slate-200 bg-slate-50/70 dark:bg-slate-950/40 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-150 dark:border-slate-850 active:scale-95'
+                  : 'text-slate-700 dark:text-slate-200 bg-slate-50/60 dark:bg-slate-800/30 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-300 hover:border-indigo-200 dark:hover:border-indigo-800/80 border border-slate-200 dark:border-slate-800 active:scale-95'
               }`}
             >
               <span>{dayNum}</span>

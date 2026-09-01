@@ -102,7 +102,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
             currency: 'thb',
             product_data: {
               name: `${plan.name} (${isYearly ? 'รายปี / Yearly' : 'รายเดือน / Monthly'})`,
-              description: `${plan.tagline} • ตรวจสลิป ${plan.quota.toLocaleString()} สลิป/เดือน`,
+              description: `${plan.tagline} • ${plan.quota.toLocaleString()} คิว/เดือน`,
             },
             unit_amount: unitAmount,
             recurring: {

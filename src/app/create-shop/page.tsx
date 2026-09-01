@@ -112,7 +112,7 @@ function CreateShopContent() {
     const res = await createMerchantAction({
       name: formData.name,
       promptpay_id: formData.promptpay_id,
-      default_deposit: Number(formData.default_deposit) || 100,
+      default_deposit: formData.default_deposit !== '' && !isNaN(Number(formData.default_deposit)) ? Number(formData.default_deposit) : 100,
       admin_pin: '1234',
       line_user_id: lineAdminProfile?.userId,
       customSlug: formData.slug || undefined,

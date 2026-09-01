@@ -141,20 +141,20 @@ export default function PricingPage() {
       ],
     },
     {
-      category: lang === 'th' ? 'โควตาสลิป & ตรวจสอบอัตโนมัติ' : 'Slip Quota & Verification',
+      category: lang === 'th' ? 'โควตาคิว & ตรวจสอบอัตโนมัติ' : 'Queue Quota & Verification',
       features: [
         {
-          name: lang === 'th' ? 'โควตาสลิปตรวจอัตโนมัติ' : 'Monthly Auto-verified Slips',
-          professional: '500 สลิป / เดือน (~16 คิว/วัน)',
-          business: '1,500 สลิป / เดือน (~50 คิว/วัน)',
-          enterprise: '5,000 สลิป / เดือน (~165 คิว/วัน)',
+          name: lang === 'th' ? 'โควตาคิวอัตโนมัติ' : 'Monthly Auto-verified Queues',
+          professional: '500 คิว / เดือน (~16 คิว/วัน)',
+          business: '1,500 คิว / เดือน (~50 คิว/วัน)',
+          enterprise: '5,000 คิว / เดือน (~165 คิว/วัน)',
           highlight: true,
         },
         {
-          name: lang === 'th' ? 'สิทธิ์ซื้อโควตาสลิปส่วนเกิน' : 'Overage Slip Rate',
-          professional: '0.60 บาท / สลิป',
-          business: '0.50 บาท / สลิป',
-          enterprise: '0.40 บาท / สลิป',
+          name: lang === 'th' ? 'สิทธิ์ซื้อโควตาคิวส่วนเกิน' : 'Overage Queue Rate',
+          professional: '0.60 บาท / คิว',
+          business: '0.50 บาท / คิว',
+          enterprise: '0.40 บาท / คิว',
         },
         {
           name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และป้องกันสลิปใช้ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
@@ -364,7 +364,7 @@ export default function PricingPage() {
                     </div>
                     <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
                       <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                        ⚡ โควตา {p.quota.toLocaleString()} สลิป/เดือน
+                        ⚡ โควตา {p.quota.toLocaleString()} คิว/เดือน
                       </span>
                     </div>
                   </div>
@@ -709,8 +709,8 @@ export default function PricingPage() {
               <span>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</span>
             </div>
 
-            <div className="flex items-center gap-4">
-              <span>Powered by Q Flow Next-Gen Engine</span>
+            <div className="flex items-center justify-center gap-4">
+              <span>Powered by <span className='font-bold'>Q Flow</span></span>
             </div>
           </div>
         </div>

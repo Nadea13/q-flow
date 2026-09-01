@@ -158,7 +158,7 @@ export async function saveServiceAction(input: {
         description: input.description?.trim() || null,
         duration_min: Number(input.duration_min) || 60,
         price: Number(input.price) || 0,
-        deposit_amount: input.deposit_amount ? Number(input.deposit_amount) : null,
+        deposit_amount: input.deposit_amount !== undefined && input.deposit_amount !== null && !isNaN(Number(input.deposit_amount)) ? Number(input.deposit_amount) : null,
         is_active: input.is_active ?? true,
         updated_at: new Date().toISOString(),
       })
@@ -173,7 +173,7 @@ export async function saveServiceAction(input: {
       description: input.description?.trim() || null,
       duration_min: Number(input.duration_min) || 60,
       price: Number(input.price) || 0,
-      deposit_amount: input.deposit_amount ? Number(input.deposit_amount) : null,
+      deposit_amount: input.deposit_amount !== undefined && input.deposit_amount !== null && !isNaN(Number(input.deposit_amount)) ? Number(input.deposit_amount) : null,
       is_active: true,
       sort_order: 99,
     })
@@ -256,7 +256,7 @@ export async function updateMerchantSettingsAction(input: {
       phone: input.phone?.trim() || null,
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || null,
-      default_deposit: Number(input.default_deposit) || 100,
+      default_deposit: input.default_deposit !== undefined && !isNaN(Number(input.default_deposit)) ? Number(input.default_deposit) : 100,
       open_time: input.open_time,
       close_time: input.close_time,
       has_break: input.has_break ?? false,

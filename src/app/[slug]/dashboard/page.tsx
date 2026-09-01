@@ -29,6 +29,8 @@ import {
   User,
   Share2,
   Sun,
+  CloudSun,
+  Sunset,
   Moon,
   Globe,
   LayoutGrid,
@@ -59,6 +61,7 @@ import {
 import { FormattedDateInput } from '@/components/FormattedDateInput'
 import { TimePicker24h } from '@/components/TimePicker24h'
 import { computeAvailableSlots } from '@/lib/slot-engine'
+import { SegmentedTimeSlotPicker } from '@/components/SegmentedTimeSlotPicker'
 import { useLanguage } from '@/context/LanguageContext'
 import { useTheme } from '@/context/ThemeContext'
 import { NavbarControls } from '@/components/NavbarControls'
@@ -155,6 +158,7 @@ export default function DashboardPage({ params }: PageProps) {
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all')
   const [selectedStaffFilter, setSelectedStaffFilter] = useState<string>('all')
   const [bookingsViewMode, setBookingsViewMode] = useState<'timeline' | 'list'>('timeline')
+  const [timelinePeriodFilter, setTimelinePeriodFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening' | 'night'>('all')
 
   function handleSelectBranch(branchId: string) {
     setSelectedBranchFilter(branchId)
@@ -203,16 +207,25 @@ export default function DashboardPage({ params }: PageProps) {
   const manualSlots = useMemo(() => {
     if (!merchant || !manualBookingForm.date) return []
     const duration = selectedManualService?.duration_min || 30
+    const activeStaff = staffList.filter((s) => {
+      if (!s.is_active) return false
+      if (manualBookingForm.branch_id && s.branch_id && s.branch_id !== manualBookingForm.branch_id) {
+        return false
+      }
+      return true
+    })
+
     return computeAvailableSlots({
       merchant,
       branch: selectedManualBranch,
       staffId: manualBookingForm.staff_id || null,
+      staffList: activeStaff,
       dateStr: manualBookingForm.date,
       durationMin: duration,
       existingBookings: bookings,
       blockedSlots: slots,
     })
-  }, [merchant, selectedManualBranch, manualBookingForm.staff_id, manualBookingForm.date, selectedManualService, bookings, slots])
+  }, [merchant, selectedManualBranch, manualBookingForm.staff_id, manualBookingForm.branch_id, manualBookingForm.date, selectedManualService, bookings, slots, staffList])
 
   // Lock background scroll when any modal is open
   const isAnyModalOpen = Boolean(selectedSlipUrl || isStaffModalOpen || isServiceModalOpen || isManualBookingModalOpen)
@@ -1230,19 +1243,29 @@ export default function DashboardPage({ params }: PageProps) {
             {bookingsViewMode === 'timeline' ? (
               /* ================== 1. TIMELINE SLOTS GRID ================== */
               (() => {
-                // Determine active branch, staff, and representative service duration
+                // Determine active branch, staff, and slot interval (ช่วงความถี่รอบจอง)
                 const branchObj = selectedBranchFilter === 'all'
                   ? null
                   : branches.find((b) => b.id === selectedBranchFilter) || null
 
-                const repService = services[0]
-                const durationMin = repService?.duration_min || 45
+                const intervalMin = merchant.slot_interval_min || 30
+                const durationMin = intervalMin
+                const defaultService = services.find((s) => s.is_active !== false) || services[0]
 
-                // Compute exact same slots as customer booking page via slot engine
+                const activeStaffList = staffList.filter((s) => {
+                  if (!s.is_active) return false
+                  if (selectedBranchFilter !== 'all' && s.branch_id && s.branch_id !== selectedBranchFilter) {
+                    return false
+                  }
+                  return true
+                })
+
+                // Compute exact slots via slot engine using the shop's slot interval
                 const computedTimelineSlots = computeAvailableSlots({
                   merchant,
                   branch: branchObj,
                   staffId: selectedStaffFilter !== 'all' ? selectedStaffFilter : null,
+                  staffList: activeStaffList,
                   dateStr: selectedDate,
                   durationMin,
                   existingBookings: bookings,
@@ -1251,41 +1274,175 @@ export default function DashboardPage({ params }: PageProps) {
 
                 // Metrics
                 const availableCount = computedTimelineSlots.filter((s) => s.isAvailable).length
-                const bookedCount = computedTimelineSlots.filter((s) => !s.isAvailable && s.reason === 'มีลูกค้าจองแล้ว').length
+                const bookedCount = computedTimelineSlots.filter((s) => (s.bookedCount || 0) > 0).length
+
+                // Group timeline slots into 4 distinct periods
+                const morningTimelineSlots = computedTimelineSlots.filter((s) => new Date(s.startTime).getHours() < 12)
+                const afternoonTimelineSlots = computedTimelineSlots.filter((s) => {
+                  const h = new Date(s.startTime).getHours()
+                  return h >= 12 && h < 16
+                })
+                const eveningTimelineSlots = computedTimelineSlots.filter((s) => {
+                  const h = new Date(s.startTime).getHours()
+                  return h >= 16 && h < 19
+                })
+                const nightTimelineSlots = computedTimelineSlots.filter((s) => new Date(s.startTime).getHours() >= 19)
+
+                const morningAvail = morningTimelineSlots.filter((s) => s.isAvailable).length
+                const afternoonAvail = afternoonTimelineSlots.filter((s) => s.isAvailable).length
+                const eveningAvail = eveningTimelineSlots.filter((s) => s.isAvailable).length
+                const nightAvail = nightTimelineSlots.filter((s) => s.isAvailable).length
+
+                const timelineSections = [
+                  {
+                    id: 'morning' as const,
+                    title: lang === 'th' ? 'รอบเช้า' : 'Morning',
+                    timeRange: lang === 'th' ? 'ก่อน 12:00 น.' : 'Before 12:00',
+                    icon: Sun,
+                    colorClass: 'text-amber-500',
+                    slots: morningTimelineSlots,
+                    availCount: morningAvail,
+                  },
+                  {
+                    id: 'afternoon' as const,
+                    title: lang === 'th' ? 'รอบบ่าย' : 'Afternoon',
+                    timeRange: '12:00 - 15:59 น.',
+                    icon: CloudSun,
+                    colorClass: 'text-orange-500',
+                    slots: afternoonTimelineSlots,
+                    availCount: afternoonAvail,
+                  },
+                  {
+                    id: 'evening' as const,
+                    title: lang === 'th' ? 'รอบเย็น' : 'Evening',
+                    timeRange: '16:00 - 18:59 น.',
+                    icon: Sunset,
+                    colorClass: 'text-rose-500',
+                    slots: eveningTimelineSlots,
+                    availCount: eveningAvail,
+                  },
+                  {
+                    id: 'night' as const,
+                    title: lang === 'th' ? 'รอบค่ำ' : 'Night',
+                    timeRange: lang === 'th' ? '19:00 น. เป็นต้นไป' : '19:00 onwards',
+                    icon: Moon,
+                    colorClass: 'text-indigo-400',
+                    slots: nightTimelineSlots,
+                    availCount: nightAvail,
+                  },
+                ].filter((sec) => sec.slots.length > 0 && (timelinePeriodFilter === 'all' || timelinePeriodFilter === sec.id))
 
                 return (
                   <div className="space-y-4">
-                    {/* Summary Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                        <span className="text-xs font-bold text-slate-900 dark:text-white">
-                          {lang === 'th'
-                            ? `เลือกรอบเวลาว่าง (${durationMin} นาที) • ประจำวันที่ ${format(parseISO(selectedDate), 'dd/MM/yyyy')}`
-                            : `Available Slots (${durationMin} mins) • ${selectedDate}`}
-                        </span>
-                        {repService && (
-                          <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-                            (อ้างอิง: {repService.title})
+                    {/* Summary Bar & Quick Period Filter Tabs */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-2xs space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            {lang === 'th'
+                              ? `ตารางรอบเวลา • วันที่ ${format(parseISO(selectedDate), 'dd/MM/yyyy')}`
+                              : `Timeline Slots • ${selectedDate}`}
                           </span>
-                        )}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800/80 font-bold text-[11px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>{lang === 'th' ? `ว่าง ${availableCount} รอบ` : `${availableCount} Available`}</span>
+                          </div>
+                          {bookedCount > 0 && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-xl border border-indigo-200 dark:border-indigo-800/80 font-bold text-[11px]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                              <span>{lang === 'th' ? `จองแล้ว ${bookedCount} คิว` : `${bookedCount} Booked`}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800/80 font-bold">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>{lang === 'th' ? `ว่าง ${availableCount} รอบ` : `${availableCount} Available`}</span>
+                      {/* Period Switcher Tabs */}
+                      {computedTimelineSlots.length > 0 && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-slate-100 dark:border-slate-800/80 scrollbar-none">
+                          <button
+                            type="button"
+                            onClick={() => setTimelinePeriodFilter('all')}
+                            className={`px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
+                              timelinePeriodFilter === 'all'
+                                ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                            }`}
+                          >
+                            {lang === 'th' ? 'ทั้งหมด' : 'All'} ({availableCount})
+                          </button>
+
+                          {morningTimelineSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setTimelinePeriodFilter('morning')}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
+                                timelinePeriodFilter === 'morning'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                              }`}
+                            >
+                              <Sun className="w-3.5 h-3.5 text-amber-500" />
+                              <span>{lang === 'th' ? 'รอบเช้า' : 'Morning'}</span>
+                              <span className="text-[10px] opacity-80 font-bold">({morningAvail})</span>
+                            </button>
+                          )}
+
+                          {afternoonTimelineSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setTimelinePeriodFilter('afternoon')}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
+                                timelinePeriodFilter === 'afternoon'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                              }`}
+                            >
+                              <CloudSun className="w-3.5 h-3.5 text-orange-500" />
+                              <span>{lang === 'th' ? 'รอบบ่าย' : 'Afternoon'}</span>
+                              <span className="text-[10px] opacity-80 font-bold">({afternoonAvail})</span>
+                            </button>
+                          )}
+
+                          {eveningTimelineSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setTimelinePeriodFilter('evening')}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
+                                timelinePeriodFilter === 'evening'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                              }`}
+                            >
+                              <Sunset className="w-3.5 h-3.5 text-rose-500" />
+                              <span>{lang === 'th' ? 'รอบเย็น' : 'Evening'}</span>
+                              <span className="text-[10px] opacity-80 font-bold">({eveningAvail})</span>
+                            </button>
+                          )}
+
+                          {nightTimelineSlots.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setTimelinePeriodFilter('night')}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
+                                timelinePeriodFilter === 'night'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
+                              }`}
+                            >
+                              <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>{lang === 'th' ? 'รอบค่ำ' : 'Night'}</span>
+                              <span className="text-[10px] opacity-80 font-bold">({nightAvail})</span>
+                            </button>
+                          )}
                         </div>
-                        {bookedCount > 0 && (
-                          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-xl border border-indigo-200 dark:border-indigo-800/80 font-bold">
-                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                            <span>{lang === 'th' ? `จองแล้ว ${bookedCount} คิว` : `${bookedCount} Booked`}</span>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
 
-                    {/* Timeline Slots Grid (Matching Customer Booking Card UI) */}
+                    {/* Timeline Slots Grouped by Period */}
                     {computedTimelineSlots.length === 0 ? (
                       <div className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xs space-y-2">
                         <Coffee className="w-8 h-8 text-amber-500 mx-auto" />
@@ -1294,109 +1451,155 @@ export default function DashboardPage({ params }: PageProps) {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                        {computedTimelineSlots.map((slot, i) => {
-                          const isBreak = slot.reason === 'เวลาพักของร้าน (Break)'
-                          const isBooked = slot.reason === 'มีลูกค้าจองแล้ว'
-
-                          // Find matching booking details if booked
-                          const sTime = slot.startTime ? new Date(slot.startTime).getTime() : 0
-                          const eTime = slot.endTime ? new Date(slot.endTime).getTime() : 0
-                          const matchedBooking = isBooked
-                            ? bookings.find((b) => {
-                                if (!b.start_time.startsWith(selectedDate) || b.status === 'cancelled') return false
-                                const bS = new Date(b.start_time).getTime()
-                                const bE = new Date(b.end_time).getTime()
-                                return bS < eTime && bE > sTime
-                              })
-                            : null
-
+                      <div className="space-y-6">
+                        {timelineSections.map((sec) => {
+                          const SecIcon = sec.icon
                           return (
-                            <div
-                              key={i}
-                              className={`p-3.5 rounded-2xl border transition-colors flex flex-col justify-between min-h-[76px] ${
-                                slot.isAvailable
-                                  ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-sm'
-                                  : isBreak
-                                  ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
-                                  : isBooked
-                                  ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80'
-                                  : 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className={`font-mono text-xs font-bold ${
-                                  slot.isAvailable
-                                    ? 'text-slate-900 dark:text-white'
-                                    : isBooked
-                                    ? 'text-indigo-950 dark:text-indigo-200'
-                                    : 'text-slate-600 dark:text-slate-300'
-                                }`}>
-                                  {slot.displayTime}
-                                </span>
+                            <div key={sec.id} className="space-y-3">
+                              {/* Section Title Header */}
+                              <div className="flex items-center justify-between px-1">
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                                  <SecIcon className={`w-4 h-4 ${sec.colorClass}`} />
+                                  <span>{sec.title}</span>
+                                  <span className="text-[11px] font-normal text-slate-400 dark:text-slate-500">
+                                    ({sec.timeRange})
+                                  </span>
+                                </div>
 
-                                {slot.isAvailable ? (
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                ) : isBooked ? (
-                                  <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-                                ) : isBreak ? (
-                                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                                ) : (
-                                  <span className="w-2 h-2 rounded-full bg-rose-400" />
-                                )}
+                                <span
+                                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                    sec.availCount > 0
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                                  }`}
+                                >
+                                  {sec.availCount > 0
+                                    ? lang === 'th'
+                                      ? `ว่าง ${sec.availCount} รอบ`
+                                      : `${sec.availCount} open`
+                                    : lang === 'th'
+                                    ? 'เต็มทุกรอบ'
+                                    : 'Fully booked'}
+                                </span>
                               </div>
 
-                              <div className="mt-2 flex items-center justify-between gap-2">
-                                {slot.isAvailable ? (
-                                  <>
-                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                      <CheckCircle2 className="w-3 h-3" />
-                                      <span>{lang === 'th' ? 'ว่าง' : 'Available'}</span>
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setManualBookingForm({
-                                          service_id: repService?.id || '',
-                                          branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : '',
-                                          staff_id: selectedStaffFilter !== 'all' ? selectedStaffFilter : '',
-                                          date: selectedDate,
-                                          selectedSlot: slot,
-                                          customer_name: '',
-                                          notes: 'ลูกค้าโทรจอง / หน้าร้าน',
-                                          deposit_amount: String(repService?.deposit_amount ?? merchant.default_deposit ?? 100),
-                                          status: 'confirmed',
-                                        })
-                                        setIsManualBookingModalOpen(true)
-                                      }}
-                                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white dark:bg-indigo-950/60 dark:hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white rounded-lg text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 transition active:scale-95 cursor-pointer flex items-center gap-1"
+                              {/* Slot Grid for this period */}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+                                {sec.slots.map((slot, i) => {
+                                  const isBreak = slot.reason === 'เวลาพักของร้าน (Break)' || slot.reason === 'เวลาพัก'
+                                  const isBooked = slot.reason === 'มีลูกค้าจองแล้ว' || slot.reason === 'จองแล้ว'
+
+                                  // Find matching booking details if booked
+                                  const sTime = slot.startTime ? new Date(slot.startTime).getTime() : 0
+                                  const eTime = slot.endTime ? new Date(slot.endTime).getTime() : 0
+                                  const matchedBooking = isBooked
+                                    ? bookings.find((b) => {
+                                        if (!b.start_time.startsWith(selectedDate) || b.status === 'cancelled') return false
+                                        const bS = new Date(b.start_time).getTime()
+                                        const bE = new Date(b.end_time).getTime()
+                                        return bS < eTime && bE > sTime
+                                      })
+                                    : null
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      className={`p-3 rounded-2xl border transition-colors flex flex-col justify-between min-h-[76px] ${
+                                        slot.isAvailable
+                                          ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-sm'
+                                          : isBreak
+                                          ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+                                          : isBooked
+                                          ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80'
+                                          : 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+                                      }`}
                                     >
-                                      <Plus className="w-3 h-3" />
-                                      <span>{lang === 'th' ? 'ลงคิว' : 'Book'}</span>
-                                    </button>
-                                  </>
-                                ) : isBreak ? (
-                                  <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
-                                    <Coffee className="w-3 h-3" />
-                                    <span>เวลาพักของร้าน (Break)</span>
-                                  </span>
-                                ) : isBooked ? (
-                                  <div className="text-left truncate w-full">
-                                    <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 block truncate">
-                                      👤 {matchedBooking?.customer_name || 'มีลูกค้าจองแล้ว'}
-                                    </span>
-                                    {matchedBooking?.services && (
-                                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 block truncate">
-                                        ✂️ {matchedBooking.services.title}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
-                                    <Lock className="w-3 h-3" />
-                                    <span>{slot.reason || 'ไม่พร้อมให้บริการ'}</span>
-                                  </span>
-                                )}
+                                      <div className="flex items-center justify-between">
+                                        <span
+                                          className={`font-mono text-sm sm:text-base font-extrabold tracking-tight ${
+                                            slot.isAvailable
+                                              ? 'text-slate-900 dark:text-white'
+                                              : isBooked
+                                              ? 'text-indigo-950 dark:text-indigo-200'
+                                              : 'text-slate-600 dark:text-slate-300'
+                                          }`}
+                                        >
+                                          {(slot.displayTime.split(' - ')[0] || slot.displayTime)} น.
+                                        </span>
+
+                                        {slot.isAvailable ? (
+                                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+                                        ) : isBooked ? (
+                                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shadow-xs" />
+                                        ) : isBreak ? (
+                                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-xs" />
+                                        ) : (
+                                          <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-xs" />
+                                        )}
+                                      </div>
+
+                                      <div className="mt-2 flex items-center justify-between gap-1.5">
+                                        {slot.isAvailable ? (
+                                          <>
+                                            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                              <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                              <span>
+                                                {slot.capacity && slot.capacity > 1
+                                                  ? `ว่าง (${slot.remainingCapacity}/${slot.capacity})`
+                                                  : lang === 'th'
+                                                  ? 'ว่าง'
+                                                  : 'Open'}
+                                              </span>
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setManualBookingForm({
+                                                  service_id: defaultService?.id || '',
+                                                  branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : '',
+                                                  staff_id: selectedStaffFilter !== 'all' ? selectedStaffFilter : '',
+                                                  date: selectedDate,
+                                                  selectedSlot: slot,
+                                                  customer_name: '',
+                                                  notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+                                                  deposit_amount: String(defaultService?.deposit_amount ?? merchant.default_deposit ?? 0),
+                                                  status: 'confirmed',
+                                                })
+                                                setIsManualBookingModalOpen(true)
+                                              }}
+                                              className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white dark:bg-indigo-950/60 dark:hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white rounded-lg text-[10px] font-bold border border-indigo-200 dark:border-indigo-800/80 transition active:scale-95 cursor-pointer flex items-center gap-1 shrink-0"
+                                            >
+                                              <Plus className="w-3 h-3" />
+                                              <span>{lang === 'th' ? 'ลงคิว' : 'Book'}</span>
+                                            </button>
+                                          </>
+                                        ) : isBreak ? (
+                                          <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
+                                            <Coffee className="w-3 h-3" />
+                                            <span>เวลาพัก (Break)</span>
+                                          </span>
+                                        ) : isBooked ? (
+                                          <div className="text-left truncate w-full">
+                                            <span className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 block truncate">
+                                              👤 {matchedBooking?.customer_name || 'คิวเต็มแล้ว'}
+                                              {slot.capacity && slot.capacity > 1 ? ` (${slot.bookedCount}/${slot.capacity})` : ''}
+                                            </span>
+                                            {matchedBooking?.services && (
+                                              <span className="text-[10px] text-indigo-600 dark:text-indigo-400 block truncate">
+                                                ✂️ {matchedBooking.services.title}
+                                              </span>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 font-medium">
+                                            <Lock className="w-3 h-3" />
+                                            <span>{slot.reason || 'ไม่พร้อมให้บริการ'}</span>
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
                               </div>
                             </div>
                           )
@@ -2053,9 +2256,9 @@ export default function DashboardPage({ params }: PageProps) {
 
       </main>
 
-      {/* MOBILE FIXED BOTTOM NAVIGATION BAR */}
+      {/* MOBILE FIXED BOTTOM NAVIGATION BAR WITH CENTER ACTION BUTTON */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 shadow-lg safe-area-bottom">
-        <div className="grid grid-cols-4 gap-1 items-center justify-around">
+        <div className="grid grid-cols-5 gap-1 items-center justify-around">
           {/* Tab 1: คิวงาน */}
           <button
             type="button"
@@ -2109,6 +2312,32 @@ export default function DashboardPage({ params }: PageProps) {
               <span className="w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-0.5" />
             )}
           </button>
+
+          {/* Center Button: ลงคิว (Large Hero Action Button) */}
+          <div className="flex flex-col items-center -mt-6 relative">
+            <button
+              type="button"
+              onClick={() => {
+                const repService = services.find((s) => s.is_active !== false) || services[0]
+                setManualBookingForm({
+                  service_id: repService?.id || '',
+                  branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : '',
+                  staff_id: selectedStaffFilter !== 'all' ? selectedStaffFilter : '',
+                  date: selectedDate,
+                  selectedSlot: null,
+                  customer_name: '',
+                  notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+                  deposit_amount: String(repService?.deposit_amount ?? merchant.default_deposit ?? 0),
+                  status: 'confirmed',
+                })
+                setIsManualBookingModalOpen(true)
+              }}
+              className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/35 ring-4 ring-white dark:ring-slate-900 active:scale-90 transition-all cursor-pointer"
+              title="ลงคิวเอง / รับจองหน้าร้าน"
+            >
+              <Plus className="w-6 h-6 stroke-[3]" />
+            </button>
+          </div>
 
           {/* Tab 3: ช่าง/บริการ */}
           <button
@@ -2697,42 +2926,15 @@ export default function DashboardPage({ params }: PageProps) {
                         : 'ไม่มีรอบเวลาว่างในวันที่เลือก'}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-1.5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40 custom-scrollbar">
-                      {manualSlots.map((slot) => {
-                        const isSelected = manualBookingForm.selectedSlot?.startTime === slot.startTime
-
-                        if (!slot.isAvailable) {
-                          return (
-                            <div
-                              key={slot.startTime}
-                              className="p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40 text-center opacity-40 cursor-not-allowed select-none flex flex-col items-center justify-center min-h-[48px]"
-                            >
-                              <p className="text-xs font-semibold text-slate-400 dark:text-slate-600 line-through">
-                                {slot.displayTime}
-                              </p>
-                              {slot.reason && (
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-full">
-                                  {slot.reason}
-                                </p>
-                              )}
-                            </div>
-                          )
-                        }
-
-                        return (
-                          <button
-                            key={slot.startTime}
-                            type="button"
-                            onClick={() => setManualBookingForm({ ...manualBookingForm, selectedSlot: slot })}
-                            className={`p-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center min-h-[48px] cursor-pointer ${isSelected
-                              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/20'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30'
-                              }`}
-                          >
-                            <span className="text-xs font-semibold">{slot.displayTime}</span>
-                          </button>
-                        )
-                      })}
+                    <div className="p-2 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40">
+                      <SegmentedTimeSlotPicker
+                        slots={manualSlots}
+                        selectedSlot={manualBookingForm.selectedSlot}
+                        onSelectSlot={(slot) => setManualBookingForm({ ...manualBookingForm, selectedSlot: slot })}
+                        durationMin={selectedManualService?.duration_min || 30}
+                        accentColor="emerald"
+                        lang={lang}
+                      />
                     </div>
                   )}
                 </div>

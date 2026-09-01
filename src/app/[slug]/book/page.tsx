@@ -1,16 +1,15 @@
 'use client'
 
 import { useEffect, useState, use } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
-  Clock, 
-  ChevronRight, 
-  Check, 
-  Store, 
-  Phone, 
-  User, 
-  MessageSquare, 
+import {
+  Clock,
+  ChevronRight,
+  Check,
+  Store,
+  Phone,
+  User,
+  MessageSquare,
   FileText,
   AlertCircle,
   ArrowLeft,
@@ -25,6 +24,7 @@ import { createBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import { BookingCalendar } from '@/components/BookingCalendar'
+import { SegmentedTimeSlotPicker } from '@/components/SegmentedTimeSlotPicker'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
 import type { Merchant, Service, TimeSlotOption, Branch, Staff } from '@/types/database'
 
@@ -51,7 +51,7 @@ export default function BookingPage({ params }: PageProps) {
 
   // Step state (1: Branch/Staff/Service, 2: Slot, 3: Customer Info)
   const [step, setStep] = useState<1 | 2 | 3>(1)
-  
+
   // Date & Slot state
   const today = startOfToday()
   const [selectedDate, setSelectedDate] = useState<string>(format(today, 'yyyy-MM-dd'))
@@ -190,6 +190,20 @@ export default function BookingPage({ params }: PageProps) {
     e.preventDefault()
     if (!selectedService || !selectedSlot) return
 
+    const isTurnstileConfigured = Boolean(
+      process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY &&
+      process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY !== '0x4AAAAAA'
+    )
+
+    if (isTurnstileConfigured && !turnstileToken) {
+      setErrorMessage(
+        lang === 'th'
+          ? 'กรุณายืนยันความปลอดภัยผ่าน Cloudflare Turnstile ก่อนทำการจอง'
+          : 'Please complete Cloudflare security verification before confirming.'
+      )
+      return
+    }
+
     setSubmitting(true)
     setErrorMessage(null)
 
@@ -257,9 +271,9 @@ export default function BookingPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
-        
+
         {/* Header (Matching Onboarding & Checkout Layout) */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             {step > 1 ? (
               <button
@@ -321,488 +335,485 @@ export default function BookingPage({ params }: PageProps) {
 
         <main className="w-full">
 
-        <AnimatePresence mode="wait">
-          {/* STEP 1: BRANCH, STAFF & SERVICE SELECTION */}
-          {step === 1 && (
-            <motion.div 
-              key="step1"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-4"
-            >
-              {/* Branch Selector (Directly from branches table) */}
-              {branches.length > 0 && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
-                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span>{t('selectBranch')}</span>
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {branches.map((b) => {
-                      const isSel = (selectedBranch ? selectedBranch.id === b.id : branches[0]?.id === b.id)
-                      return (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedBranch(b)
-                            setSelectedStaff(null)
-                          }}
-                          className={`p-2.5 rounded-xl border text-left text-xs transition active:scale-98 ${
-                            isSel
-                              ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className="font-semibold">{b.name}</div>
-                          {b.address && <div className="text-[10px] text-slate-400 mt-0.5 truncate">{b.address}</div>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Staff / Provider Selector (if staff exist) */}
-              {staffList.length > 0 && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
-                  <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span>{t('selectStaff')}</span>
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedStaff(null)}
-                      className={`p-2.5 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${
-                        selectedStaff === null
-                          ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                      }`}
-                    >
-                      <Sparkles className="w-4 h-4 text-amber-500 mb-1" />
-                      <span>{t('anyStaff')}</span>
-                    </button>
-                    {staffList
-                      .filter((stf) => !selectedBranch || stf.branch_id === selectedBranch.id)
-                      .map((stf) => {
-                        const isSel = selectedStaff?.id === stf.id
+          <AnimatePresence mode="wait">
+            {/* STEP 1: BRANCH, STAFF & SERVICE SELECTION */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {/* Branch Selector (Directly from branches table) */}
+                {branches.length > 0 && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                    <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>{t('selectBranch')}</span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {branches.map((b) => {
+                        const isSel = (selectedBranch ? selectedBranch.id === b.id : branches[0]?.id === b.id)
                         return (
                           <button
-                            key={stf.id}
+                            key={b.id}
                             type="button"
-                            onClick={() => setSelectedStaff(stf)}
-                            className={`p-2 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${
-                              isSel
+                            onClick={() => {
+                              setSelectedBranch(b)
+                              setSelectedStaff(null)
+                            }}
+                            className={`p-2.5 rounded-xl border text-left text-xs transition active:scale-98 ${isSel
                                 ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
                                 : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
-                            <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px] mb-1">
-                              {stf.nickname ? stf.nickname.charAt(0) : stf.name.charAt(0)}
-                            </div>
-                            <span className="font-semibold truncate max-w-full">
-                              {stf.nickname || stf.name}
-                            </span>
-                            <span className="text-[9px] text-slate-400 truncate max-w-full">
-                              {stf.role_title || 'ช่าง'}
-                            </span>
+                            <div className="font-semibold">{b.name}</div>
+                            {b.address && <div className="text-[10px] text-slate-400 mt-0.5 truncate">{b.address}</div>}
                           </button>
                         )
                       })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Service list (filtered by selected staff if any) */}
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-900 dark:text-white block px-1">
-                  {t('selectService')} ({
-                    services.filter((s) => {
-                      if (!selectedStaff) return true
-                      return selectedStaff.staff_services?.some((ss) => ss.service_id === s.id)
-                    }).length
-                  })
-                </label>
-                {services
-                  .filter((service) => {
-                    if (!selectedStaff) return true
-                    return selectedStaff.staff_services?.some((ss) => ss.service_id === service.id)
-                  })
-                  .map((service) => {
-                    const isSelected = selectedService?.id === service.id
-                    const deposit = service.deposit_amount ?? merchant.default_deposit
-
-                    return (
-                      <div
-                        key={service.id}
-                        onClick={() => {
-                          setSelectedService(service)
-                          setStep(2)
-                        }}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative active:scale-[0.99] ${
-                          isSelected
-                            ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
-                        }`}
+                {/* Staff / Provider Selector (if staff exist) */}
+                {staffList.length > 0 && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                    <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>{t('selectStaff')}</span>
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStaff(null)}
+                        className={`p-2.5 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${selectedStaff === null
+                            ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                          }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                                {service.title}
-                              </h3>
-                              {isSelected && (
-                                <span className="w-5 h-5 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center">
-                                  <Check className="w-3 h-3 stroke-[3]" />
-                                </span>
+                        <Sparkles className="w-4 h-4 text-amber-500 mb-1" />
+                        <span>{t('anyStaff')}</span>
+                      </button>
+                      {staffList
+                        .filter((stf) => !selectedBranch || stf.branch_id === selectedBranch.id)
+                        .map((stf) => {
+                          const isSel = selectedStaff?.id === stf.id
+                          return (
+                            <button
+                              key={stf.id}
+                              type="button"
+                              onClick={() => setSelectedStaff(stf)}
+                              className={`p-2 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${isSel
+                                  ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                                }`}
+                            >
+                              <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px] mb-1">
+                                {stf.nickname ? stf.nickname.charAt(0) : stf.name.charAt(0)}
+                              </div>
+                              <span className="font-semibold truncate max-w-full">
+                                {stf.nickname || stf.name}
+                              </span>
+                              <span className="text-[9px] text-slate-400 truncate max-w-full">
+                                {stf.role_title || 'ช่าง'}
+                              </span>
+                            </button>
+                          )
+                        })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Service list (filtered by selected staff if any) */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-slate-900 dark:text-white block px-1">
+                    {t('selectService')} ({
+                      services.filter((s) => {
+                        if (!selectedStaff) return true
+                        return selectedStaff.staff_services?.some((ss) => ss.service_id === s.id)
+                      }).length
+                    })
+                  </label>
+                  {services
+                    .filter((service) => {
+                      if (!selectedStaff) return true
+                      return selectedStaff.staff_services?.some((ss) => ss.service_id === service.id)
+                    })
+                    .map((service) => {
+                      const isSelected = selectedService?.id === service.id
+                      const deposit = service.deposit_amount ?? merchant.default_deposit
+
+                      return (
+                        <div
+                          key={service.id}
+                          onClick={() => {
+                            setSelectedService(service)
+                            setStep(2)
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer relative active:scale-[0.99] ${isSelected
+                              ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500'
+                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                                  {service.title}
+                                </h3>
+                                {isSelected && (
+                                  <span className="w-5 h-5 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center">
+                                    <Check className="w-3 h-3 stroke-[3]" />
+                                  </span>
+                                )}
+                              </div>
+                              {service.description && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                  {service.description}
+                                </p>
                               )}
-                            </div>
-                            {service.description && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                {service.description}
-                              </p>
-                            )}
 
-                            <div className="flex items-center gap-3 mt-3 text-xs">
-                              <span className="flex items-center gap-1 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800/60 font-semibold">
-                                <Clock className="w-3 h-3" />
-                                {service.duration_min} {t('minutes')}
-                              </span>
-                              <span className="font-bold text-slate-800 dark:text-slate-200">
-                                ฿{Number(service.price).toLocaleString()}
-                              </span>
-                              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                                ({t('depositAmount')} ฿{Number(deposit).toLocaleString()})
-                              </span>
+                              <div className="flex items-center gap-3 mt-3 text-xs">
+                                <span className="flex items-center gap-1 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800/60 font-semibold">
+                                  <Clock className="w-3 h-3" />
+                                  {service.duration_min} {t('minutes')}
+                                </span>
+                                <span className="font-bold text-slate-800 dark:text-slate-200">
+                                  ฿{Number(service.price).toLocaleString()}
+                                </span>
+                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                                  {Number(deposit) > 0 ? `(${t('depositAmount')} ฿${Number(deposit).toLocaleString()})` : `(${lang === 'th' ? 'ไม่มีมัดจำ' : 'No Deposit'})`}
+                                </span>
+                              </div>
                             </div>
-                          </div>
 
-                          <div className="self-center text-slate-400 dark:text-slate-500">
-                            <ChevronRight className="w-5 h-5" />
+                            <div className="self-center text-slate-400 dark:text-slate-500">
+                              <ChevronRight className="w-5 h-5" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
-              </div>
-            </motion.div>
-          )}
-
-          {/* STEP 2: DATE & TIME SLOT SELECTION */}
-          {step === 2 && selectedService && (
-            <motion.div 
-              key="step2"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-5"
-            >
-              {/* Selected Service Recap */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-2xs">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider">
-                    {t('selectedService')}
-                  </span>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedService.title}</p>
-                  {(selectedBranch || selectedStaff) && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {selectedBranch ? `สาขา: ${selectedBranch.name}` : ''}
-                      {selectedBranch && selectedStaff ? ' • ' : ''}
-                      {selectedStaff ? `ช่าง: ${selectedStaff.nickname || selectedStaff.name}` : ''}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setStep(1)}
-                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
-                >
-                  {t('change')}
-                </button>
-              </div>
-
-              {/* Interactive Month & Date Calendar */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
-                  {t('selectDate')}
-                </label>
-                <BookingCalendar
-                  selectedDate={selectedDate}
-                  onSelectDate={setSelectedDate}
-                  closedDays={merchant.closed_days || []}
-                  lang={lang}
-                />
-              </div>
-
-              {/* Time Slot Picker */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {t('selectTimeSlot')} ({selectedService.duration_min} {t('minutes')})
-                  </label>
-                  {loadingSlots && (
-                    <span className="text-[11px] text-indigo-600 dark:text-indigo-400 animate-pulse font-medium">
-                      {t('calculatingSlots')}
-                    </span>
-                  )}
-                </div>
-
-                {loadingSlots ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="h-11 bg-slate-200 dark:bg-slate-900 rounded-xl animate-pulse" />
-                    ))}
-                  </div>
-                ) : slots.length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('noAvailableSlots')}</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {slots.map((slot, idx) => {
-                      const isSelected = selectedSlot?.startTime === slot.startTime
-                      return (
-                        <button
-                          key={idx}
-                          disabled={!slot.isAvailable}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center transition-all relative ${
-                            !slot.isAvailable
-                              ? 'bg-slate-100 dark:bg-slate-950/40 border-slate-200 dark:border-slate-900 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
-                              : isSelected
-                              ? 'bg-indigo-600 dark:bg-indigo-500 border-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/30'
-                              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 active:scale-98 shadow-2xs'
-                          }`}
-                        >
-                          <span>{slot.displayTime}</span>
-                          {!slot.isAvailable && (
-                            <span className="text-[9px] font-normal text-slate-400 dark:text-slate-500 mt-0.5">
-                              {slot.reason || t('slotBlocked')}
-                            </span>
-                          )}
-                        </button>
                       )
                     })}
-                  </div>
-                )}
-              </div>
+                </div>
+              </motion.div>
+            )}
 
-              {/* Next Button */}
-              <button
-                disabled={!selectedSlot}
-                onClick={() => setStep(3)}
-                className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
+            {/* STEP 2: DATE & TIME SLOT SELECTION */}
+            {step === 2 && selectedService && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-5"
               >
-                <span>{t('nextCustomerInfo')}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </motion.div>
-          )}
-
-          {/* STEP 3: CUSTOMER FORM & CONFIRMATION */}
-          {step === 3 && selectedService && selectedSlot && (
-            <motion.form 
-              key="step3"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
-              onSubmit={handleSubmitBooking} 
-              className="space-y-4"
-            >
-              {/* Booking Summary Box */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  {t('bookingSummary')}
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-400">{t('service')}:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{selectedService.title}</span>
-                </div>
-                {selectedBranch && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-600 dark:text-slate-400">{t('selectBranch')}:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedBranch.name}</span>
+                {/* Selected Service Recap */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-2xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider">
+                      {t('selectedService')}
+                    </span>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedService.title}</p>
+                    {(selectedBranch || selectedStaff) && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {selectedBranch ? `สาขา: ${selectedBranch.name}` : ''}
+                        {selectedBranch && selectedStaff ? ' • ' : ''}
+                        {selectedStaff ? `ช่าง: ${selectedStaff.nickname || selectedStaff.name}` : ''}
+                      </p>
+                    )}
                   </div>
-                )}
-                {selectedStaff && (
+                  <button
+                    onClick={() => setStep(1)}
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                  >
+                    {t('change')}
+                  </button>
+                </div>
+
+                {/* Interactive Month & Date Calendar */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
+                    {t('selectDate')}
+                  </label>
+                  <BookingCalendar
+                    selectedDate={selectedDate}
+                    onSelectDate={setSelectedDate}
+                    closedDays={merchant.closed_days || []}
+                    lang={lang}
+                  />
+                </div>
+
+                {/* Time Slot Picker */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {t('selectTimeSlot')} ({selectedService.duration_min} {t('minutes')})
+                    </label>
+                    {loadingSlots && (
+                      <span className="text-[11px] text-indigo-600 dark:text-indigo-400 animate-pulse font-medium">
+                        {t('calculatingSlots')}
+                      </span>
+                    )}
+                  </div>
+
+                  {loadingSlots ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="h-11 bg-slate-200 dark:bg-slate-900 rounded-xl animate-pulse" />
+                      ))}
+                    </div>
+                  ) : slots.length === 0 ? (
+                    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t('noAvailableSlots')}</p>
+                    </div>
+                  ) : (
+                    <div className="p-2 sm:p-3 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40">
+                      <SegmentedTimeSlotPicker
+                        slots={slots}
+                        selectedSlot={selectedSlot}
+                        onSelectSlot={(slot) => setSelectedSlot(slot)}
+                        durationMin={selectedService.duration_min}
+                        accentColor="indigo"
+                        lang={lang}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  disabled={!selectedSlot}
+                  onClick={() => setStep(3)}
+                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
+                >
+                  <span>{t('nextCustomerInfo')}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </motion.div>
+            )}
+
+            {/* STEP 3: CUSTOMER FORM & CONFIRMATION */}
+            {step === 3 && selectedService && selectedSlot && (
+              <motion.form
+                key="step3"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={handleSubmitBooking}
+                className="space-y-4"
+              >
+                {/* Booking Summary Box */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    {t('bookingSummary')}
+                  </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-600 dark:text-slate-400">{t('selectStaff')}:</span>
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                      {selectedStaff.nickname || selectedStaff.name} ({selectedStaff.role_title})
+                    <span className="text-slate-600 dark:text-slate-400">{t('service')}:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{selectedService.title}</span>
+                  </div>
+                  {selectedBranch && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-600 dark:text-slate-400">{t('selectBranch')}:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedBranch.name}</span>
+                    </div>
+                  )}
+                  {selectedStaff && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-600 dark:text-slate-400">{t('selectStaff')}:</span>
+                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                        {selectedStaff.nickname || selectedStaff.name} ({selectedStaff.role_title})
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">{t('dateTime')}:</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-300">
+                      {format(new Date(selectedSlot.startTime), 'dd/MM/yyyy')} ({selectedSlot.displayTime} น.)
                     </span>
                   </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">{t('fullPrice')}:</span>
+                    <span className="text-slate-800 dark:text-slate-200">฿{Number(selectedService.price).toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
+                    <span className="text-emerald-600 dark:text-emerald-400">{t('depositToPay')}:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      {Number(selectedService.deposit_amount ?? merchant.default_deposit) > 0
+                        ? `฿${Number(selectedService.deposit_amount ?? merchant.default_deposit).toLocaleString()}`
+                        : (lang === 'th' ? '฿0 (ไม่มีมัดจำ)' : '฿0 (No Deposit)')}
+                    </span>
+                  </div>
+                </div>
+
+                {errorMessage && (
+                  <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
                 )}
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-400">{t('dateTime')}:</span>
-                  <span className="font-bold text-indigo-600 dark:text-indigo-300">
-                    {format(new Date(selectedSlot.startTime), 'dd/MM/yyyy')} ({selectedSlot.displayTime} น.)
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-400">{t('fullPrice')}:</span>
-                  <span className="text-slate-800 dark:text-slate-200">฿{Number(selectedService.price).toLocaleString()}</span>
-                </div>
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
-                  <span className="text-emerald-600 dark:text-emerald-400">{t('depositToPay')}:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    ฿{Number(selectedService.deposit_amount ?? merchant.default_deposit).toLocaleString()}
-                  </span>
-                </div>
-              </div>
 
-              {errorMessage && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
+                {/* LINE Profile Auto-Fill Indicator */}
+                {lineCustomerProfile && (
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-2.5">
+                      {lineCustomerProfile.pictureUrl ? (
+                        <img
+                          src={lineCustomerProfile.pictureUrl}
+                          alt={lineCustomerProfile.displayName}
+                          className="w-8 h-8 rounded-full object-cover border border-emerald-500/40"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#06C755] text-white font-bold text-xs flex items-center justify-center">
+                          L
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                          <span>{lineCustomerProfile.displayName}</span>
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">(LINE Profile)</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {lang === 'th' ? 'ดึงข้อมูลและเชื่อมต่อตั๋วคิวเข้า LINE อัตโนมัติ' : 'Linked for instant LINE booking passes'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                )}
 
-              {/* LINE Profile Auto-Fill Indicator */}
-              {lineCustomerProfile && (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex items-center justify-between shadow-2xs">
-                  <div className="flex items-center gap-2.5">
-                    {lineCustomerProfile.pictureUrl ? (
-                      <img
-                        src={lineCustomerProfile.pictureUrl}
-                        alt={lineCustomerProfile.displayName}
-                        className="w-8 h-8 rounded-full object-cover border border-emerald-500/40"
+                {/* Input Fields */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      {t('customerName')} <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        placeholder={t('customerNamePlaceholder')}
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
                       />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-[#06C755] text-white font-bold text-xs flex items-center justify-center">
-                        L
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      {t('customerPhone')} <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                        <Phone className="w-4 h-4" />
                       </div>
-                    )}
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                        <span>{lineCustomerProfile.displayName}</span>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">(LINE Profile)</span>
+                      <input
+                        type="tel"
+                        required
+                        placeholder={t('customerPhonePlaceholder')}
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      {t('customerLineId')}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                        <MessageSquare className="w-4 h-4" />
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        {lang === 'th' ? 'ดึงข้อมูลและเชื่อมต่อตั๋วคิวเข้า LINE อัตโนมัติ' : 'Linked for instant LINE booking passes'}
-                      </p>
+                      <input
+                        type="text"
+                        placeholder={t('customerLineIdPlaceholder')}
+                        value={customerLineId}
+                        onChange={(e) => setCustomerLineId(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                      />
                     </div>
                   </div>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
-              )}
 
-              {/* Input Fields */}
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                    {t('customerName')} <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                      <User className="w-4 h-4" />
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      {t('customerNotes')}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute top-2.5 left-0 pl-3 pointer-events-none text-slate-400 dark:text-slate-500">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <textarea
+                        rows={2}
+                        placeholder={t('customerNotesPlaceholder')}
+                        value={customerNotes}
+                        onChange={(e) => setCustomerNotes(e.target.value)}
+                        className="resize-none w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      required
-                      placeholder={t('customerNamePlaceholder')}
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                    {t('customerPhone')} <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                      <Phone className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="tel"
-                      required
-                      placeholder={t('customerPhonePlaceholder')}
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                    />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                    {t('customerLineId')}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                      <MessageSquare className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={t('customerLineIdPlaceholder')}
-                      value={customerLineId}
-                      onChange={(e) => setCustomerLineId(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                    />
-                  </div>
-                </div>
+                {/* Cloudflare Turnstile Bot Protection Widget */}
+                <TurnstileWidget
+                  onVerify={(token) => {
+                    setTurnstileToken(token)
+                    setErrorMessage(null)
+                  }}
+                  onExpire={() => setTurnstileToken('')}
+                  onError={() => setTurnstileToken('')}
+                />
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                    {t('customerNotes')}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute top-2.5 left-0 pl-3 pointer-events-none text-slate-400 dark:text-slate-500">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <textarea
-                      rows={2}
-                      placeholder={t('customerNotesPlaceholder')}
-                      value={customerNotes}
-                      onChange={(e) => setCustomerNotes(e.target.value)}
-                      className="resize-none w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                    />
-                  </div>
-                </div>
-              </div>
+                {(() => {
+                  const isTurnstileConfigured = Boolean(
+                    process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY &&
+                    process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY !== '0x4AAAAAA'
+                  )
+                  const isSubmitDisabled = submitting || (isTurnstileConfigured && !turnstileToken)
 
-              {/* Cloudflare Turnstile Bot Protection Widget */}
-              <TurnstileWidget
-                onVerify={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken('')}
-              />
+                  return (
+                    <button
+                      type="submit"
+                      disabled={isSubmitDisabled}
+                      className={`w-full py-3.5 rounded-xl font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-98 ${
+                        isSubmitDisabled
+                          ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed shadow-none'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 cursor-pointer'
+                      }`}
+                    >
+                      {submitting ? (
+                        <span>{t('submittingBooking')}</span>
+                      ) : (
+                        <>
+                          <span>
+                            {Number(selectedService.deposit_amount ?? merchant.default_deposit) <= 0
+                              ? (lang === 'th' ? 'ยืนยันการจองคิว' : 'Confirm Booking')
+                              : t('confirmAndPayBtn')}
+                          </span>
+                          <ChevronRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  )
+                })()}
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </main>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 active:scale-98"
-              >
-                {submitting ? (
-                  <span>{t('submittingBooking')}</span>
-                ) : (
-                  <>
-                    <span>{t('confirmAndPayBtn')}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </motion.form>
-          )}
-        </AnimatePresence>
-      </main>
-
-      {/* Powered by Q Flow Footer inside card (Matching Onboarding) */}
-      <div className="flex justify-center items-center mt-0">
-        <Link
-          href="/"
-          target="_blank"
-          className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
-        >
-          Powered by Q Flow
-        </Link>
-      </div>
-
+        {/* Powered by Q Flow Footer inside card (Matching Onboarding) */}
+        <div className="flex justify-center items-center text-center text-xs text-slate-400 dark:text-slate-500">
+          <span>Powered by <span className='font-bold'>Q Flow</span></span>
+        </div>
       </div>
     </div>
   )

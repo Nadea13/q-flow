@@ -264,11 +264,10 @@ export default function DemoBookPage() {
                             setSelectedBranch(b)
                             setSelectedStaff(null)
                           }}
-                          className={`p-2.5 rounded-xl border text-left text-xs transition active:scale-98 ${
-                            isSel
-                              ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                          }`}
+                          className={`p-2.5 rounded-xl border text-left text-xs transition active:scale-98 ${isSel
+                            ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                            }`}
                         >
                           <div className="font-semibold">{b.name}</div>
                           <div className="text-[10px] text-slate-400 mt-0.5 truncate">{b.address}</div>
@@ -288,11 +287,10 @@ export default function DemoBookPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedStaff(null)}
-                      className={`p-2.5 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${
-                        selectedStaff === null
-                          ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                      }`}
+                      className={`p-2.5 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${selectedStaff === null
+                        ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                        }`}
                     >
                       <Sparkles className="w-4 h-4 text-amber-500 mb-1" />
                       <span>{t('anyStaff')}</span>
@@ -304,11 +302,10 @@ export default function DemoBookPage() {
                           key={stf.id}
                           type="button"
                           onClick={() => setSelectedStaff(stf)}
-                          className={`p-2 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${
-                            isSel
-                              ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
-                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                          }`}
+                          className={`p-2 rounded-xl border text-center text-xs transition active:scale-98 flex flex-col items-center justify-center min-h-[52px] ${isSel
+                            ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                            }`}
                         >
                           <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px] mb-1">
                             {stf.nickname ? stf.nickname.charAt(0) : stf.name.charAt(0)}
@@ -347,11 +344,10 @@ export default function DemoBookPage() {
                           setSelectedService(service)
                           setStep(2)
                         }}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative active:scale-[0.99] ${
-                          isSelected
-                            ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
-                        }`}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative active:scale-[0.99] ${isSelected
+                          ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-500 ring-1 ring-indigo-500'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs'
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1">
@@ -458,13 +454,12 @@ export default function DemoBookPage() {
                           key={idx}
                           disabled={!slot.isAvailable}
                           onClick={() => setSelectedSlot(slot)}
-                          className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center transition-all relative cursor-pointer ${
-                            !slot.isAvailable
-                              ? 'bg-slate-100 dark:bg-slate-950/40 border-slate-200 dark:border-slate-900 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
-                              : isSelected
+                          className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center transition-all relative cursor-pointer ${!slot.isAvailable
+                            ? 'bg-slate-100 dark:bg-slate-950/40 border-slate-200 dark:border-slate-900 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
+                            : isSelected
                               ? 'bg-indigo-600 dark:bg-indigo-500 border-indigo-600 text-white shadow-sm ring-2 ring-indigo-500/30'
                               : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 active:scale-98 shadow-2xs'
-                          }`}
+                            }`}
                         >
                           <span>{slot.displayTime}</span>
                           {!slot.isAvailable && (
@@ -631,11 +626,10 @@ export default function DemoBookPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="space-y-4"
               >
-                <div className={`p-4 rounded-2xl border text-center space-y-2 ${
-                  isPaidSuccess
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80'
-                    : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/80'
-                }`}>
+                <div className={`p-4 rounded-2xl border text-center space-y-2 ${isPaidSuccess
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80'
+                  : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/80'
+                  }`}>
                   <div className="w-10 h-10 rounded-full mx-auto flex items-center justify-center bg-white dark:bg-slate-900 shadow-2xs">
                     {isPaidSuccess ? (
                       <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
@@ -760,14 +754,8 @@ export default function DemoBookPage() {
         </main>
 
         {/* Powered by Q Flow Footer inside card */}
-        <div className="flex justify-center items-center mt-0">
-          <Link
-            href="/"
-            target="_blank"
-            className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
-          >
-            Powered by Q Flow
-          </Link>
+        <div className="flex justify-center items-center mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
+          <span>Powered by <span className='font-bold'>Q Flow</span></span>
         </div>
       </div>
     </div>

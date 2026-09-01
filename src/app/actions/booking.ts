@@ -19,12 +19,10 @@ interface CreateBookingInput {
 }
 
 export async function createBookingAction(input: CreateBookingInput) {
-  // Verify Turnstile security token
-  if (input.turnstileToken) {
-    const turnstileRes = await verifyTurnstileToken(input.turnstileToken)
-    if (!turnstileRes.success) {
-      return { success: false, error: turnstileRes.error || 'การตรวจสอบความปลอดภัยล้มเหลว (Bot detected)' }
-    }
+  // Verify Cloudflare Turnstile security token
+  const turnstileRes = await verifyTurnstileToken(input.turnstileToken)
+  if (!turnstileRes.success) {
+    return { success: false, error: turnstileRes.error || 'กรุณายืนยันความปลอดภัยผ่าน Cloudflare Turnstile ก่อนทำการจอง' }
   }
 
   const supabase = await createClient()
@@ -52,26 +50,7 @@ export async function createBookingAction(input: CreateBookingInput) {
     return { success: false, error: 'ไม่พบบริการที่เลือก' }
   }
 
-  // 3. Double check slot conflict (if staff specified, check conflict for that staff; otherwise check merchant)
-  let conflictQuery = supabase
-    .from('bookings')
-    .select('id, start_time, end_time, status')
-    .eq('shop_id', merchant.id)
-    .neq('status', 'cancelled')
-    .lt('start_time', input.endTime)
-    .gt('end_time', input.startTime)
-
-  if (input.staffId) {
-    conflictQuery = conflictQuery.eq('staff_id', input.staffId)
-  }
-
-  const { data: existingBookings } = await conflictQuery
-
-  if (existingBookings && existingBookings.length > 0) {
-    return { success: false, error: 'ช่วงเวลานี้มีผู้จองกับผู้ให้บริการท่านนี้แล้ว กรุณาเลือกรอบเวลาอื่น' }
-  }
-
-  // 4. Resolve Branch ID (from input, staff's branch, or merchant's default first branch)
+  // 3. Resolve Branch ID (from input, staff's branch, or merchant's default first branch)
   let resolvedBranchId = input.branchId || null
   if (!resolvedBranchId && input.staffId) {
     const { data: staffData } = await supabase
@@ -97,16 +76,90 @@ export async function createBookingAction(input: CreateBookingInput) {
     }
   }
 
-  const depositAmount = service.deposit_amount ?? merchant.default_deposit
+  // 4. Fetch active staff pool for this branch/shop
+  let staffQuery = supabase
+    .from('staff')
+    .select('id, name, branch_id')
+    .eq('shop_id', merchant.id)
+    .eq('is_active', true)
 
-  // 5. Create booking in pending_payment status
+  if (resolvedBranchId) {
+    staffQuery = staffQuery.or(`branch_id.eq.${resolvedBranchId},branch_id.is.null`)
+  }
+
+  const { data: activeStaffList } = await staffQuery
+  const activeStaff = activeStaffList || []
+  const totalCapacity = input.staffId ? 1 : Math.max(1, activeStaff.length)
+
+  // 5. Check overlapping active bookings for this time window
+  let conflictQuery = supabase
+    .from('bookings')
+    .select('id, staff_id, start_time, end_time, status, created_at')
+    .eq('shop_id', merchant.id)
+    .neq('status', 'cancelled')
+    .lt('start_time', input.endTime)
+    .gt('end_time', input.startTime)
+
+  if (resolvedBranchId) {
+    conflictQuery = conflictQuery.eq('branch_id', resolvedBranchId)
+  }
+
+  const { data: rawOverlappingBookings } = await conflictQuery
+  const now = new Date()
+
+  // Filter out expired pending_payment bookings (> 10 mins)
+  const activeOverlapping = (rawOverlappingBookings || []).filter((b) => {
+    if (b.status === 'pending_payment' && b.created_at) {
+      const createdAt = new Date(b.created_at).getTime()
+      if (now.getTime() - createdAt > 10 * 60 * 1000) {
+        return false
+      }
+    }
+    return true
+  })
+
+  let assignedStaffId = input.staffId || null
+
+  if (input.staffId) {
+    // Specific staff requested: check if that specific staff already has an active booking
+    const staffBooked = activeOverlapping.some((b) => b.staff_id === input.staffId)
+    if (staffBooked) {
+      return {
+        success: false,
+        error: 'ช่างหรือผู้ให้บริการท่านนี้ติดคิวในช่วงเวลาดังกล่าวแล้ว กรุณาเลือกช่างท่านอื่นหรือเลือกรอบเวลาอื่น',
+      }
+    }
+  } else {
+    // No specific staff: check if total capacity for this slot is reached
+    if (activeOverlapping.length >= totalCapacity) {
+      return {
+        success: false,
+        error: 'รอบเวลานี้มีผู้จองเต็มจำนวนแล้ว กรุณาเลือกรอบเวลาอื่น',
+      }
+    }
+
+    // Auto-assign to an available staff member who is free in this time slot
+    if (activeStaff.length > 0) {
+      const busyStaffIds = new Set(activeOverlapping.map((b) => b.staff_id).filter(Boolean))
+      const freeStaff = activeStaff.find((s) => !busyStaffIds.has(s.id))
+      if (freeStaff) {
+        assignedStaffId = freeStaff.id
+      }
+    }
+  }
+
+  const depositAmount = Number(service.deposit_amount ?? merchant.default_deposit ?? 0)
+  const isZeroDeposit = depositAmount <= 0
+  const initialStatus = isZeroDeposit ? 'confirmed' : 'pending_payment'
+
+  // 6. Create booking in appropriate status (confirmed if 0 deposit, pending_payment if deposit required)
   const { data: booking, error: bError } = await supabase
     .from('bookings')
     .insert({
       shop_id: merchant.id,
       service_id: service.id,
       branch_id: resolvedBranchId,
-      staff_id: input.staffId || null,
+      staff_id: assignedStaffId,
       customer_name: input.customerName.trim(),
       customer_phone: input.customerPhone.trim(),
       customer_line_id: input.customerLineId?.trim() || null,
@@ -115,7 +168,7 @@ export async function createBookingAction(input: CreateBookingInput) {
       end_time: input.endTime,
       total_price: service.price,
       deposit_amount: depositAmount,
-      status: 'pending_payment',
+      status: initialStatus,
     })
     .select()
     .single()
@@ -124,10 +177,28 @@ export async function createBookingAction(input: CreateBookingInput) {
     return { success: false, error: bError?.message || 'เกิดข้อผิดพลาดในการสร้างคำขอจองคิว' }
   }
 
+  // 6. If 0 deposit, dispatch LINE Notification immediately
+  if (isZeroDeposit) {
+    try {
+      const { sendLineBookingNotification } = await import('@/lib/line')
+      await sendLineBookingNotification({
+        booking: {
+          ...booking,
+          status: 'confirmed',
+        },
+        merchant: merchant,
+        service: service,
+      })
+    } catch (notifyErr) {
+      console.error('Failed to dispatch LINE alert for 0 deposit booking', notifyErr)
+    }
+  }
+
   return {
     success: true,
     bookingId: booking.id,
     merchantSlug: merchant.slug,
+    isConfirmed: isZeroDeposit,
   }
 }
 

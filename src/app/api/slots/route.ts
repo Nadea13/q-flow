@@ -64,10 +64,24 @@ export async function GET(request: Request) {
     .gte('start_time', startOfDay)
     .lte('start_time', endOfDay)
 
+  // 4. Fetch active staff for capacity computation
+  let staffQuery = supabase
+    .from('staff')
+    .select('*')
+    .eq('shop_id', merchant.id)
+    .eq('is_active', true)
+
+  if (branchId) {
+    staffQuery = staffQuery.or(`branch_id.eq.${branchId},branch_id.is.null`)
+  }
+
+  const { data: staffList } = await staffQuery
+
   const slots = computeAvailableSlots({
     merchant,
     branch,
     staffId,
+    staffList: staffList || [],
     dateStr,
     durationMin,
     existingBookings: bookings || [],

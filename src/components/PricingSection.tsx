@@ -167,7 +167,7 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
 
                   <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold mt-1.5 flex items-center gap-1 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                     <Zap className="w-3.5 h-3.5 text-amber-500" />
-                    <span>{lang === 'th' ? `โควตาตรวจสลิป ${p.quota.toLocaleString()} สลิป/เดือน` : `${p.quota.toLocaleString()} slips quota/mo`}</span>
+                    <span>{lang === 'th' ? `โควตา ${p.quota.toLocaleString()} คิว/เดือน` : `${p.quota.toLocaleString()} queues/mo`}</span>
                   </div>
                 </div>
 

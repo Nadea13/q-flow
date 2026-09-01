@@ -157,4 +157,7 @@ export interface TimeSlotOption {
   displayTime: string // "10:00 - 11:00"
   isAvailable: boolean
   reason?: string
+  capacity?: number
+  bookedCount?: number
+  remainingCapacity?: number
 }

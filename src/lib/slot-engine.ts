@@ -1,10 +1,11 @@
 import { addMinutes, format, isBefore, parseISO } from 'date-fns'
-import type { Booking, Branch, Merchant, Slot, TimeSlotOption } from '@/types/database'
+import type { Booking, Branch, Merchant, Slot, Staff, TimeSlotOption } from '@/types/database'
 
 interface ComputeSlotsParams {
   merchant: Merchant
   branch?: Branch | null
   staffId?: string | null
+  staffList?: Staff[] | null
   dateStr: string // "YYYY-MM-DD"
   durationMin: number
   existingBookings: Booking[]
@@ -12,12 +13,14 @@ interface ComputeSlotsParams {
 }
 
 /**
- * Computes available time slots for a given date and service duration.
+ * Computes available time slots for a given date and service duration,
+ * taking into account staff capacity (multi-staff / multi-chair concurrency).
  */
 export function computeAvailableSlots({
   merchant,
   branch,
   staffId,
+  staffList,
   dateStr,
   durationMin,
   existingBookings,
@@ -51,6 +54,20 @@ export function computeAvailableSlots({
   let currentSlotStart = new Date(year, month - 1, day, openHours, openMinutes, 0)
   const dayCloseTime = new Date(year, month - 1, day, closeHours, closeMinutes, 0)
 
+  // Determine active staff pool for this branch/shop
+  const activeStaff = (staffList || []).filter((s) => {
+    if (!s.is_active) return false
+    if (branch?.id && s.branch_id && s.branch_id !== branch.id) return false
+    return true
+  })
+
+  // Total simultaneous capacity for this branch/shop
+  // If specific staffId requested: capacity = 1
+  // If no staff registered: fallback capacity = 1
+  // Otherwise: capacity = number of active staff
+  const isSpecificStaff = Boolean(staffId)
+  const totalCapacity = isSpecificStaff ? 1 : Math.max(1, activeStaff.length)
+
   const slots: TimeSlotOption[] = []
 
   while (true) {
@@ -67,17 +84,39 @@ export function computeAvailableSlots({
     // 1. Check if the slot is in the past
     const isPast = isBefore(currentSlotStart, now)
 
-    // 2. Check if overlapping with existing active bookings
-    const isBooked = existingBookings.some((booking) => {
+    // 2. Overlapping active bookings
+    const overlappingBookings = existingBookings.filter((booking) => {
       if (booking.status === 'cancelled') return false
-      // If staffId is specified, only conflict if booking is for the same staff
-      if (staffId && booking.staff_id && booking.staff_id !== staffId) {
-        return false
+      // Filter out expired pending_payment reservations (> 10 mins)
+      if (booking.status === 'pending_payment' && booking.created_at) {
+        const createdAt = new Date(booking.created_at).getTime()
+        if (now.getTime() - createdAt > 10 * 60 * 1000) {
+          return false
+        }
       }
       const bStart = parseISO(booking.start_time)
       const bEnd = parseISO(booking.end_time)
       return currentSlotStart < bEnd && currentSlotEnd > bStart
     })
+
+    let isBooked = false
+    let bookedCount = 0
+
+    if (isSpecificStaff) {
+      // If a specific staff is requested, check if that staff has a booking
+      const staffBooked = overlappingBookings.some((b) => {
+        if (b.staff_id) {
+          return b.staff_id === staffId
+        }
+        return overlappingBookings.length >= (activeStaff.length || 1)
+      })
+      isBooked = staffBooked
+      bookedCount = staffBooked ? 1 : 0
+    } else {
+      // No specific staff: check against total capacity of available staff
+      bookedCount = overlappingBookings.length
+      isBooked = bookedCount >= totalCapacity
+    }
 
     // 3. Check if overlapping with blocked slots
     const isBlocked = blockedSlots.some((slot) => {
@@ -109,13 +148,14 @@ export function computeAvailableSlots({
       reason = 'หมดเวลาจอง'
     } else if (isDuringBreak) {
       reason = 'เวลาพัก'
-    } else if (isBooked) {
-      reason = 'จองแล้ว'
     } else if (isBlocked) {
       reason = 'ปิดรับรอบนี้'
+    } else if (isBooked) {
+      reason = isSpecificStaff ? 'ช่างติดคิวแล้ว' : 'คิวเต็มแล้ว'
     }
 
     const isAvailable = !isPast && !isDuringBreak && !isBooked && !isBlocked
+    const remainingCapacity = Math.max(0, totalCapacity - bookedCount)
 
     slots.push({
       startTime: startISO,
@@ -123,6 +163,9 @@ export function computeAvailableSlots({
       displayTime: `${format(currentSlotStart, 'HH:mm')} - ${format(currentSlotEnd, 'HH:mm')}`,
       isAvailable,
       reason,
+      capacity: totalCapacity,
+      bookedCount,
+      remainingCapacity,
     })
 
     // Advance by intervalMin

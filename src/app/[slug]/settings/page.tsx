@@ -276,7 +276,7 @@ export default function SettingsPage({ params }: PageProps) {
       phone: mData.phone || '',
       promptpay_id: mData.promptpay_id || '',
       promptpay_name: mData.promptpay_name || '',
-      default_deposit: String(mData.default_deposit || 100),
+      default_deposit: String(mData.default_deposit !== undefined && mData.default_deposit !== null ? mData.default_deposit : 100),
       open_time: mData.open_time?.slice(0, 5) || '10:00',
       close_time: mData.close_time?.slice(0, 5) || '20:00',
       has_break: mData.has_break ?? true,
@@ -452,7 +452,7 @@ export default function SettingsPage({ params }: PageProps) {
       name: '',
       promptpay_id: merchant.promptpay_id || '',
       promptpay_name: merchant.promptpay_name || '',
-      default_deposit: String(merchant.default_deposit || 100),
+      default_deposit: String(merchant.default_deposit !== undefined && merchant.default_deposit !== null ? merchant.default_deposit : 100),
       slug: '',
       branch_name: 'สาขาหลัก (Main Branch)',
       branch_address: '',
@@ -478,7 +478,7 @@ export default function SettingsPage({ params }: PageProps) {
       name: newShopForm.name,
       promptpay_id: newShopForm.promptpay_id,
       promptpay_name: newShopForm.promptpay_name || undefined,
-      default_deposit: Number(newShopForm.default_deposit) || 100,
+      default_deposit: newShopForm.default_deposit !== '' && !isNaN(Number(newShopForm.default_deposit)) ? Number(newShopForm.default_deposit) : 100,
       admin_pin: merchant?.admin_pin || '1234',
       line_user_id: merchant?.line_user_id || undefined,
       customSlug: newShopForm.slug || undefined,
@@ -633,11 +633,10 @@ export default function SettingsPage({ params }: PageProps) {
               }}
               aria-label={lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link'}
               title={copiedLink ? (lang === 'th' ? 'คัดลอกแล้ว!' : 'Copied!') : (lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link')}
-              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-2xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${
-                copiedLink
+              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-2xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${copiedLink
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
                   : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border-slate-300 dark:border-slate-800'
-              }`}
+                }`}
             >
               {copiedLink ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
             </button>
@@ -795,8 +794,8 @@ export default function SettingsPage({ params }: PageProps) {
             type="button"
             onClick={() => setActiveTab('shop')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'shop'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
             <Settings className="w-3.5 h-3.5 shrink-0" />
@@ -806,8 +805,8 @@ export default function SettingsPage({ params }: PageProps) {
             type="button"
             onClick={() => setActiveTab('billing')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'billing'
-                ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
             <CreditCard className="w-3.5 h-3.5 shrink-0" />
@@ -1186,10 +1185,8 @@ export default function SettingsPage({ params }: PageProps) {
               {t('saveSettingsBtn')}
             </button>
             {/* Powered by Q Flow Footer */}
-            <div className="flex justify-center items-center">
-              <div className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition">
-                Powered by Q Flow
-              </div>
+            <div className="flex justify-center items-center pt-2 text-center text-xs text-slate-400 dark:text-slate-500">
+              <span>Powered by <span className='font-bold'>Q Flow</span></span>
             </div>
           </form>
         )}
@@ -1206,16 +1203,15 @@ export default function SettingsPage({ params }: PageProps) {
               const planMonthlyQuota = hasActiveSub ? (merchant.monthly_slip_quota || activePlanInfo?.quota || 0) : 0
 
               const currentMonthStr = format(new Date(), 'yyyy-MM')
-              const actualUsedSlips = bookings.filter((b) => {
-                if (b.status !== 'confirmed') return false
-                if (!b.slip_url && !b.slip_trans_ref) return false
-                const bookingMonth = (b.slip_verified_at || b.created_at || '').slice(0, 7)
+              const actualUsedBookings = bookings.filter((b) => {
+                if (b.status === 'cancelled') return false
+                const bookingMonth = (b.created_at || b.start_time || '').slice(0, 7)
                 return bookingMonth === currentMonthStr
               }).length
 
-              const remainingSlips = Math.max(0, planMonthlyQuota - actualUsedSlips)
+              const remainingBookings = Math.max(0, planMonthlyQuota - actualUsedBookings)
               const usagePercent = planMonthlyQuota > 0
-                ? Math.min(100, Math.max(actualUsedSlips > 0 ? 4 : 0, (actualUsedSlips / planMonthlyQuota) * 100))
+                ? Math.min(100, Math.max(actualUsedBookings > 0 ? 4 : 0, (actualUsedBookings / planMonthlyQuota) * 100))
                 : 0
 
               return (
@@ -1265,10 +1261,10 @@ export default function SettingsPage({ params }: PageProps) {
                     <div className="pt-2 space-y-2">
                       <div className="flex justify-between items-center text-xs">
                         <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                          {lang === 'th' ? 'โควตาตรวจสลิป SlipOK เดือนนี้' : 'Monthly SlipOK Verification Quota'}
+                          {lang === 'th' ? 'โควตาการจอง เดือนนี้' : 'Monthly Booking Quota'}
                         </span>
                         <span className="font-bold text-slate-900 dark:text-white">
-                          {actualUsedSlips.toLocaleString()} / {planMonthlyQuota.toLocaleString()} สลิป
+                          {actualUsedBookings.toLocaleString()} / {planMonthlyQuota.toLocaleString()} การจอง
                         </span>
                       </div>
 
@@ -1282,8 +1278,8 @@ export default function SettingsPage({ params }: PageProps) {
                       <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
                         <span>
                           {lang === 'th'
-                            ? `เหลือโควตาอีก ${remainingSlips.toLocaleString()} สลิป`
-                            : `${remainingSlips.toLocaleString()} slips remaining`}
+                            ? `เหลือโควตาอีก ${remainingBookings.toLocaleString()} การจอง`
+                            : `${remainingBookings.toLocaleString()} bookings remaining`}
                         </span>
                         <span>{lang === 'th' ? 'รีเซ็ตโควตาทุก 30 วัน' : 'Resets monthly'}</span>
                       </div>
@@ -1300,8 +1296,8 @@ export default function SettingsPage({ params }: PageProps) {
                           </h4>
                           <p className="text-amber-700 dark:text-amber-300/80 mt-0.5 text-[11px]">
                             {lang === 'th'
-                              ? 'เลือกและสมัครแพ็กเกจด้านล่างเพื่อปลดล็อกโควตาตรวจสลิป SlipOK, ระบบจอง 24 ชม., และการแจ้งเตือน LINE'
-                              : 'Select and subscribe to a plan below to activate auto-slip verification, 24/7 calendar, and LINE alerts.'}
+                              ? 'เลือกและสมัครแพ็กเกจด้านล่างเพื่อปลดล็อกโควตาการจอง, ระบบจอง 24 ชม., และการแจ้งเตือน LINE'
+                              : 'Select and subscribe to a plan below to activate booking quota, 24/7 calendar, and LINE alerts.'}
                           </p>
                         </div>
                       </div>
@@ -1637,8 +1633,8 @@ export default function SettingsPage({ params }: PageProps) {
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
             className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${activeTab === 'shop'
-                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
           >
             <div className="relative">
@@ -1658,8 +1654,8 @@ export default function SettingsPage({ params }: PageProps) {
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
             className={`flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer relative ${activeTab === 'billing'
-                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
           >
             <div className="relative">

@@ -4,13 +4,18 @@
 export async function verifyTurnstileToken(token?: string | null, remoteIp?: string): Promise<{ success: boolean; error?: string }> {
   const secretKey = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY
 
-  // If secret key is not configured, allow bypass gracefully in dev
-  if (!secretKey || secretKey.startsWith('0x4AAAAAA') && process.env.NODE_ENV === 'development' && !token) {
+  // If secret key is not set in env, skip only in local dev without keys
+  if (!secretKey) {
     return { success: true }
   }
 
   if (!token) {
-    return { success: false, error: '?????????????????????? (Cloudflare Turnstile)' }
+    return { success: false, error: 'กรุณายืนยันความปลอดภัยผ่าน Cloudflare Turnstile ก่อนดำเนินการ' }
+  }
+
+  // Cloudflare standard test secret keys (always passes)
+  if (secretKey === '1x0000000000000000000000000000000AA') {
+    return { success: true }
   }
 
   try {
@@ -35,11 +40,11 @@ export async function verifyTurnstileToken(token?: string | null, remoteIp?: str
     } else {
       return {
         success: false,
-        error: '?????????????????????????????? ????????????????????'
+        error: 'การตรวจสอบความปลอดภัย Cloudflare Turnstile ไม่ผ่าน กรุณาลองใหม่อีกครั้ง',
       }
     }
   } catch (error) {
     console.error('Turnstile verification error:', error)
-    return { success: false, error: '????????????????????????????????????????' }
+    return { success: false, error: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับ Cloudflare Turnstile' }
   }
 }
