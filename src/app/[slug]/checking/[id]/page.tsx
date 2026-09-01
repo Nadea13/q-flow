@@ -98,8 +98,9 @@ export default function BookingCheckingPage({ params }: PageProps) {
       // Generate PromptPay QR if pending, not 0 deposit, and not expired
       if (bData.status === 'pending_payment' && !isZeroDeposit && (bData.shops || bData.merchants) && diff > 0) {
         try {
+          const targetPromptPay = bData.branch?.promptpay_id || (bData.shops || bData.merchants).promptpay_id
           const qrRes = await generatePromptPayQR(
-            (bData.shops || bData.merchants).promptpay_id,
+            targetPromptPay,
             Number(bData.deposit_amount)
           )
           setQrDataUrl(qrRes.qrDataUrl)
@@ -291,7 +292,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
 
               {/* Voucher Card */}
               <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 relative overflow-hidden">
-                <div className="border-b border-slate-200 dark:border-slate-800 pb-3 flex justify-between items-center">
+                <div className="# border-slate-200 dark:border-slate-800 pb-3 flex justify-between items-center">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {t('bookingId')}
                   </span>
@@ -467,37 +468,41 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 )}
 
                 {/* PromptPay Details */}
-                {merchant.promptpay_id && (
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs flex items-center justify-between">
-                    <div className="text-left">
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                        {t('promptpayNumber')} ({merchant.name})
+                {(booking?.branch?.promptpay_id || merchant.promptpay_id) && (() => {
+                  const displayPromptPayId = booking?.branch?.promptpay_id || merchant.promptpay_id
+                  const displayPromptPayName = booking?.branch?.promptpay_name || merchant.promptpay_name || merchant.name
+                  return (
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs flex items-center justify-between">
+                      <div className="text-left">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                          {t('promptpayNumber')} ({displayPromptPayName})
+                        </div>
+                        <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{displayPromptPayId}</div>
                       </div>
-                      <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{merchant.promptpay_id}</div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(displayPromptPayId)
+                          setCopiedPayId(true)
+                          setTimeout(() => setCopiedPayId(false), 2000)
+                        }}
+                        className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
+                      >
+                        {copiedPayId ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <span>{t('copied')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 text-slate-500" />
+                            <span>{t('copy')}</span>
+                          </>
+                        )}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(merchant.promptpay_id)
-                        setCopiedPayId(true)
-                        setTimeout(() => setCopiedPayId(false), 2000)
-                      }}
-                      className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
-                    >
-                      {copiedPayId ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                          <span>{t('copied')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3 text-slate-500" />
-                          <span>{t('copy')}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {qrDataUrl && (
                   <a
