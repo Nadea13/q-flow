@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, use, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { QFlowLogo } from '@/components/QFlowLogo'
 import { listShopsByLineUserIdAction } from '@/app/actions/portal'
+import { syncStripeSessionAction } from '@/app/actions/stripe'
+import { PRICING_PLANS } from '@/lib/stripe'
+import { toast } from 'sonner'
 import { Plus, Sparkles, ShieldCheck, Store, ArrowRight, ExternalLink } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NavbarControls } from '@/components/NavbarControls'
@@ -20,12 +23,16 @@ interface ShopItem {
   created_at?: string
 }
 
-export default function ShopsPortalPage() {
+function ShopsPortalContent() {
   const { t, lang } = useLanguage()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [shops, setShops] = useState<ShopItem[]>([])
   const [loading, setLoading] = useState(true)
   const [lineProfile, setLineProfile] = useState<{ displayName?: string; pictureUrl?: string; userId?: string } | null>(null)
+
+  const sessionId = searchParams.get('session_id')
+  const upgradedPlanId = searchParams.get('upgraded')
 
   useEffect(() => {
     async function loadShops() {
@@ -55,7 +62,19 @@ export default function ShopsPortalPage() {
           } catch { }
         }
 
-        // 3. Query all shops for this LINE User ID
+        // 3. If returning from Stripe checkout, sync session
+        if (sessionId) {
+          await syncStripeSessionAction(sessionId)
+          const planName = upgradedPlanId && PRICING_PLANS[upgradedPlanId] ? PRICING_PLANS[upgradedPlanId].name : ''
+          toast.success(lang === 'th' ? `อัปเกรดเป็น ${planName || 'แพ็กเกจใหม่'} เรียบร้อยแล้ว!` : `Upgraded to ${planName || 'plan'} successfully!`)
+          router.replace('/shops')
+        } else if (upgradedPlanId) {
+          const planName = PRICING_PLANS[upgradedPlanId] ? PRICING_PLANS[upgradedPlanId].name : upgradedPlanId
+          toast.success(lang === 'th' ? `เลือกแพ็กเกจ ${planName} เรียบร้อยแล้ว!` : `Selected ${planName} plan successfully!`)
+          router.replace('/shops')
+        }
+
+        // 4. Query all shops for this LINE User ID
         if (lineUid) {
           const res = await listShopsByLineUserIdAction(lineUid)
           if (res.success && res.shops) {
@@ -77,7 +96,7 @@ export default function ShopsPortalPage() {
     }
 
     loadShops()
-  }, [])
+  }, [sessionId, upgradedPlanId, router, lang])
 
   async function handleCreateNewShop() {
     router.push('/pricing')
@@ -341,5 +360,17 @@ export default function ShopsPortalPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function ShopsPortalPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <QFlowLogo className="h-10 w-10 animate-pulse text-indigo-600" />
+      </div>
+    }>
+      <ShopsPortalContent />
+    </Suspense>
   )
 }

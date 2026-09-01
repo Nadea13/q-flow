@@ -28,6 +28,7 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
   const supabase = await createClient()
 
   let merchant = null
+  let isFromSettings = false
   if (input.merchantSlug && input.merchantSlug !== 'public') {
     const { data: mData } = await supabase
       .from('shops')
@@ -35,6 +36,22 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
       .eq('slug', input.merchantSlug)
       .single()
     merchant = mData
+    if (merchant) isFromSettings = true
+  }
+
+  // Check if user already owns shops via LINE User ID when coming from public flow
+  let hasExistingShops = false
+  if (!merchant && input.lineUserId) {
+    const { data: userShops } = await supabase
+      .from('shops')
+      .select('id, slug, name, stripe_customer_id, plan')
+      .eq('line_user_id', input.lineUserId)
+      .order('created_at', { ascending: false })
+
+    if (userShops && userShops.length > 0) {
+      merchant = userShops[0]
+      hasExistingShops = true
+    }
   }
 
   const lineParams = new URLSearchParams()
@@ -44,13 +61,17 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
   const lineQueryString = lineParams.toString()
   const lineQuery = lineQueryString ? `&${lineQueryString}` : ''
 
-  const successUrl = merchant
+  const successUrl = isFromSettings && merchant
     ? `${siteUrl}/${merchant.slug}/settings?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
-    : `${siteUrl}/create-shop?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}${lineQuery}`
+    : hasExistingShops
+      ? `${siteUrl}/shops?session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
+      : `${siteUrl}/create-shop?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}${lineQuery}`
   
-  const cancelUrl = merchant
+  const cancelUrl = isFromSettings && merchant
     ? `${siteUrl}/${merchant.slug}/settings?tab=billing`
-    : `${siteUrl}/pricing`
+    : hasExistingShops
+      ? `${siteUrl}/shops`
+      : `${siteUrl}/pricing`
 
   // 0. Handle Free / Basic Plan: No payment session required
   if (input.planId === 'basic' || input.planId === 'free' || plan.priceTHB === 0) {
@@ -66,11 +87,14 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
 
       revalidatePath(`/${merchant.slug}/settings`)
       revalidatePath(`/${merchant.slug}/dashboard`)
+      revalidatePath('/shops')
       revalidatePath('/')
 
       return {
         success: true,
-        url: `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=basic`,
+        url: isFromSettings
+          ? `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=basic`
+          : `${siteUrl}/shops?upgraded=basic`,
         simulated: true,
       }
     }
@@ -96,11 +120,14 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
 
       revalidatePath(`/${merchant.slug}/settings`)
       revalidatePath(`/${merchant.slug}/dashboard`)
+      revalidatePath('/shops')
       revalidatePath('/')
 
       return {
         success: true,
-        url: `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=${plan.id}`,
+        url: isFromSettings
+          ? `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=${plan.id}`
+          : `${siteUrl}/shops?upgraded=${plan.id}`,
         simulated: true,
       }
     }
@@ -349,12 +376,35 @@ export async function syncStripeSessionAction(sessionId: string, merchantSlug?: 
           monthly_slip_quota: plan.quota,
         })
         .eq('slug', merchantSlug)
+    } else if (session.metadata?.line_user_id) {
+      const { data: userShops } = await supabase
+        .from('shops')
+        .select('id, slug')
+        .eq('line_user_id', session.metadata.line_user_id)
+        .order('created_at', { ascending: false })
+
+      if (userShops && userShops.length > 0) {
+        await supabase
+          .from('shops')
+          .update({
+            plan: plan.id,
+            subscription_status: 'active',
+            stripe_customer_id: (session.customer as string) || undefined,
+            stripe_subscription_id: (session.subscription as string) || undefined,
+            monthly_slip_quota: plan.quota,
+          })
+          .eq('id', userShops[0].id)
+        
+        revalidatePath(`/${userShops[0].slug}/settings`)
+        revalidatePath(`/${userShops[0].slug}/dashboard`)
+      }
     }
 
     if (merchantSlug) {
       revalidatePath(`/${merchantSlug}/settings`)
       revalidatePath(`/${merchantSlug}/dashboard`)
     }
+    revalidatePath('/shops')
     revalidatePath('/')
 
     return { success: true, plan }
