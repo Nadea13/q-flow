@@ -115,6 +115,33 @@ export default function SettingsPage({ params }: PageProps) {
     router.replace(`/${slug}/settings?${params.toString()}`, { scroll: false })
   }
 
+  // Handle Stripe Session Return / Upgraded query params
+  const sessionIdParam = searchParams.get('session_id')
+  const upgradedParam = searchParams.get('upgraded')
+  const hasHandledSessionRef = useRef(false)
+
+  useEffect(() => {
+    if (hasHandledSessionRef.current) return
+
+    async function handleSessionSync() {
+      if (sessionIdParam) {
+        hasHandledSessionRef.current = true
+        const { syncStripeSessionAction } = await import('@/app/actions/stripe')
+        const res = await syncStripeSessionAction(sessionIdParam, slug)
+        if (res.success) {
+          toast.success(lang === 'th' ? 'อัปเกรดแพ็กเกจเรียบร้อยแล้ว!' : 'Plan updated successfully!')
+        }
+        await loadSettingsData()
+      } else if (upgradedParam) {
+        hasHandledSessionRef.current = true
+        toast.success(lang === 'th' ? 'อัปเดตแพ็กเกจเรียบร้อยแล้ว!' : 'Plan updated successfully!')
+        await loadSettingsData()
+      }
+    }
+
+    handleSessionSync()
+  }, [sessionIdParam, upgradedParam, slug, lang])
+
   // Branch Edit/New Modal state
   const [editingBranch, setEditingBranch] = useState<Partial<Branch> | null>(null)
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false)
@@ -1310,7 +1337,7 @@ export default function SettingsPage({ params }: PageProps) {
             <div className="pt-2">
               <PricingSection
                 merchantSlug={slug}
-                currentPlan={merchant.subscription_status === 'active' ? merchant.plan : undefined}
+                currentPlan={merchant.plan || undefined}
                 onPlanSelected={loadSettingsData}
               />
             </div>

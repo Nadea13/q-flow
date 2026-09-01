@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { stripe, PRICING_PLANS } from '@/lib/stripe'
 import type { PlanType } from '@/types/database'
@@ -37,11 +38,11 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
   const lineQuery = input.lineUserId ? `&line_uid=${encodeURIComponent(input.lineUserId)}` : ''
 
   const successUrl = merchant
-    ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
+    ? `${siteUrl}/${merchant.slug}/settings?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
     : `${siteUrl}/create-shop?plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}${lineQuery}`
   
   const cancelUrl = merchant
-    ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing`
+    ? `${siteUrl}/${merchant.slug}/settings?tab=billing`
     : `${siteUrl}/pricing`
 
   // 0. Handle Free Plan: No payment session required
@@ -56,9 +57,13 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
         })
         .eq('id', merchant.id)
 
+      revalidatePath(`/${merchant.slug}/settings`)
+      revalidatePath(`/${merchant.slug}/dashboard`)
+      revalidatePath('/')
+
       return {
         success: true,
-        url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing&upgraded=free`,
+        url: `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=free`,
         simulated: true,
       }
     }
@@ -82,9 +87,13 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
         })
         .eq('id', merchant.id)
 
+      revalidatePath(`/${merchant.slug}/settings`)
+      revalidatePath(`/${merchant.slug}/dashboard`)
+      revalidatePath('/')
+
       return {
         success: true,
-        url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing&upgraded=${plan.id}`,
+        url: `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=${plan.id}`,
         simulated: true,
       }
     }
@@ -284,5 +293,66 @@ export async function createStripePaymentIntentAction(input: {
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err)
     return { success: false, error: `Stripe Error: ${errorMsg}` }
+  }
+}
+
+/**
+ * Syncs and verifies a Stripe Checkout Session on return to update merchant plan
+ */
+export async function syncStripeSessionAction(sessionId: string, merchantSlug?: string) {
+  if (!sessionId) {
+    return { success: false, error: 'No session ID provided' }
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('mock')) {
+    return { success: true }
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    const merchantId = session.metadata?.shop_id
+    const planId = session.metadata?.plan_id as PlanType
+    const plan = PRICING_PLANS[planId]
+
+    if (!plan) {
+      return { success: false, error: 'Invalid plan from session' }
+    }
+
+    const supabase = await createClient()
+
+    if (merchantId) {
+      await supabase
+        .from('shops')
+        .update({
+          plan: plan.id,
+          subscription_status: 'active',
+          stripe_customer_id: (session.customer as string) || undefined,
+          stripe_subscription_id: (session.subscription as string) || undefined,
+          monthly_slip_quota: plan.quota,
+        })
+        .eq('id', merchantId)
+    } else if (merchantSlug) {
+      await supabase
+        .from('shops')
+        .update({
+          plan: plan.id,
+          subscription_status: 'active',
+          stripe_customer_id: (session.customer as string) || undefined,
+          stripe_subscription_id: (session.subscription as string) || undefined,
+          monthly_slip_quota: plan.quota,
+        })
+        .eq('slug', merchantSlug)
+    }
+
+    if (merchantSlug) {
+      revalidatePath(`/${merchantSlug}/settings`)
+      revalidatePath(`/${merchantSlug}/dashboard`)
+    }
+    revalidatePath('/')
+
+    return { success: true, plan }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { success: false, error: msg }
   }
 }

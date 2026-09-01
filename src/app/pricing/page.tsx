@@ -11,7 +11,8 @@ import {
   CreditCard, 
   Zap, 
   HelpCircle,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PRICING_PLANS } from '@/lib/stripe'
@@ -26,6 +27,7 @@ export default function PricingPage() {
   const { t, lang } = useLanguage()
   const router = useRouter()
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [showFreeConfirmModal, setShowFreeConfirmModal] = useState(false)
 
   async function proceedToCheckout(planId: PlanType, lineUid?: string) {
     setLoadingPlan(planId)
@@ -51,7 +53,17 @@ export default function PricingPage() {
     }
   }
 
-  async function handleSubscribe(planId: PlanType) {
+  function handleSubscribe(planId: PlanType) {
+    if (planId === 'free') {
+      setShowFreeConfirmModal(true)
+      return
+    }
+    executeSubscribe(planId)
+  }
+
+  async function executeSubscribe(planId: PlanType) {
+    setShowFreeConfirmModal(false)
+
     // 1. Check if LIFF profile is already present
     try {
       const { initLiff } = await import('@/lib/liff')
@@ -762,6 +774,73 @@ export default function PricingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Confirmation Modal for Free Plan */}
+      <AnimatePresence>
+        {showFreeConfirmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 relative"
+            >
+              <button
+                type="button"
+                onClick={() => setShowFreeConfirmModal(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-1.5">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {lang === 'th' ? 'ยืนยันการเลือกแพ็กเกจฟรี?' : 'Confirm Free Plan Selection?'}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {lang === 'th' 
+                    ? 'แพ็กเกจฟรี (Q Flow Free) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?' 
+                    : 'The Free Plan includes 30 bookings/month, 1 shop, 1 branch, and 1 staff member. Do you wish to proceed?'}
+                </p>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs space-y-1.5 text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>โควตารองรับ 30 คิว/เดือน (ฟรีตลอดไป)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>1 ร้านค้า • 1 สาขา • 1 ผู้ให้บริการ</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFreeConfirmModal(false)}
+                  className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
+                >
+                  {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => executeSubscribe('free')}
+                  disabled={loadingPlan !== null}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs transition shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {lang === 'th' ? 'ยืนยันเลือกแพ็กเกจฟรี' : 'Confirm Free Plan'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
