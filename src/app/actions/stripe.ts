@@ -44,6 +44,32 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     ? `${siteUrl}/${merchant.slug}/dashboard?tab=billing`
     : `${siteUrl}/pricing`
 
+  // 0. Handle Free Plan: No payment session required
+  if (input.planId === 'free' || plan.priceTHB === 0) {
+    if (merchant) {
+      await supabase
+        .from('shops')
+        .update({
+          plan: 'free',
+          subscription_status: 'active',
+          monthly_slip_quota: plan.quota || 30,
+        })
+        .eq('id', merchant.id)
+
+      return {
+        success: true,
+        url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing&upgraded=free`,
+        simulated: true,
+      }
+    }
+
+    return {
+      success: true,
+      url: `${siteUrl}/create-shop?plan=free${lineQuery}`,
+      simulated: true,
+    }
+  }
+
   // If Stripe Secret Key is not configured or in mock test, perform instant simulated upgrade
   if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('mock')) {
     if (merchant) {

@@ -92,12 +92,14 @@ export default function PricingPage() {
       features: [
         {
           name: lang === 'th' ? 'เหมาะสำหรับ' : 'Target Audience',
+          free: 'ร้านค้าขนาดเล็ก / ทดลองใช้ระบบ',
           professional: 'ร้านค้าบริการเดี่ยว / สตูดิโอ / ฟรีแลนซ์',
           business: 'ร้านเสริมสวย / คลินิกความงาม 2-5 สาขา',
           enterprise: 'แฟรนไชส์ / คลินิกใหญ่ / เชนธุรกิจ',
         },
         {
           name: lang === 'th' ? 'ราคาค่าบริการ (รายเดือน)' : 'Monthly Fee',
+          free: '0 บาท / เดือน (ฟรี)',
           professional: '790 บาท / เดือน',
           business: '1,590 บาท / เดือน',
           enterprise: '3,990 บาท / เดือน',
@@ -105,6 +107,7 @@ export default function PricingPage() {
         },
         {
           name: lang === 'th' ? 'ราคาค่าบริการ (รายปี - ลด 2 เดือน)' : 'Yearly Fee (Save 2 Months)',
+          free: '0 บาท / ปี (ฟรี)',
           professional: '7,900 บาท / ปี',
           business: '15,900 บาท / ปี',
           enterprise: '39,900 บาท / ปี',
@@ -116,24 +119,28 @@ export default function PricingPage() {
       features: [
         {
           name: lang === 'th' ? 'จำนวนร้านค้า (Merchants)' : 'Number of Merchants',
+          free: '1 ร้านค้า',
           professional: '1 ร้านค้า',
           business: 'สูงสุด 2 ร้านค้า',
           enterprise: 'ไม่จำกัด (Unlimited)',
         },
         {
           name: lang === 'th' ? 'จำนวนสาขา (Branches)' : 'Number of Branches',
+          free: '1 สาขา',
           professional: 'สูงสุด 2 สาขา',
           business: 'สูงสุด 5 สาขา',
           enterprise: 'ไม่จำกัด (Unlimited)',
         },
         {
           name: lang === 'th' ? 'จำนวนช่าง / ผู้ให้บริการ (Staff)' : 'Number of Staff / Specialists',
+          free: '1 ท่าน',
           professional: 'สูงสุด 5 ท่าน',
           business: 'สูงสุด 20 ท่าน',
           enterprise: 'ไม่จำกัด (Unlimited)',
         },
         {
           name: lang === 'th' ? 'การผูกบัญชีรับเงิน' : 'Payment Account Linking',
+          free: 'พร้อมเพย์ร้านค้า',
           professional: 'แยกบัญชีพร้อมเพย์รายสาขา',
           business: 'แยกบัญชีพร้อมเพย์รายสาขา',
           enterprise: 'แยกบัญชีพร้อมเพย์อิสระตามสาขา/ร้าน',
@@ -145,6 +152,7 @@ export default function PricingPage() {
       features: [
         {
           name: lang === 'th' ? 'โควตาคิวอัตโนมัติ' : 'Monthly Auto-verified Queues',
+          free: '30 คิว / เดือน (~1 คิว/วัน)',
           professional: '500 คิว / เดือน (~16 คิว/วัน)',
           business: '1,500 คิว / เดือน (~50 คิว/วัน)',
           enterprise: '5,000 คิว / เดือน (~165 คิว/วัน)',
@@ -152,18 +160,21 @@ export default function PricingPage() {
         },
         {
           name: lang === 'th' ? 'สิทธิ์ซื้อโควตาคิวส่วนเกิน' : 'Overage Queue Rate',
+          free: 'อัปเกรดเพื่อเพิ่มคิว',
           professional: '0.60 บาท / คิว',
           business: '0.50 บาท / คิว',
           enterprise: '0.40 บาท / คิว',
         },
         {
           name: lang === 'th' ? 'ตรวจยอดเงิน ตรงบัญชี และป้องกันสลิปใช้ซ้ำ 100%' : 'Amount, Account & Duplicate Slip Check',
+          free: true,
           professional: true,
           business: true,
           enterprise: true,
         },
         {
           name: lang === 'th' ? 'จัดเก็บรูปสลิปบนคลาวด์ความเร็วสูง (Cloudflare R2)' : 'Cloudflare R2 Slip Storage',
+          free: true,
           professional: true,
           business: true,
           enterprise: true,
@@ -175,12 +186,14 @@ export default function PricingPage() {
       features: [
         {
           name: lang === 'th' ? 'บริการ Setup LINE' : 'LINE Setup Service',
+          free: 'ตั้งค่าด้วยตนเอง (Self-serve)',
           professional: 'ทีมงานตั้งค่า & เชื่อม LINE ให้',
           business: 'ทีมงานตั้งค่า & เชื่อม LINE ให้',
           enterprise: 'Setup LINE OA + Rich Menu + Flex Message ครบวงจร',
         },
         {
           name: lang === 'th' ? 'การแจ้งเตือนคิวใหม่' : 'New Queue Notification',
+          free: 'LINE Notify เข้ากลุ่มแอดมิน',
           professional: 'LINE Notify เข้ากลุ่มแอดมิน',
           business: 'LINE Notify เข้ากลุ่มแอดมิน',
           enterprise: 'LINE Notify + Flex Message สรุปประจำวัน',
@@ -192,24 +205,28 @@ export default function PricingPage() {
       features: [
         {
           name: lang === 'th' ? 'ระบบปฏิทินจองคิว 24 ชม.' : '24/7 Booking Calendar',
+          free: true,
           professional: true,
           business: true,
           enterprise: true,
         },
         {
           name: lang === 'th' ? 'Dashboard จัดการคิว Real-time' : 'Real-time Queue Dashboard',
+          free: true,
           professional: true,
           business: true,
           enterprise: true,
         },
         {
           name: lang === 'th' ? 'Custom Branding / White-label' : 'Custom Branding',
+          free: 'โลโก้ร้านค้า + ป้าย Q Flow',
           professional: 'โลโก้ร้านค้า + ป้าย Q Flow',
           business: 'White-label (ซ่อนป้าย Q Flow)',
           enterprise: '100% White-label + รองรับ Custom Domain',
         },
         {
           name: lang === 'th' ? 'ระดับการซัพพอร์ต (Support)' : 'Support Tier',
+          free: 'Standard Support',
           professional: 'Standard Support (LINE Official)',
           business: 'Priority Support',
           enterprise: 'Dedicated VIP Support (กลุ่ม LINE ส่วนตัว)',
@@ -317,18 +334,19 @@ export default function PricingPage() {
         </motion.p>
       </section>
 
-      {/* 3 PRICING CARDS */}
-      <section className="pb-16 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+      {/* 4 PRICING CARDS (Including Free Plan) */}
+      <section className="pb-16 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
           {Object.values(PRICING_PLANS).map((p) => {
             const isPopular = p.popular
+            const isFree = p.priceTHB === 0
 
             return (
               <motion.div
                 key={p.id}
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
-                className={`relative flex flex-col justify-between rounded-3xl p-6 sm:p-8 transition-all ${
+                className={`relative flex flex-col justify-between rounded-3xl p-6 sm:p-7 transition-all ${
                   isPopular
                     ? 'bg-white dark:bg-slate-900 border-2 border-indigo-600 dark:border-indigo-500 shadow-xl shadow-indigo-600/10'
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs'
@@ -344,7 +362,7 @@ export default function PricingPage() {
                 <div>
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">{p.name}</h3>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{p.name}</h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 min-h-[32px]">{p.tagline}</p>
                     </div>
                   </div>
@@ -352,16 +370,24 @@ export default function PricingPage() {
                   {/* Price Box */}
                   <div className="my-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800/80">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                        ฿{p.priceTHB.toLocaleString()}
+                      <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        {isFree ? (lang === 'th' ? 'ฟรี' : 'Free') : `฿${p.priceTHB.toLocaleString()}`}
                       </span>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {lang === 'th' ? '/เดือน' : '/month'}
+                        {isFree ? '' : (lang === 'th' ? '/เดือน' : '/month')}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                      รายปี ฿{p.priceYearlyTHB.toLocaleString()} / ปี <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(ประหยัด 2 เดือน)</span>
-                    </div>
+
+                    {!isFree ? (
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                        รายปี ฿{p.priceYearlyTHB.toLocaleString()} / ปี <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(ประหยัด 2 เดือน)</span>
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                        {lang === 'th' ? 'ใช้งานได้ตลอดไป ไม่มีค่าบริการ' : 'Free forever, no card needed'}
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
                       <span className="font-bold text-indigo-600 dark:text-indigo-400">
                         ⚡ โควตา {p.quota.toLocaleString()} คิว/เดือน
@@ -386,14 +412,16 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Direct Stripe Checkout Button */}
+                {/* Direct Checkout Button */}
                 <div>
                   <button
                     onClick={() => handleSubscribe(p.id)}
                     disabled={loadingPlan !== null}
-                    className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md active:scale-98 ${
+                    className={`w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md active:scale-98 cursor-pointer ${
                       isPopular
                         ? 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-indigo-600/25'
+                        : isFree
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
                         : 'bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900'
                     } disabled:opacity-50`}
                   >
@@ -401,14 +429,16 @@ export default function PricingPage() {
                       <span>{t('loading')}</span>
                     ) : (
                       <>
-                        <CreditCard className="w-4 h-4" />
-                        <span>{lang === 'th' ? `สมัครแพ็กเกจ ${p.name}` : `Subscribe ${p.name} via Stripe`}</span>
+                        {isFree ? <Sparkles className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
+                        <span>{isFree ? (lang === 'th' ? 'เริ่มใช้งานฟรี' : 'Start Free') : (lang === 'th' ? `สมัครแพ็กเกจ ${p.name}` : `Subscribe ${p.name} via Stripe`)}</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
                   <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 mt-2">
-                    {lang === 'th' ? 'ชำระเงินรายเดือนปลอดภัย Checkout' : 'Secure monthly billing via Stripe Checkout'}
+                    {isFree 
+                      ? (lang === 'th' ? 'เริ่มเปิดร้านได้ทันที ไม่ต้องผูกบัตร' : 'Instant activation, no card required')
+                      : (lang === 'th' ? 'ชำระเงินรายเดือนปลอดภัย Checkout' : 'Secure monthly billing via Stripe Checkout')}
                   </p>
                 </div>
               </motion.div>
@@ -419,7 +449,7 @@ export default function PricingPage() {
 
       {/* DETAILED FEATURE COMPARISON TABLE */}
       <section className="py-16 bg-white dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {lang === 'th' ? 'ตารางเปรียบเทียบฟีเจอร์อย่างละเอียด' : 'Detailed Feature Breakdown'}
@@ -433,18 +463,22 @@ export default function PricingPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80">
-                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-700 dark:text-slate-300 w-2/5">
+                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-700 dark:text-slate-300 w-1/3">
                     {lang === 'th' ? 'ฟังก์ชันการทำงาน / รายละเอียด' : 'Capabilities'}
                   </th>
-                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-900 dark:text-white text-center w-1/5">
+                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-700 dark:text-slate-300 text-center w-1/6 bg-slate-50/60 dark:bg-slate-850/40">
+                    Free (ฟรี) <br />
+                    <span className="font-normal text-[10px] text-slate-500">฿0 / ฟรี</span>
+                  </th>
+                  <th className="p-3 sm:p-4 text-xs font-bold text-slate-900 dark:text-white text-center w-1/6">
                     Professional <br />
                     <span className="font-normal text-[10px] text-slate-500">฿790/ด. (฿7,900/ปี)</span>
                   </th>
-                  <th className="p-3 sm:p-4 text-xs font-bold text-indigo-600 dark:text-indigo-400 text-center w-1/5 bg-indigo-50/50 dark:bg-indigo-950/20">
+                  <th className="p-3 sm:p-4 text-xs font-bold text-indigo-600 dark:text-indigo-400 text-center w-1/6 bg-indigo-50/50 dark:bg-indigo-950/20">
                     Business (แนะนำ) <br />
                     <span className="font-normal text-[10px] text-indigo-500">฿1,590/ด. (฿15,900/ปี)</span>
                   </th>
-                  <th className="p-3 sm:p-4 text-xs font-bold text-amber-600 dark:text-amber-400 text-center w-1/5 bg-amber-50/30 dark:bg-amber-950/10">
+                  <th className="p-3 sm:p-4 text-xs font-bold text-amber-600 dark:text-amber-400 text-center w-1/6 bg-amber-50/30 dark:bg-amber-950/10">
                     Enterprise <br />
                     <span className="font-normal text-[10px] text-amber-600">฿3,990/ด. (฿39,900/ปี)</span>
                   </th>
@@ -454,7 +488,7 @@ export default function PricingPage() {
                 {comparisonCategories.map((cat, cIdx) => (
                   <tr key={cIdx} className="contents">
                     <tr className="bg-slate-100/60 dark:bg-slate-800/40">
-                      <td colSpan={4} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider">
+                      <td colSpan={5} className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-wider">
                         {cat.category}
                       </td>
                     </tr>
@@ -464,6 +498,19 @@ export default function PricingPage() {
                           {feat.name}
                         </td>
                         
+                        {/* Free Column */}
+                        <td className="p-3 text-center bg-slate-50/40 dark:bg-slate-900/40">
+                          {typeof feat.free === 'boolean' ? (
+                            feat.free ? (
+                              <Check className="w-4 h-4 text-emerald-500 mx-auto stroke-[2.5]" />
+                            ) : (
+                              <X className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
+                            )
+                          ) : (
+                            <span className="font-medium text-[11px] text-slate-700 dark:text-slate-300">{feat.free}</span>
+                          )}
+                        </td>
+
                         {/* Professional Column */}
                         <td className="p-3 text-center">
                           {typeof feat.professional === 'boolean' ? (

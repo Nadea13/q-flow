@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { PRICING_PLANS } from '@/lib/stripe'
 
 interface CreateMerchantInput {
   name: string
@@ -45,7 +46,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
 
   const plan = input.plan || undefined
   const subscriptionStatus = plan ? 'active' : undefined
-  const monthlySlipQuota = plan === 'enterprise' ? 5000 : plan === 'business' ? 1500 : plan === 'professional' ? 500 : undefined
+  const monthlySlipQuota = plan ? (PRICING_PLANS[plan]?.quota || (plan === 'free' ? 30 : plan === 'professional' ? 500 : plan === 'business' ? 1500 : 5000)) : undefined
 
   // 1. Insert merchant
   const { data: merchant, error: mError } = await supabase

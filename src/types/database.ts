@@ -1,5 +1,5 @@
 export type BookingStatus = 'pending_payment' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
-export type PlanType = 'professional' | 'business' | 'enterprise' | 'starter' | 'growth'
+export type PlanType = 'free' | 'professional' | 'business' | 'enterprise' | 'starter' | 'growth'
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
 export interface Shop {

@@ -109,12 +109,13 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
         </div>
       </div>
 
-      {/* Pricing Grid (3-Tier) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-6xl mx-auto items-stretch">
+      {/* Pricing Grid (4-Tier with Free Plan) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 max-w-7xl mx-auto items-stretch">
         {plans.map((p) => {
           const isPopular = p.popular
           const isCurrent = currentPlan === p.id
-          const currentPrice = billingCycle === 'yearly' ? p.priceYearlyTHB : p.priceTHB
+          const isFree = p.priceTHB === 0
+          const currentPrice = isFree ? 0 : (billingCycle === 'yearly' ? p.priceYearlyTHB : p.priceTHB)
           const monthlyEquivalent = billingCycle === 'yearly' ? Math.round(p.priceYearlyTHB / 12) : p.priceTHB
 
           return (
@@ -152,16 +153,22 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                 <div className="my-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                      ฿{currentPrice.toLocaleString()}
+                      {isFree ? (lang === 'th' ? 'ฟรี' : 'Free') : `฿${currentPrice.toLocaleString()}`}
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      /{billingCycle === 'yearly' ? (lang === 'th' ? 'ปี' : 'year') : (lang === 'th' ? 'เดือน' : 'month')}
+                      {isFree ? '' : `/${billingCycle === 'yearly' ? (lang === 'th' ? 'ปี' : 'year') : (lang === 'th' ? 'เดือน' : 'month')}`}
                     </span>
                   </div>
 
-                  {billingCycle === 'yearly' && (
+                  {!isFree && billingCycle === 'yearly' && (
                     <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
                       {lang === 'th' ? `เฉลี่ยเพียงเดือนละ ฿${monthlyEquivalent.toLocaleString()}` : `Equivalent to ฿${monthlyEquivalent.toLocaleString()}/mo`}
+                    </div>
+                  )}
+
+                  {isFree && (
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                      {lang === 'th' ? 'ใช้งานได้ตลอดไป ไม่มีค่าบริการ' : 'Free forever, no credit card needed'}
                     </div>
                   )}
 
@@ -205,6 +212,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                     className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md active:scale-98 cursor-pointer ${
                       isPopular
                         ? 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-indigo-600/20'
+                        : isFree
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
                         : 'bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900'
                     } disabled:opacity-50`}
                   >
@@ -212,11 +221,15 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                       <span>{t('loading')}</span>
                     ) : (
                       <>
-                        <CreditCard className="w-3.5 h-3.5" />
+                        {isFree ? <Sparkles className="w-3.5 h-3.5" /> : <CreditCard className="w-3.5 h-3.5" />}
                         <span>
                           {merchantSlug 
-                            ? (lang === 'th' ? `อัปเกรดเป็น ${p.name}` : `Upgrade to ${p.name}`)
-                            : (lang === 'th' ? `เลือก ${p.name}` : `Choose ${p.name}`)}
+                            ? (isFree 
+                                ? (lang === 'th' ? 'เปลี่ยนเป็นแพ็กเกจฟรี' : 'Switch to Free')
+                                : (lang === 'th' ? `อัปเกรดเป็น ${p.name}` : `Upgrade to ${p.name}`))
+                            : (isFree 
+                                ? (lang === 'th' ? 'เริ่มใช้งานฟรี' : 'Start Free')
+                                : (lang === 'th' ? `เลือก ${p.name}` : `Choose ${p.name}`))}
                         </span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </>
