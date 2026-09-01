@@ -25,15 +25,43 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
   async function handleSelectPlan(planId: PlanType) {
     setLoadingPlan(planId)
 
-    // Retrieve line user ID if available
+    // 1. Check if LIFF profile is already present
     let lineUserId: string | undefined = undefined
     try {
-      const cached = localStorage.getItem('qflow_admin_line_profile')
-      if (cached) {
-        const parsed = JSON.parse(cached)
-        lineUserId = parsed.userId
+      const { initLiff } = await import('@/lib/liff')
+      const liffRes = await initLiff()
+      if (liffRes?.success && liffRes.profile?.userId) {
+        lineUserId = liffRes.profile.userId
+        localStorage.setItem('qflow_admin_line_profile', JSON.stringify(liffRes.profile))
       }
     } catch { }
+
+    // 2. Check localStorage
+    if (!lineUserId) {
+      try {
+        const cached = localStorage.getItem('qflow_admin_line_profile')
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed.userId) {
+            lineUserId = parsed.userId
+          }
+        }
+      } catch { }
+    }
+
+    // 3. If no LINE profile and creating a new shop, trigger LINE Login first
+    if (!lineUserId && !merchantSlug) {
+      try {
+        const { loginWithLine } = await import('@/lib/liff')
+        const redirectUri = planId === 'free'
+          ? `${window.location.origin}/create-shop?plan=free`
+          : `${window.location.origin}/checkout/${planId}`
+        await loginWithLine(redirectUri)
+        return
+      } catch {
+        // LIFF login fallback (e.g. dev environment without LIFF ID)
+      }
+    }
 
     const res = await createStripeCheckoutSessionAction({
       merchantSlug: merchantSlug || 'public',
@@ -44,12 +72,12 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
     setLoadingPlan(null)
 
     if (!res.success) {
-      toast.error(res.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Stripe')
+      toast.error(res.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อ')
       return
     }
 
     if (res.url) {
-      if (res.simulated) {
+      if (res.simulated || planId === 'free') {
         toast.success(`กำลังพาคุณไปหน้าสร้างร้านพร้อมแพ็กเกจ ${PRICING_PLANS[planId].name}...`)
         router.push(res.url)
       } else {

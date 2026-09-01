@@ -37,12 +37,12 @@ export default function PricingPage() {
     setLoadingPlan(null)
 
     if (!res.success) {
-      toast.error(res.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Stripe')
+      toast.error(res.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อ')
       return
     }
 
     if (res.url) {
-      if (res.simulated) {
+      if (res.simulated || planId === 'free') {
         toast.success(`กำลังพาคุณไปหน้าสร้างร้านพร้อมแพ็กเกจ ${PRICING_PLANS[planId].name}...`)
         router.push(res.url)
       } else {
@@ -78,11 +78,13 @@ export default function PricingPage() {
     // 3. Directly redirect to LINE Login
     try {
       const { loginWithLine } = await import('@/lib/liff')
-      const redirectUri = `${window.location.origin}/pricing?plan=${planId}`
+      const redirectUri = planId === 'free'
+        ? `${window.location.origin}/create-shop?plan=free`
+        : `${window.location.origin}/checkout/${planId}`
       await loginWithLine(redirectUri)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      toast.error('ไม่สามารถเปิด LINE Login ได้: ' + msg)
+      // Fallback if LINE Login fails or LIFF ID not set
+      await proceedToCheckout(planId)
     }
   }
 
