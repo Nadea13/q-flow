@@ -21,6 +21,13 @@ interface CreateMerchantInput {
   branch_address?: string
   branch_phone?: string
   plan?: string
+  // Step 3: Staff & Service
+  staff_name?: string
+  staff_nickname?: string
+  staff_role?: string
+  service_title?: string
+  service_duration?: number
+  service_price?: number
 }
 
 function generateSlug(name: string): string {
@@ -92,7 +99,7 @@ export async function createMerchantAction(input: CreateMerchantInput) {
   })
 
   // 2. Insert first branch in `branches` table
-  await supabase
+  const { data: branch } = await supabase
     .from('branches')
     .insert({
       shop_id: merchant.id,
@@ -103,6 +110,47 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       close_time: input.close_time || '20:00:00',
       is_active: true,
     })
+    .select('id')
+    .single()
+
+  // 3. Insert initial staff
+  const staffName = input.staff_name?.trim() || 'ช่างประจำร้าน'
+  const { data: staff } = await supabase
+    .from('staff')
+    .insert({
+      shop_id: merchant.id,
+      branch_id: branch?.id || null,
+      name: staffName,
+      nickname: input.staff_nickname?.trim() || null,
+      role_title: input.staff_role?.trim() || 'ผู้ให้บริการ',
+      is_active: true,
+    })
+    .select('id')
+    .single()
+
+  // 4. Insert initial service
+  const serviceTitle = input.service_title?.trim() || 'บริการทั่วไป'
+  const { data: service } = await supabase
+    .from('services')
+    .insert({
+      shop_id: merchant.id,
+      title: serviceTitle,
+      duration_min: Number(input.service_duration) || 60,
+      price: input.service_price !== undefined && !isNaN(Number(input.service_price)) ? Number(input.service_price) : 300,
+      deposit_amount: input.default_deposit !== undefined && !isNaN(Number(input.default_deposit)) ? Number(input.default_deposit) : 100,
+      is_active: true,
+      sort_order: 1,
+    })
+    .select('id')
+    .single()
+
+  // 5. Link staff with service
+  if (staff?.id && service?.id) {
+    await supabase.from('staff_services').insert({
+      staff_id: staff.id,
+      service_id: service.id,
+    })
+  }
 
   revalidatePath('/')
   return { success: true, merchant }
