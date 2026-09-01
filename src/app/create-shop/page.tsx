@@ -107,6 +107,7 @@ function CreateShopContent() {
           setFormData((prev) => ({
             ...prev,
             name: prev.name ? prev.name : `${res.profile?.displayName || 'Shop'}'s Studio`,
+            promptpay_name: prev.promptpay_name ? prev.promptpay_name : (res.profile?.displayName || ''),
             staff_name: prev.staff_name ? prev.staff_name : (res.profile?.displayName || 'ช่างประจำร้าน'),
           }))
           return
@@ -133,6 +134,10 @@ function CreateShopContent() {
       }
       if (!formData.promptpay_id.trim()) {
         setError(lang === 'th' ? 'กรุณากรอกเบอร์โทรหรือเลขบัตรประชาชนสำหรับพร้อมเพย์' : 'Please enter PromptPay ID')
+        return
+      }
+      if (!formData.promptpay_name.trim()) {
+        setError(lang === 'th' ? 'กรุณากรอกชื่อบัญชีพร้อมเพย์รับเงิน' : 'Please enter PromptPay account name')
         return
       }
       if (!formData.default_deposit || isNaN(Number(formData.default_deposit))) {
@@ -480,7 +485,7 @@ function CreateShopContent() {
 
                     <div>
                       <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                        {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์รับเงิน' : 'PromptPay Account Name'}
+                        {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์รับเงิน' : 'PromptPay Account Name'} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
@@ -488,6 +493,7 @@ function CreateShopContent() {
                         </div>
                         <input
                           type="text"
+                          required
                           placeholder={lang === 'th' ? 'เช่น นาย สมชาย ใจดี, ร้าน นวดแผนไทย' : 'e.g. Somchai Jaidee, Thai Massage Shop'}
                           value={formData.promptpay_name}
                           onChange={(e) => setFormData({ ...formData, promptpay_name: e.target.value })}
