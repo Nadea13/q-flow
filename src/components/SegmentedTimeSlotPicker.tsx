@@ -19,7 +19,7 @@ export function SegmentedTimeSlotPicker({
   slots,
   selectedSlot,
   onSelectSlot,
-  durationMin = 30,
+  durationMin: _durationMin = 30,
   accentColor = 'emerald',
   lang = 'th',
 }: SegmentedTimeSlotPickerProps) {

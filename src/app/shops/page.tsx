@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use, Suspense } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { QFlowLogo } from '@/components/QFlowLogo'
@@ -8,7 +8,7 @@ import { listShopsByLineUserIdAction } from '@/app/actions/portal'
 import { syncStripeSessionAction } from '@/app/actions/stripe'
 import { PRICING_PLANS } from '@/lib/stripe'
 import { toast } from 'sonner'
-import { Plus, Sparkles, ShieldCheck, Store, ArrowRight, ExternalLink } from 'lucide-react'
+import { Plus, Sparkles, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NavbarControls } from '@/components/NavbarControls'
 import { useLanguage } from '@/context/LanguageContext'
@@ -24,7 +24,7 @@ interface ShopItem {
 }
 
 function ShopsPortalContent() {
-  const { t, lang } = useLanguage()
+  const { lang } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [shops, setShops] = useState<ShopItem[]>([])
@@ -104,17 +104,6 @@ function ShopsPortalContent() {
 
   function handleSelectShop(slug: string) {
     router.push(`/${slug}/dashboard`)
-  }
-
-  async function handleLineLogin() {
-    try {
-      const { loginWithLine } = await import('@/lib/liff')
-      const redirectUri = `${window.location.origin}/shops`
-      await loginWithLine(redirectUri)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      alert('ไม่สามารถเปิด LINE Login ได้: ' + msg)
-    }
   }
 
   return (

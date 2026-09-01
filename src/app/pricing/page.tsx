@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
@@ -96,7 +96,7 @@ export default function PricingPage() {
         ? `${window.location.origin}/create-shop?plan=basic`
         : `${window.location.origin}/checkout/${planId}`
       await loginWithLine(redirectUri)
-    } catch (err: unknown) {
+    } catch {
       // Fallback if LINE Login fails or LIFF ID not set
       await proceedToCheckout(planId)
     }

@@ -21,7 +21,7 @@ interface MerchantItem {
 }
 
 export default function ShopSelectionPortalPage() {
-  const { t, lang } = useLanguage()
+  const { lang } = useLanguage()
   const router = useRouter()
   const [merchants, setMerchants] = useState<MerchantItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -83,17 +83,6 @@ export default function ShopSelectionPortalPage() {
 
   function handleSelectShop(slug: string) {
     router.push(`/${slug}/dashboard`)
-  }
-
-  async function handleLineLogin() {
-    try {
-      const { loginWithLine } = await import('@/lib/liff')
-      const redirectUri = `${window.location.origin}/dashboard`
-      await loginWithLine(redirectUri)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      alert('ไม่สามารถเปิด LINE Login ได้: ' + msg)
-    }
   }
 
   return (

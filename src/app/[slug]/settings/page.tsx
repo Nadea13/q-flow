@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use, useRef, Suspense } from 'react'
+import { useEffect, useState, use, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -140,6 +140,7 @@ export default function SettingsPage({ params }: PageProps) {
     }
 
     handleSessionSync()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionIdParam, upgradedParam, slug, lang])
 
   // Branch Edit/New Modal state
