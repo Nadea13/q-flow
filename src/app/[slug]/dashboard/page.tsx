@@ -2313,31 +2313,32 @@ export default function DashboardPage({ params }: PageProps) {
             )}
           </button>
 
-          {/* Center Button: ลงคิว (Large Hero Action Button) */}
-          <div className="flex flex-col items-center -mt-6 relative">
-            <button
-              type="button"
-              onClick={() => {
-                const repService = services.find((s) => s.is_active !== false) || services[0]
-                setManualBookingForm({
-                  service_id: repService?.id || '',
-                  branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : '',
-                  staff_id: selectedStaffFilter !== 'all' ? selectedStaffFilter : '',
-                  date: selectedDate,
-                  selectedSlot: null,
-                  customer_name: '',
-                  notes: 'ลูกค้าโทรจอง / หน้าร้าน',
-                  deposit_amount: String(repService?.deposit_amount ?? merchant.default_deposit ?? 0),
-                  status: 'confirmed',
-                })
-                setIsManualBookingModalOpen(true)
-              }}
-              className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/35 ring-4 ring-white dark:ring-slate-900 active:scale-90 transition-all cursor-pointer"
-              title="ลงคิวเอง / รับจองหน้าร้าน"
-            >
-              <Plus className="w-6 h-6 stroke-[3]" />
-            </button>
-          </div>
+          {/* Center Button: ลงคิว */}
+          <button
+            type="button"
+            onClick={() => {
+              const repService = services.find((s) => s.is_active !== false) || services[0]
+              setManualBookingForm({
+                service_id: repService?.id || '',
+                branch_id: selectedBranchFilter !== 'all' ? selectedBranchFilter : '',
+                staff_id: selectedStaffFilter !== 'all' ? selectedStaffFilter : '',
+                date: selectedDate,
+                selectedSlot: null,
+                customer_name: '',
+                notes: 'ลูกค้าโทรจอง / หน้าร้าน',
+                deposit_amount: String(repService?.deposit_amount ?? merchant.default_deposit ?? 0),
+                status: 'confirmed',
+              })
+              setIsManualBookingModalOpen(true)
+            }}
+            className="flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 active:scale-95"
+            title="ลงคิวเอง / รับจองหน้าร้าน"
+          >
+            <div className="w-5 h-5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            </div>
+            <span className="text-[10px] mt-0.5 leading-tight font-medium">ลงคิว</span>
+          </button>
 
           {/* Tab 3: ช่าง/บริการ */}
           <button
