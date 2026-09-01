@@ -29,6 +29,8 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
     async function initCheckout() {
       try {
         let lineUserId: string | undefined = undefined
+        let lineDisplayName: string | undefined = undefined
+        let linePictureUrl: string | undefined = undefined
 
         // Try getting LINE profile if opened inside LIFF
         try {
@@ -36,6 +38,8 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
           const liffRes = await initLiff()
           if (liffRes?.success && liffRes.profile?.userId) {
             lineUserId = liffRes.profile.userId
+            lineDisplayName = liffRes.profile.displayName
+            linePictureUrl = liffRes.profile.pictureUrl
             localStorage.setItem('qflow_admin_line_profile', JSON.stringify(liffRes.profile))
           }
         } catch {
@@ -48,6 +52,8 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
             if (cached) {
               const parsed = JSON.parse(cached)
               lineUserId = parsed.userId
+              lineDisplayName = parsed.displayName
+              linePictureUrl = parsed.pictureUrl
             }
           } catch { }
         }
@@ -58,6 +64,8 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
           planId: validPlanId,
           merchantSlug: 'public',
           lineUserId: lineUserId,
+          lineDisplayName: lineDisplayName,
+          linePictureUrl: linePictureUrl,
         })
 
         if (res.success && res.url) {

@@ -87,10 +87,49 @@ function CreateShopContent() {
   })
 
   const lineUidParam = searchParams.get('line_uid')
+  const lineNameParam = searchParams.get('line_name')
+  const linePicParam = searchParams.get('line_pic')
 
   // Detect LINE LIFF on mount
   useEffect(() => {
     async function checkLiff() {
+      // 1. Try reading from localStorage first for instant display
+      try {
+        const cached = localStorage.getItem('qflow_admin_line_profile')
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed && parsed.userId) {
+            setLineAdminProfile(parsed)
+            setFormData((prev) => ({
+              ...prev,
+              name: prev.name ? prev.name : `${parsed.displayName || 'Shop'}'s Studio`,
+              promptpay_name: prev.promptpay_name ? prev.promptpay_name : (parsed.displayName || ''),
+              staff_name: prev.staff_name ? prev.staff_name : (parsed.displayName || 'ช่างประจำร้าน'),
+            }))
+          }
+        }
+      } catch { }
+
+      // 2. If line params exist in URL, update or initialize profile
+      if (lineUidParam) {
+        const urlProfile = {
+          userId: lineUidParam,
+          displayName: lineNameParam || 'LINE User',
+          pictureUrl: linePicParam || undefined,
+        }
+        setLineAdminProfile((prev) => prev?.displayName !== 'LINE User' && prev?.userId === lineUidParam ? prev : urlProfile)
+        localStorage.setItem('qflow_admin_line_profile', JSON.stringify(urlProfile))
+        if (lineNameParam) {
+          setFormData((prev) => ({
+            ...prev,
+            name: prev.name ? prev.name : `${lineNameParam}'s Studio`,
+            promptpay_name: prev.promptpay_name ? prev.promptpay_name : lineNameParam,
+            staff_name: prev.staff_name ? prev.staff_name : lineNameParam,
+          }))
+        }
+      }
+
+      // 3. Try LIFF SDK to get live / latest profile
       try {
         const { initLiff } = await import('@/lib/liff')
         const res = await initLiff()
@@ -115,15 +154,10 @@ function CreateShopContent() {
       } catch {
         // LIFF fallback
       }
-
-      // If line_uid came from Stripe redirect query param
-      if (lineUidParam) {
-        setLineAdminProfile((prev) => prev || { displayName: 'LINE Admin', userId: lineUidParam })
-      }
     }
 
     checkLiff()
-  }, [lineUidParam])
+  }, [lineUidParam, lineNameParam, linePicParam])
 
   function handleNextStep() {
     setError(null)

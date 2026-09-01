@@ -37,11 +37,15 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
 
     // 1. Check if LIFF profile is already present
     let lineUserId: string | undefined = undefined
+    let lineDisplayName: string | undefined = undefined
+    let linePictureUrl: string | undefined = undefined
     try {
       const { initLiff } = await import('@/lib/liff')
       const liffRes = await initLiff()
       if (liffRes?.success && liffRes.profile?.userId) {
         lineUserId = liffRes.profile.userId
+        lineDisplayName = liffRes.profile.displayName
+        linePictureUrl = liffRes.profile.pictureUrl
         localStorage.setItem('qflow_admin_line_profile', JSON.stringify(liffRes.profile))
       }
     } catch { }
@@ -54,6 +58,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
           const parsed = JSON.parse(cached)
           if (parsed.userId) {
             lineUserId = parsed.userId
+            lineDisplayName = parsed.displayName
+            linePictureUrl = parsed.pictureUrl
           }
         }
       } catch { }
@@ -78,6 +84,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
       planId,
       billingCycle,
       lineUserId,
+      lineDisplayName,
+      linePictureUrl,
     })
     setLoadingPlan(null)
 

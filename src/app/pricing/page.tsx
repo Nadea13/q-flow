@@ -29,12 +29,14 @@ export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [showFreeConfirmModal, setShowFreeConfirmModal] = useState(false)
 
-  async function proceedToCheckout(planId: PlanType, lineUid?: string) {
+  async function proceedToCheckout(planId: PlanType, lineUid?: string, lineDisplayName?: string, linePictureUrl?: string) {
     setLoadingPlan(planId)
     const res = await createStripeCheckoutSessionAction({
       merchantSlug: 'public',
       planId,
       lineUserId: lineUid,
+      lineDisplayName,
+      linePictureUrl,
     })
     setLoadingPlan(null)
 
@@ -70,7 +72,7 @@ export default function PricingPage() {
       const liffRes = await initLiff()
       if (liffRes?.success && liffRes.profile?.userId) {
         localStorage.setItem('qflow_admin_line_profile', JSON.stringify(liffRes.profile))
-        await proceedToCheckout(planId, liffRes.profile.userId)
+        await proceedToCheckout(planId, liffRes.profile.userId, liffRes.profile.displayName, liffRes.profile.pictureUrl)
         return
       }
     } catch { }
@@ -81,7 +83,7 @@ export default function PricingPage() {
       if (cached) {
         const parsed = JSON.parse(cached)
         if (parsed.userId) {
-          await proceedToCheckout(planId, parsed.userId)
+          await proceedToCheckout(planId, parsed.userId, parsed.displayName, parsed.pictureUrl)
           return
         }
       }

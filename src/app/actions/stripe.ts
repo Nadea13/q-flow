@@ -11,6 +11,8 @@ interface CreateCheckoutInput {
   billingCycle?: 'monthly' | 'yearly'
   returnUrl?: string
   lineUserId?: string
+  lineDisplayName?: string
+  linePictureUrl?: string
 }
 
 /**
@@ -35,7 +37,12 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     merchant = mData
   }
 
-  const lineQuery = input.lineUserId ? `&line_uid=${encodeURIComponent(input.lineUserId)}` : ''
+  const lineParams = new URLSearchParams()
+  if (input.lineUserId) lineParams.set('line_uid', input.lineUserId)
+  if (input.lineDisplayName) lineParams.set('line_name', input.lineDisplayName)
+  if (input.linePictureUrl) lineParams.set('line_pic', input.linePictureUrl)
+  const lineQueryString = lineParams.toString()
+  const lineQuery = lineQueryString ? `&${lineQueryString}` : ''
 
   const successUrl = merchant
     ? `${siteUrl}/${merchant.slug}/settings?tab=billing&session_id={CHECKOUT_SESSION_ID}&upgraded=${plan.id}`
