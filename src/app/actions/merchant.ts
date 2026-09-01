@@ -69,8 +69,6 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       phone: input.phone?.trim() || input.promptpay_id.trim(),
       open_time: input.open_time || '10:00:00',
       close_time: input.close_time || '20:00:00',
-      branch_name: branchName,
-      branch_address: branchAddress,
       slot_interval_min: 30,
       is_active: true,
       plan: plan,

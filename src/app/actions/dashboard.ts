@@ -240,9 +240,6 @@ export async function updateMerchantSettingsAction(input: {
   break_start_time?: string | null
   break_end_time?: string | null
   closed_days?: number[]
-  branch_name?: string
-  branch_address?: string
-  branch_phone?: string
   slot_interval_min: number
   line_notify_token?: string
 }) {
@@ -263,9 +260,6 @@ export async function updateMerchantSettingsAction(input: {
       break_start_time: input.has_break && input.break_start_time ? input.break_start_time : null,
       break_end_time: input.has_break && input.break_end_time ? input.break_end_time : null,
       closed_days: input.closed_days ?? [],
-      branch_name: input.branch_name?.trim() || null,
-      branch_address: input.branch_address?.trim() || null,
-      branch_phone: input.branch_phone?.trim() || null,
       slot_interval_min: Number(input.slot_interval_min) || 30,
       line_notify_token: input.line_notify_token?.trim() || null,
       updated_at: new Date().toISOString(),

@@ -388,9 +388,6 @@ export default function SettingsPage({ params }: PageProps) {
       break_start_time: settingsForm.has_break ? `${settingsForm.break_start_time}:00` : null,
       break_end_time: settingsForm.has_break ? `${settingsForm.break_end_time}:00` : null,
       closed_days: settingsForm.closed_days,
-      branch_name: settingsForm.branch_name,
-      branch_address: settingsForm.branch_address,
-      branch_phone: settingsForm.branch_phone,
       slot_interval_min: Number(settingsForm.slot_interval_min),
       line_notify_token: settingsForm.line_notify_token,
     })
