@@ -242,10 +242,10 @@ function CreateShopContent() {
         {!createdMerchant && (
           <div className="pt-1">
             <div className="flex items-center justify-between relative mb-2">
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0" />
-              <div
-                className="absolute top-1/2 left-0 h-0.5 bg-indigo-600 dark:bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-300"
-                style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }}
+              <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0" />
+              <div 
+                className="absolute top-4 left-6 h-0.5 bg-indigo-600 dark:bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-300" 
+                style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? 'calc(50% - 12px)' : 'calc(100% - 48px)' }}
               />
 
               {stepTitles.map((s) => {
