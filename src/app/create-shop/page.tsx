@@ -18,7 +18,8 @@ import {
   Clock,
   User,
   Scissors,
-  Sparkles
+  Sparkles,
+  CreditCard
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createMerchantAction } from '@/app/actions/merchant'
@@ -65,11 +66,14 @@ function CreateShopContent() {
     name: '',
     slug: '',
     promptpay_id: '',
+    promptpay_name: '',
     default_deposit: '100',
 
     // Step 2: Branch & Operating Hours
     branch_name: 'สาขาหลัก',
     branch_phone: '',
+    branch_promptpay_id: '',
+    branch_promptpay_name: '',
     branch_address: '',
     open_time: '10:00',
     close_time: '20:00',
@@ -163,6 +167,7 @@ function CreateShopContent() {
     const res = await createMerchantAction({
       name: formData.name,
       promptpay_id: formData.promptpay_id,
+      promptpay_name: formData.promptpay_name.trim() || undefined,
       default_deposit: formData.default_deposit !== '' && !isNaN(Number(formData.default_deposit)) ? Number(formData.default_deposit) : 100,
       admin_pin: '1234',
       line_user_id: lineAdminProfile?.userId,
@@ -170,6 +175,8 @@ function CreateShopContent() {
       branch_name: formData.branch_name || undefined,
       branch_address: formData.branch_address || undefined,
       branch_phone: formData.branch_phone || undefined,
+      branch_promptpay_id: formData.branch_promptpay_id.trim() || undefined,
+      branch_promptpay_name: formData.branch_promptpay_name.trim() || undefined,
       open_time: `${formData.open_time}:00`,
       close_time: `${formData.close_time}:00`,
       plan: validPlan || undefined,
@@ -470,6 +477,28 @@ function CreateShopContent() {
                     </p>
                   </div>
 
+                  {/* PromptPay Account Name */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์รับเงิน' : 'PromptPay Account Name'}
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={lang === 'th' ? 'เช่น นาย สมชาย ใจดี, ร้าน นวดแผนไทย' : 'e.g. Somchai Jaidee, Thai Massage Shop'}
+                        value={formData.promptpay_name}
+                        onChange={(e) => setFormData({ ...formData, promptpay_name: e.target.value })}
+                        className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                      {lang === 'th' ? 'แสดงให้ลูกค้าตรวจสอบชื่อบัญชีก่อนสแกนโอนเงิน' : 'Display account holder name for customers to verify'}
+                    </p>
+                  </div>
+
                   {/* Deposit Amount */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
@@ -588,6 +617,42 @@ function CreateShopContent() {
                         value={formData.close_time}
                         onChange={(val) => setFormData({ ...formData, close_time: val })}
                       />
+                    </div>
+                  </div>
+
+                  {/* Branch PromptPay (Optional) - Matching รูปที่ 3 */}
+                  <div className="p-3.5 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl space-y-3">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      <CreditCard className="w-4 h-4 text-indigo-500" />
+                      <span>{lang === 'th' ? 'บัญชีพร้อมเพย์เฉพาะสาขานี้ (ไม่บังคับ)' : 'Branch PromptPay Account (Optional)'}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          {lang === 'th' ? 'เลขพร้อมเพย์สาขา' : 'Branch PromptPay ID'}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={lang === 'th' ? 'เว้นว่างไว้หากใช้บัญชีหลักร้าน' : 'Leave empty to use main shop account'}
+                          value={formData.branch_promptpay_id}
+                          onChange={(e) => setFormData({ ...formData, branch_promptpay_id: e.target.value })}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          {lang === 'th' ? 'ชื่อบัญชีพร้อมเพย์สาขา' : 'Branch PromptPay Name'}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={lang === 'th' ? 'เช่น ร้าน... สาขา 2' : 'e.g. Shop Branch 2'}
+                          value={formData.branch_promptpay_name}
+                          onChange={(e) => setFormData({ ...formData, branch_promptpay_name: e.target.value })}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+                        />
+                      </div>
                     </div>
                   </div>
 

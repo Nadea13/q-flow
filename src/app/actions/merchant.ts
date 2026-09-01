@@ -20,6 +20,8 @@ interface CreateMerchantInput {
   branch_name?: string
   branch_address?: string
   branch_phone?: string
+  branch_promptpay_id?: string
+  branch_promptpay_name?: string
   plan?: string
   // Step 3: Staff & Service
   staff_name?: string
@@ -106,6 +108,8 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       name: branchName,
       address: branchAddress,
       phone: branchPhone,
+      promptpay_id: input.branch_promptpay_id?.trim() || null,
+      promptpay_name: input.branch_promptpay_name?.trim() || null,
       open_time: input.open_time || '10:00:00',
       close_time: input.close_time || '20:00:00',
       is_active: true,
