@@ -15,7 +15,6 @@ import {
   Check,
   Building2,
   Phone,
-  Clock,
   User,
   Scissors,
   Sparkles,
@@ -35,7 +34,8 @@ function CreateShopContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const planParam = searchParams.get('plan')
+  const rawPlanParam = searchParams.get('plan')
+  const planParam = rawPlanParam === 'free' ? 'basic' : rawPlanParam
   const validPlan = planParam && PRICING_PLANS[planParam] ? planParam : null
 
   // If no package is subscribed / selected, redirect to /pricing
@@ -608,7 +608,6 @@ function CreateShopContent() {
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-indigo-500" />
                         <span>{lang === 'th' ? 'เวลาเปิดร้าน' : 'Opening Time'}</span>
                       </label>
                       <TimePicker24h
@@ -618,7 +617,6 @@ function CreateShopContent() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-indigo-500" />
                         <span>{lang === 'th' ? 'เวลาปิดร้าน' : 'Closing Time'}</span>
                       </label>
                       <TimePicker24h
@@ -629,7 +627,7 @@ function CreateShopContent() {
                   </div>
 
                   {/* Branch PromptPay (Optional) - Matching รูปที่ 3 */}
-                  <div className="p-3.5 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl space-y-3">
+                  <div className="p-4 bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl space-y-3">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
                       <CreditCard className="w-4 h-4 text-indigo-500" />
                       <span>{lang === 'th' ? 'บัญชีพร้อมเพย์เฉพาะสาขานี้ (ไม่บังคับ)' : 'Branch PromptPay Account (Optional)'}</span>
@@ -713,11 +711,9 @@ function CreateShopContent() {
                   </div>
 
                   {/* Section A: Staff Specialist */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-3">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
-                        <User className="w-3.5 h-3.5" />
-                      </span>
+                      <User className="w-4 h-4 text-indigo-500" />
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                         {lang === 'th' ? 'ข้อมูลผู้ให้บริการ / ช่างคนแรก' : 'First Staff / Specialist'}
                       </h4>
@@ -752,11 +748,9 @@ function CreateShopContent() {
                   </div>
 
                   {/* Section B: Service Details */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-3">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
-                        <Scissors className="w-3.5 h-3.5" />
-                      </span>
+                      <Scissors className="w-4 h-4 text-indigo-500" />
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                         {lang === 'th' ? 'ข้อมูลบริการแรก' : 'First Service'}
                       </h4>

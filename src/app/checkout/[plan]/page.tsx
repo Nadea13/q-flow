@@ -15,12 +15,12 @@ interface PageProps {
 export default function DynamicPlanCheckoutPage({ params }: PageProps) {
   const { plan: rawPlan } = use(params)
   const router = useRouter()
-  const planParam = rawPlan as PlanType
+  const normalizedPlan = (rawPlan === 'free' ? 'basic' : rawPlan) as PlanType
   const [error, setError] = useState<string | null>(null)
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
   const hasTriggeredRef = useRef(false)
 
-  const plan = PRICING_PLANS[planParam] || PRICING_PLANS.professional
+  const plan = PRICING_PLANS[normalizedPlan] || PRICING_PLANS.professional
 
   useEffect(() => {
     if (hasTriggeredRef.current) return
@@ -52,7 +52,7 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
           } catch { }
         }
 
-        const validPlanId: PlanType = PRICING_PLANS[planParam] ? planParam : 'professional'
+        const validPlanId: PlanType = PRICING_PLANS[normalizedPlan] ? normalizedPlan : 'professional'
 
         const res = await createStripeCheckoutSessionAction({
           planId: validPlanId,
@@ -77,7 +77,7 @@ export default function DynamicPlanCheckoutPage({ params }: PageProps) {
     }
 
     initCheckout()
-  }, [planParam, router])
+  }, [normalizedPlan, router])
 
   function handleManualOpen() {
     if (!checkoutUrl) return
