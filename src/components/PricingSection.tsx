@@ -212,8 +212,6 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                     className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md active:scale-98 cursor-pointer ${
                       isPopular
                         ? 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-indigo-600/20'
-                        : isFree
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
                         : 'bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900'
                     } disabled:opacity-50`}
                   >
