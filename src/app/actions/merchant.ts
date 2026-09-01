@@ -55,13 +55,36 @@ export async function createMerchantAction(input: CreateMerchantInput) {
   const subscriptionStatus = plan ? 'active' : undefined
   const monthlySlipQuota = plan ? (PRICING_PLANS[plan]?.quota || (plan === 'basic' || plan === 'free' ? 30 : plan === 'professional' ? 500 : plan === 'business' ? 1500 : 5000)) : undefined
 
-  // 1. Insert merchant
-  const { data: merchant, error: mError } = await supabase
+  // 1. Insert merchant with fallback for schema differences
+  const fullPayload: Record<string, unknown> = {
+    name: input.name.trim(),
+    slug: slug,
+    logo_url: input.logo_url?.trim() || undefined,
+    promptpay_id: input.promptpay_id.trim(),
+    promptpay_name: input.promptpay_name?.trim() || input.name.trim(),
+    default_deposit: input.default_deposit !== undefined && !isNaN(Number(input.default_deposit)) ? Number(input.default_deposit) : 100,
+    line_user_id: input.line_user_id || undefined,
+    phone: input.phone?.trim() || input.promptpay_id.trim(),
+    open_time: input.open_time || '10:00:00',
+    close_time: input.close_time || '20:00:00',
+    slot_interval_min: 30,
+    is_active: true,
+    plan: plan,
+    subscription_status: subscriptionStatus,
+    monthly_slip_quota: monthlySlipQuota,
+  }
+
+  let { data: merchant, error: mError } = await supabase
     .from('shops')
-    .insert({
+    .insert(fullPayload)
+    .select()
+    .single()
+
+  // Graceful fallback if database schema does not have the newer subscription/billing columns
+  if (mError && (mError.message?.includes('schema cache') || mError.code === 'PGRST204')) {
+    const basePayload: Record<string, unknown> = {
       name: input.name.trim(),
       slug: slug,
-      logo_url: input.logo_url?.trim() || undefined,
       promptpay_id: input.promptpay_id.trim(),
       promptpay_name: input.promptpay_name?.trim() || input.name.trim(),
       default_deposit: input.default_deposit !== undefined && !isNaN(Number(input.default_deposit)) ? Number(input.default_deposit) : 100,
@@ -71,18 +94,23 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       close_time: input.close_time || '20:00:00',
       slot_interval_min: 30,
       is_active: true,
-      plan: plan,
-      subscription_status: subscriptionStatus,
-      monthly_slip_quota: monthlySlipQuota,
-    })
-    .select()
-    .single()
+    }
 
-  if (mError) {
-    if (mError.code === '23505') {
+    const retryRes = await supabase
+      .from('shops')
+      .insert(basePayload)
+      .select()
+      .single()
+
+    merchant = retryRes.data
+    mError = retryRes.error
+  }
+
+  if (mError || !merchant) {
+    if (mError?.code === '23505') {
       return { success: false, error: 'ชื่อลิงก์ร้านค้า (Slug) นี้มีผู้ใช้งานแล้ว โปรดลองใหม่อีกครั้ง' }
     }
-    return { success: false, error: mError.message }
+    return { success: false, error: mError?.message || 'ไม่สามารถสร้างร้านค้าได้' }
   }
 
   // Automatically authorize creator on this device
