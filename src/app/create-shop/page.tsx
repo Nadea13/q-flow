@@ -774,7 +774,8 @@ function CreateShopContent() {
           )}
         </AnimatePresence>
 
-        <div className="flex items-center gap-4">
+        {/* Powered by Q Flow Footer */}
+        <div className="flex justify-center items-center text-center text-xs text-slate-400 dark:text-slate-500 pt-1">
           <span>Powered by <span className='font-bold'>Q Flow</span></span>
         </div>
       </div>
