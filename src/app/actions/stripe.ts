@@ -216,7 +216,7 @@ export async function createStripeCustomerPortalAction(merchantSlug: string) {
     // Create billing portal session pointing directly to invoices and payment methods
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${siteUrl}/${merchant.slug}/dashboard?tab=billing`,
+      return_url: `${siteUrl}/${merchant.slug}/settings?tab=billing`,
     })
 
     return { success: true, url: portalSession.url }
