@@ -34,21 +34,45 @@ export async function POST(req: NextRequest) {
         const session = event.data.object
         const merchantId = session.metadata?.shop_id
         const planId = session.metadata?.plan_id as PlanType
+        const lineUserId = session.metadata?.line_user_id
 
-        if (merchantId && planId && PRICING_PLANS[planId]) {
+        if (planId && PRICING_PLANS[planId]) {
           const plan = PRICING_PLANS[planId]
-          await supabase
-            .from('shops')
-            .update({
-              plan: plan.id,
-              subscription_status: 'active',
-              stripe_customer_id: session.customer as string,
-              stripe_subscription_id: session.subscription as string,
-              monthly_slip_quota: plan.quota,
-            })
-            .eq('id', merchantId)
+          if (merchantId) {
+            await supabase
+              .from('shops')
+              .update({
+                plan: plan.id,
+                subscription_status: 'active',
+                stripe_customer_id: session.customer as string,
+                stripe_subscription_id: session.subscription as string,
+                monthly_slip_quota: plan.quota,
+              })
+              .eq('id', merchantId)
 
-          console.log(`✅ [Stripe Webhook] Upgraded merchant ${merchantId} to ${planId}`)
+            console.log(`✅ [Stripe Webhook] Upgraded merchant ${merchantId} to ${planId}`)
+          } else if (lineUserId) {
+            const { data: userShops } = await supabase
+              .from('shops')
+              .select('id')
+              .eq('line_user_id', lineUserId)
+              .order('created_at', { ascending: false })
+
+            if (userShops && userShops.length > 0) {
+              await supabase
+                .from('shops')
+                .update({
+                  plan: plan.id,
+                  subscription_status: 'active',
+                  stripe_customer_id: session.customer as string,
+                  stripe_subscription_id: session.subscription as string,
+                  monthly_slip_quota: plan.quota,
+                })
+                .eq('id', userShops[0].id)
+
+              console.log(`✅ [Stripe Webhook] Upgraded user shop ${userShops[0].id} (LINE: ${lineUserId}) to ${planId}`)
+            }
+          }
         }
         break
       }
