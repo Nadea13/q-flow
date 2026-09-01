@@ -24,8 +24,31 @@ export interface PricingPlan {
 }
 
 export const PRICING_PLANS: Record<string, PricingPlan> = {
+  basic: {
+    id: 'basic',
+    name: 'Q Flow Basic',
+    tagline: 'เหมาะสำหรับร้านค้าขนาดเล็กเริ่มต้นทดลองใช้ระบบ',
+    priceTHB: 0,
+    priceYearlyTHB: 0,
+    quota: 30,
+    merchantsCount: '1 ร้านค้า',
+    branchesCount: '1 สาขา',
+    staffCount: '1 ท่าน',
+    lineSetup: 'ตั้งค่าและเชื่อม LINE ด้วยตนเอง',
+    overageRate: 'อัปเกรดเพื่อเพิ่มคิว',
+    supportTier: 'Standard Support',
+    features: [
+      'รองรับ 1 ร้านค้า',
+      'รองรับ 1 สาขา',
+      'รองรับช่าง / ผู้ให้บริการ 1 ท่าน',
+      'โควตารองรับ 30 คิว/เดือน',
+      'ระบบปฏิทินจองคิว 24 ชม.',
+      'Dashboard จัดการคิว Real-time',
+      'Standard Support',
+    ],
+  },
   free: {
-    id: 'free',
+    id: 'basic',
     name: 'Q Flow Basic',
     tagline: 'เหมาะสำหรับร้านค้าขนาดเล็กเริ่มต้นทดลองใช้ระบบ',
     priceTHB: 0,

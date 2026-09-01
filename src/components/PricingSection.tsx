@@ -24,7 +24,7 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
   const [showFreeConfirmModal, setShowFreeConfirmModal] = useState(false)
 
   function handleSelectPlan(planId: PlanType) {
-    if (planId === 'free') {
+    if (planId === 'basic' || planId === 'free') {
       setShowFreeConfirmModal(true)
       return
     }
@@ -63,8 +63,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
     if (!lineUserId && !merchantSlug) {
       try {
         const { loginWithLine } = await import('@/lib/liff')
-        const redirectUri = planId === 'free'
-          ? `${window.location.origin}/create-shop?plan=free`
+        const redirectUri = (planId === 'basic' || planId === 'free')
+          ? `${window.location.origin}/create-shop?plan=basic`
           : `${window.location.origin}/checkout/${planId}`
         await loginWithLine(redirectUri)
         return
@@ -86,6 +86,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
       return
     }
 
+    const isBasicOrFree = planId === 'basic' || planId === 'free'
+
     if (merchantSlug) {
       // If merchant is updating plan from settings
       toast.success(
@@ -96,12 +98,12 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
       if (onPlanSelected) {
         await onPlanSelected()
       }
-      if (res.url && !res.simulated && planId !== 'free') {
+      if (res.url && !res.simulated && !isBasicOrFree) {
         window.location.assign(res.url)
       }
     } else if (res.url) {
       // Public user creating new shop
-      if (res.simulated || planId === 'free') {
+      if (res.simulated || isBasicOrFree) {
         toast.success(`กำลังพาคุณไปหน้าสร้างร้านพร้อมแพ็กเกจ ${PRICING_PLANS[planId].name}...`)
         router.push(res.url)
       } else {
@@ -115,18 +117,9 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
   return (
     <div className="w-full space-y-8">
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{lang === 'th' ? 'แพ็กเกจราคาสุดคุ้ม คืนทุนตั้งแต่คิวแรก' : 'Simple, Transparent Pricing'}</span>
-        </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           {lang === 'th' ? 'เลือกระดับพลังที่เหมาะกับธุรกิจคุณ' : 'Choose the Perfect Plan for Your Business'}
         </h2>
-        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-          {lang === 'th' 
-            ? 'รวมระบบตรวจสลิป SlipOK อัตโนมัติ ปฏิทิน 24 ชม. และแจ้งเตือน LINE ครบวงจร' 
-            : 'Includes auto SlipOK verification, 24/7 calendar, and rich LINE notifications'}
-        </p>
 
         {/* Billing Cycle Switcher: Monthly vs Yearly */}
         <div className="pt-2 flex items-center justify-center">
@@ -134,11 +127,10 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
             <button
               type="button"
               onClick={() => setBillingCycle('monthly')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
-                billingCycle === 'monthly'
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${billingCycle === 'monthly'
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               {lang === 'th' ? 'รายเดือน (Monthly)' : 'Monthly'}
             </button>
@@ -146,11 +138,10 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
             <button
               type="button"
               onClick={() => setBillingCycle('yearly')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
-                billingCycle === 'yearly'
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${billingCycle === 'yearly'
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               <span>{lang === 'th' ? 'รายปี (Yearly)' : 'Yearly'}</span>
               <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 text-[10px] font-extrabold animate-pulse">
@@ -175,11 +166,10 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
               key={p.id}
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
-              className={`relative flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all ${
-                isPopular
+              className={`relative flex flex-col justify-between rounded-3xl p-5 sm:p-6 transition-all ${isPopular
                   ? 'bg-white dark:bg-slate-900 border-2 border-indigo-600 dark:border-indigo-500 shadow-xl shadow-indigo-600/10 ring-2 ring-indigo-500/20'
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm'
-              }`}
+                }`}
             >
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-extrabold rounded-full shadow-md tracking-wider uppercase flex items-center gap-1">
@@ -234,11 +224,10 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                 <div className="space-y-2 mb-6 text-xs text-slate-700 dark:text-slate-300">
                   {p.features.map((feat, idx) => (
                     <div key={idx} className="flex items-start gap-2">
-                      <div className={`mt-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
-                        isPopular 
-                          ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400' 
+                      <div className={`mt-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${isPopular
+                          ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
                           : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
-                      }`}>
+                        }`}>
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                       </div>
                       <span className="leading-tight text-[11px]">{feat}</span>
@@ -261,11 +250,10 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                   <button
                     onClick={() => handleSelectPlan(p.id)}
                     disabled={loadingPlan !== null}
-                    className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md active:scale-98 cursor-pointer ${
-                      isPopular
+                    className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md active:scale-98 cursor-pointer ${isPopular
                         ? 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-indigo-600/20'
                         : 'bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900'
-                    } disabled:opacity-50`}
+                      } disabled:opacity-50`}
                   >
                     {loadingPlan === p.id ? (
                       <span>{t('loading')}</span>
@@ -273,13 +261,13 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                       <>
                         {isFree ? <Sparkles className="w-3.5 h-3.5" /> : <CreditCard className="w-3.5 h-3.5" />}
                         <span>
-                          {merchantSlug 
-                            ? (isFree 
-                                ? (lang === 'th' ? 'เปลี่ยนเป็นแพ็กเกจฟรี' : 'Switch to Free')
-                                : (lang === 'th' ? `อัปเกรดเป็น ${p.name}` : `Upgrade to ${p.name}`))
-                            : (isFree 
-                                ? (lang === 'th' ? 'เริ่มใช้งานฟรี' : 'Start Free')
-                                : (lang === 'th' ? `เลือก ${p.name}` : `Choose ${p.name}`))}
+                          {merchantSlug
+                            ? (isFree
+                              ? (lang === 'th' ? 'เปลี่ยนเป็นแพ็กเกจฟรี' : 'Switch to Free')
+                              : (lang === 'th' ? `อัปเกรดเป็น ${p.name}` : `Upgrade to ${p.name}`))
+                            : (isFree
+                              ? (lang === 'th' ? 'เริ่มใช้งานฟรี' : 'Start Free')
+                              : (lang === 'th' ? `เลือก ${p.name}` : `Choose ${p.name}`))}
                         </span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </>
@@ -327,8 +315,8 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                   {lang === 'th' ? 'ยืนยันการเลือกแพ็กเกจ Q Flow Basic?' : 'Confirm Q Flow Basic Selection?'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {lang === 'th' 
-                    ? 'แพ็กเกจ Q Flow Basic (ฟรี) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?' 
+                  {lang === 'th'
+                    ? 'แพ็กเกจ Q Flow Basic (ฟรี) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?'
                     : 'The Q Flow Basic Plan includes 30 bookings/month, 1 shop, 1 branch, and 1 staff member. Do you wish to proceed?'}
                 </p>
               </div>
@@ -354,7 +342,7 @@ export function PricingSection({ merchantSlug, currentPlan, onPlanSelected }: Pr
                 </button>
                 <button
                   type="button"
-                  onClick={() => executeSelectPlan('free')}
+                  onClick={() => executeSelectPlan('basic')}
                   disabled={loadingPlan !== null}
                   className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs transition shadow-md cursor-pointer disabled:opacity-50"
                 >

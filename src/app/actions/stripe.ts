@@ -45,13 +45,13 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
     ? `${siteUrl}/${merchant.slug}/settings?tab=billing`
     : `${siteUrl}/pricing`
 
-  // 0. Handle Free Plan: No payment session required
-  if (input.planId === 'free' || plan.priceTHB === 0) {
+  // 0. Handle Free / Basic Plan: No payment session required
+  if (input.planId === 'basic' || input.planId === 'free' || plan.priceTHB === 0) {
     if (merchant) {
       await supabase
         .from('shops')
         .update({
-          plan: 'free',
+          plan: 'basic',
           subscription_status: 'active',
           monthly_slip_quota: plan.quota || 30,
         })
@@ -63,14 +63,14 @@ export async function createStripeCheckoutSessionAction(input: CreateCheckoutInp
 
       return {
         success: true,
-        url: `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=free`,
+        url: `${siteUrl}/${merchant.slug}/settings?tab=billing&upgraded=basic`,
         simulated: true,
       }
     }
 
     return {
       success: true,
-      url: `${siteUrl}/create-shop?plan=free${lineQuery}`,
+      url: `${siteUrl}/create-shop?plan=basic${lineQuery}`,
       simulated: true,
     }
   }

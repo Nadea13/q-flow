@@ -44,7 +44,7 @@ export default function PricingPage() {
     }
 
     if (res.url) {
-      if (res.simulated || planId === 'free') {
+      if (res.simulated || planId === 'basic' || planId === 'free') {
         toast.success(`กำลังพาคุณไปหน้าสร้างร้านพร้อมแพ็กเกจ ${PRICING_PLANS[planId].name}...`)
         router.push(res.url)
       } else {
@@ -54,7 +54,7 @@ export default function PricingPage() {
   }
 
   function handleSubscribe(planId: PlanType) {
-    if (planId === 'free') {
+    if (planId === 'basic' || planId === 'free') {
       setShowFreeConfirmModal(true)
       return
     }
@@ -90,8 +90,8 @@ export default function PricingPage() {
     // 3. Directly redirect to LINE Login
     try {
       const { loginWithLine } = await import('@/lib/liff')
-      const redirectUri = planId === 'free'
-        ? `${window.location.origin}/create-shop?plan=free`
+      const redirectUri = (planId === 'basic' || planId === 'free')
+        ? `${window.location.origin}/create-shop?plan=basic`
         : `${window.location.origin}/checkout/${planId}`
       await loginWithLine(redirectUri)
     } catch (err: unknown) {
@@ -830,7 +830,7 @@ export default function PricingPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => executeSubscribe('free')}
+                  onClick={() => executeSubscribe('basic')}
                   disabled={loadingPlan !== null}
                   className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs transition shadow-md cursor-pointer disabled:opacity-50"
                 >
