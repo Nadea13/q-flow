@@ -55,8 +55,9 @@ export default function BookingCheckingPage({ params }: PageProps) {
 
   // Load Booking Data
   useEffect(() => {
+    const supabase = createClient()
+
     async function loadData() {
-      const supabase = createClient()
       const { data: bData, error } = await supabase
         .from('bookings')
         .select('*, shops(*), services(*)')
@@ -113,6 +114,46 @@ export default function BookingCheckingPage({ params }: PageProps) {
     }
 
     loadData()
+
+    // Real-time listener for queue status changes
+    const channel = supabase
+      .channel(`checking-live-${id}`)
+      .on(
+        'postgres_changes' as const,
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `id=eq.${id}`,
+        },
+        async (payload: { new: Record<string, unknown> }) => {
+          const updated = payload.new as { status?: string }
+          if (updated && updated.status) {
+            setBooking((prev) => (prev ? { ...prev, ...payload.new } : null))
+
+            if (updated.status === 'confirmed') {
+              try {
+                const confetti = (await import('canvas-confetti')).default
+                confetti({
+                  particleCount: 80,
+                  spread: 70,
+                  origin: { y: 0.6 },
+                  colors: ['#4F46E5', '#10B981', '#38BDF8', '#F59E0B'],
+                })
+              } catch {
+                // Ignore confetti error
+              }
+            } else if (updated.status === 'cancelled') {
+              setIsExpired(true)
+            }
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [id])
 
   // 10-Minute Live Countdown Interval

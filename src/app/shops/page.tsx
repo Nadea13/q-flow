@@ -12,6 +12,7 @@ import { Plus, Sparkles, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NavbarControls } from '@/components/NavbarControls'
 import { useLanguage } from '@/context/LanguageContext'
+import { createClient } from '@/lib/supabase/client'
 
 interface ShopItem {
   id: string
@@ -96,6 +97,23 @@ function ShopsPortalContent() {
     }
 
     loadShops()
+
+    // Real-time listener for shops updates
+    const supabase = createClient()
+    const channel = supabase
+      .channel('portal-shops-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shops' },
+        () => {
+          loadShops()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [sessionId, upgradedPlanId, router, lang])
 
   async function handleCreateNewShop() {

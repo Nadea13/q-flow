@@ -128,11 +128,49 @@ export default function BookingPage({ params }: PageProps) {
 
     loadShop()
 
+    // Real-time listener for shop profile, services, and staff changes
+    const supabase = createClient()
+    const shopChannel = supabase
+      .channel(`live-shop-data-${slug}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'services' },
+        () => {
+          loadShop()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'staff' },
+        () => {
+          loadShop()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'branches' },
+        () => {
+          loadShop()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shops' },
+        () => {
+          loadShop()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(shopChannel)
+    }
+
     // 1.1 Load cached customer info from localStorage
     try {
       const savedInfo = localStorage.getItem('qflow_customer_info')
       if (savedInfo) {
-        const parsed = JSON.parse(savedInfo)
+        const parsed = JSON.parse(savedInfo as string)
         if (parsed.name) setCustomerName(parsed.name)
         if (parsed.phone) setCustomerPhone(parsed.phone)
         if (parsed.lineId) setCustomerLineId(parsed.lineId)
@@ -160,9 +198,10 @@ export default function BookingPage({ params }: PageProps) {
   useEffect(() => {
     if (!selectedService || !slug) return
 
+    let isMounted = true
+
     async function loadSlots() {
       setLoadingSlots(true)
-      setSelectedSlot(null)
       try {
         let url = `/api/slots?merchantSlug=${slug}&date=${selectedDate}&duration=${selectedService?.duration_min || 60}`
         if (selectedBranch) {
@@ -174,15 +213,44 @@ export default function BookingPage({ params }: PageProps) {
 
         const res = await fetch(url)
         const json = await res.json()
-        setSlots(json.slots || [])
+        if (isMounted) {
+          setSlots(json.slots || [])
+        }
       } catch (err) {
         console.error('Failed to load slots', err)
       } finally {
-        setLoadingSlots(false)
+        if (isMounted) {
+          setLoadingSlots(false)
+        }
       }
     }
 
     loadSlots()
+
+    // Real-time slot listener: Whenever any booking or slot block is added/cancelled/updated, re-fetch slots instantly
+    const supabase = createClient()
+    const realtimeChannel = supabase
+      .channel(`live-slots-${slug}-${selectedDate}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bookings' },
+        () => {
+          loadSlots()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'slots' },
+        () => {
+          loadSlots()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      isMounted = false
+      supabase.removeChannel(realtimeChannel)
+    }
   }, [slug, selectedDate, selectedService, selectedBranch, selectedStaff])
 
   // Handle Booking Submit

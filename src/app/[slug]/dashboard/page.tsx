@@ -352,6 +352,212 @@ export default function DashboardPage({ params }: PageProps) {
     setLoading(false)
   }
 
+  // Real-time synchronization for Merchant Dashboard
+  useEffect(() => {
+    if (!isAuthenticated || !merchant?.id) return
+
+    const supabase = createClient()
+
+    // Helper to play a pleasant notification chime
+    function playNotificationSound() {
+      try {
+        const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+        const osc = audioCtx.createOscillator()
+        const gain = audioCtx.createGain()
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime) // D5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15) // A5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4)
+        osc.connect(gain)
+        gain.connect(audioCtx.destination)
+        osc.start()
+        osc.stop(audioCtx.currentTime + 0.4)
+      } catch {
+        // AudioContext not allowed or unsupported
+      }
+    }
+
+    const channel = supabase
+      .channel(`merchant-dashboard-realtime-${merchant.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bookings',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async (payload) => {
+          // New booking arrived!
+          const newBooking = payload.new as { customer_name?: string; id: string }
+          playNotificationSound()
+          toast.success(`🎉 มีการจองคิวใหม่เข้ามา!`, {
+            description: `ลูกค้า: ${newBooking.customer_name || 'ลูกค้าใหม่'}`,
+            duration: 6000,
+          })
+
+          // Fetch fresh bookings
+          const { data: updatedBookings } = await supabase
+            .from('bookings')
+            .select('*, services(*), branch:branches(*), staff:staff(*)')
+            .eq('shop_id', merchant.id)
+            .order('start_time', { ascending: true })
+
+          if (updatedBookings) {
+            setBookings(updatedBookings)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async (payload) => {
+          const updated = payload.new as { id: string; status?: string; customer_name?: string }
+          // If status updated to confirmed (e.g. slip paid)
+          if (updated.status === 'confirmed') {
+            toast.info(`✅ คิวได้รับการยืนยันแล้ว`, {
+              description: `ลูกค้า: ${updated.customer_name || ''}`,
+            })
+          }
+
+          const { data: updatedBookings } = await supabase
+            .from('bookings')
+            .select('*, services(*), branch:branches(*), staff:staff(*)')
+            .eq('shop_id', merchant.id)
+            .order('start_time', { ascending: true })
+
+          if (updatedBookings) {
+            setBookings(updatedBookings)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async () => {
+          const { data: updatedBookings } = await supabase
+            .from('bookings')
+            .select('*, services(*), branch:branches(*), staff:staff(*)')
+            .eq('shop_id', merchant.id)
+            .order('start_time', { ascending: true })
+
+          if (updatedBookings) {
+            setBookings(updatedBookings)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slots',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async () => {
+          const { data: updatedSlots } = await supabase
+            .from('slots')
+            .select('*')
+            .eq('shop_id', merchant.id)
+            .order('start_time', { ascending: true })
+
+          if (updatedSlots) {
+            setSlots(updatedSlots)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'services',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async () => {
+          const { data: updatedServices } = await supabase
+            .from('services')
+            .select('*')
+            .eq('shop_id', merchant.id)
+            .order('sort_order', { ascending: true })
+
+          if (updatedServices) {
+            setServices(updatedServices)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'staff',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async () => {
+          const { data: updatedStaff } = await supabase
+            .from('staff')
+            .select('*, branch:branches(*), staff_services(*, service:services(*))')
+            .eq('shop_id', merchant.id)
+            .order('created_at', { ascending: true })
+
+          if (updatedStaff) {
+            setStaffList((updatedStaff as unknown as Staff[]) || [])
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'branches',
+          filter: `shop_id=eq.${merchant.id}`,
+        },
+        async () => {
+          const { data: updatedBranches } = await supabase
+            .from('branches')
+            .select('*')
+            .eq('shop_id', merchant.id)
+            .order('created_at', { ascending: true })
+
+          if (updatedBranches) {
+            setBranches(updatedBranches)
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'shops',
+          filter: `id=eq.${merchant.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setMerchant(payload.new as Merchant)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [isAuthenticated, merchant?.id])
+
   // Handle PIN Login
   async function handleVerifyPin(e: React.FormEvent) {
     e.preventDefault()
