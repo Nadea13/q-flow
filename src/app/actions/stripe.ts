@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { stripe, PRICING_PLANS } from '@/lib/stripe'
 import type { PlanType } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 interface CreateCheckoutInput {
   merchantSlug?: string
@@ -278,8 +279,15 @@ export async function upgradeMerchantPlanAction(merchantSlug: string, planId: Pl
     .eq('slug', merchantSlug)
 
   if (error) {
+    logger.error('Failed to upgrade merchant plan', { merchantSlug, planId, error: error.message })
     return { success: false, error: error.message }
   }
+
+  logger.info('Merchant plan upgraded', {
+    merchantSlug,
+    planId: plan.id,
+    quota: plan.quota,
+  })
 
   return { success: true, plan }
 }

@@ -91,8 +91,17 @@ export async function createManualBookingAction(input: {
     .single()
 
   if (error) {
+    logger.error('Failed to create manual booking', { error: error.message, shopId: input.merchantId })
     return { success: false, error: error.message }
   }
+
+  logger.info('Manual booking created', {
+    bookingId: data?.id,
+    shopId: input.merchantId,
+    customerName: input.customerName,
+    startTime: input.startTime,
+    status: input.status,
+  })
 
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   return { success: true, booking: data }
@@ -120,8 +129,17 @@ export async function createBlockedSlotAction(input: {
     .single()
 
   if (error) {
+    logger.error('Failed to create blocked slot', { error: error.message, shopId: input.merchantId })
     return { success: false, error: error.message }
   }
+
+  logger.info('Blocked slot created', {
+    slotId: data?.id,
+    shopId: input.merchantId,
+    startTime: input.startTime,
+    endTime: input.endTime,
+    reason: input.reason,
+  })
 
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   return { success: true, slot: data }
@@ -133,8 +151,11 @@ export async function deleteBlockedSlotAction(slotId: string, merchantSlug: stri
   const { error } = await supabase.from('slots').delete().eq('id', slotId)
 
   if (error) {
+    logger.error('Failed to delete blocked slot', { slotId, error: error.message })
     return { success: false, error: error.message }
   }
+
+  logger.info('Blocked slot deleted', { slotId, merchantSlug })
 
   revalidatePath(`/${merchantSlug}/dashboard`)
   return { success: true }
@@ -232,8 +253,15 @@ export async function updateMerchantBranchAction(input: {
     .eq('id', input.merchantId)
 
   if (error) {
+    logger.error('Failed to update merchant branch', { merchantId: input.merchantId, error: error.message })
     return { success: false, error: error.message }
   }
+
+  logger.info('Merchant branch updated', {
+    merchantId: input.merchantId,
+    merchantSlug: input.merchantSlug,
+    branch_name: input.branch_name,
+  })
 
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   return { success: true }
@@ -281,8 +309,17 @@ export async function updateMerchantSettingsAction(input: {
     .eq('id', input.merchantId)
 
   if (error) {
+    logger.error('Failed to update shop settings', { merchantId: input.merchantId, error: error.message })
     return { success: false, error: error.message }
   }
+
+  logger.info('Shop settings updated', {
+    merchantId: input.merchantId,
+    merchantSlug: input.merchantSlug,
+    name: input.name,
+    open_time: input.open_time,
+    close_time: input.close_time,
+  })
 
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   revalidatePath(`/${input.merchantSlug}/settings`)
@@ -343,6 +380,7 @@ export async function uploadMerchantLogoAction(formData: FormData) {
   }
 
   if (!logoPublicUrl) {
+    logger.error('Failed to upload shop logo', { merchantId, merchantSlug })
     return { success: false, error: 'ไม่สามารถอัปโหลดรูปภาพได้ กรุณาลองใหม่อีกครั้ง' }
   }
 
@@ -356,8 +394,11 @@ export async function uploadMerchantLogoAction(formData: FormData) {
     .eq('id', merchantId)
 
   if (updateError) {
+    logger.error('Failed to save shop logo URL', { merchantId, error: updateError.message })
     return { success: false, error: updateError.message }
   }
+
+  logger.info('Shop logo updated', { merchantId, merchantSlug, logoUrl: logoPublicUrl })
 
   revalidatePath(`/${merchantSlug}/dashboard`)
   revalidatePath(`/${merchantSlug}/settings`)
@@ -435,11 +476,24 @@ export async function saveBranchAction(input: {
       .update(payload)
       .eq('id', input.id)
 
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      logger.error('Failed to update branch', { branchId: input.id, error: error.message })
+      return { success: false, error: error.message }
+    }
   } else {
     const { error } = await supabase.from('branches').insert(payload)
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      logger.error('Failed to create branch', { shopId: input.merchantId, error: error.message })
+      return { success: false, error: error.message }
+    }
   }
+
+  logger.info(input.id ? 'Branch updated' : 'Branch created', {
+    branchId: input.id,
+    name: input.name,
+    shopId: input.merchantId,
+    merchantSlug: input.merchantSlug,
+  })
 
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   revalidatePath(`/${input.merchantSlug}/book`)
@@ -450,7 +504,12 @@ export async function deleteBranchAction(branchId: string, merchantSlug: string)
   const supabase = await createClient()
 
   const { error } = await supabase.from('branches').delete().eq('id', branchId)
-  if (error) return { success: false, error: error.message }
+  if (error) {
+    logger.error('Failed to delete branch', { branchId, error: error.message })
+    return { success: false, error: error.message }
+  }
+
+  logger.info('Branch deleted', { branchId, merchantSlug })
 
   revalidatePath(`/${merchantSlug}/dashboard`)
   revalidatePath(`/${merchantSlug}/book`)

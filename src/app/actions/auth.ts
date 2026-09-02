@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
 
 /**
  * Verifies Merchant Admin PIN Code and creates a secure session cookie
@@ -60,7 +61,18 @@ export async function verifyMerchantLiffAction(slug: string, lineUserId: string)
       .from('shops')
       .update({ line_user_id: lineUserId })
       .eq('id', merchant.id)
+
+    logger.info('Shop linked with LINE account', {
+      shopId: merchant.id,
+      slug,
+      lineUserId,
+    })
   } else if (merchant.line_user_id !== lineUserId) {
+    logger.warn('Unauthorized LINE login attempt for shop', {
+      shopId: merchant.id,
+      slug,
+      attemptedLineUserId: lineUserId,
+    })
     return { success: false, error: 'บัญชี LINE นี้ไม่ใช่ผู้ดูแลของร้านนี้' }
   }
 

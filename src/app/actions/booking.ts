@@ -175,8 +175,20 @@ export async function createBookingAction(input: CreateBookingInput) {
     .single()
 
   if (bError || !booking) {
+    logger.error('Failed to create booking', { error: bError?.message, shopId: merchant.id, serviceId: service.id })
     return { success: false, error: bError?.message || 'เกิดข้อผิดพลาดในการสร้างคำขอจองคิว' }
   }
+
+  logger.info('Booking created', {
+    bookingId: booking.id,
+    shopId: merchant.id,
+    merchantSlug: merchant.slug,
+    serviceId: service.id,
+    status: initialStatus,
+    customerName: input.customerName,
+    startTime: input.startTime,
+    isConfirmed: isZeroDeposit,
+  })
 
   // 6. If 0 deposit, dispatch LINE Notification immediately
   if (isZeroDeposit) {
@@ -342,8 +354,16 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
     .eq('id', booking.id)
 
   if (updateError) {
+    logger.error('Failed to update booking status to confirmed', { bookingId: booking.id, error: updateError.message })
     return { success: false, error: 'เกิดข้อผิดพลาดในการบันทึกการยืนยันคิว' }
   }
+
+  logger.info('Booking confirmed with slip', {
+    bookingId: booking.id,
+    transRef: verification.transRef,
+    depositAmount: booking.deposit_amount,
+    shopId: booking.shop_id,
+  })
 
   // 6. Send LINE Notification to merchant
   try {
@@ -383,6 +403,8 @@ export async function expireBookingAction(bookingId: string) {
       .from('bookings')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', bookingId)
+
+    logger.info('Booking expired and cancelled', { bookingId })
   }
 
   return { success: true }
