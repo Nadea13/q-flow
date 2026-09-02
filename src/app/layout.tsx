@@ -13,7 +13,7 @@ const ibmPlexSansThai = IBM_Plex_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "Q Flow • Smart Queue Booking & Auto-Deposit Check",
+  title: "QFlow • Smart Queue Booking & Auto-Deposit Check",
   description: "ระบบจองคิวบริการ และตรวจสลิปมัดจำอัตโนมัติ 3 คลิกผ่าน LINE LIFF & Responsive Web สำหรับธุรกิจ SME ขนาดเล็ก",
   icons: {
     icon: "/icon.svg",

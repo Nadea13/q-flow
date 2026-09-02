@@ -810,9 +810,9 @@ export default function BookingPage({ params }: PageProps) {
           </AnimatePresence>
         </main>
 
-        {/* Powered by Q Flow Footer inside card (Matching Onboarding) */}
+        {/* Powered by QFlow Footer inside card (Matching Onboarding) */}
         <div className="flex justify-center items-center text-center text-xs text-slate-400 dark:text-slate-500">
-          <span>Powered by <span className='font-bold'>Q Flow</span></span>
+          <span>Powered by <span className='font-bold'>QFlow</span></span>
         </div>
       </div>
     </div>

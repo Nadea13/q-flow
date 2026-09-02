@@ -240,7 +240,7 @@ export default function SettingsPage({ params }: PageProps) {
   useEffect(() => {
     async function initAuthAndData() {
       try {
-        const cachedProfile = localStorage.getItem('q flow_admin_line_profile')
+        const cachedProfile = localStorage.getItem('qflow_admin_line_profile')
         if (cachedProfile) {
           setLineProfile(JSON.parse(cachedProfile))
         }
@@ -263,7 +263,7 @@ export default function SettingsPage({ params }: PageProps) {
             userId: liffRes.profile.userId,
           }
           setLineProfile(profileData)
-          localStorage.setItem('q flow_admin_line_profile', JSON.stringify(profileData))
+          localStorage.setItem('qflow_admin_line_profile', JSON.stringify(profileData))
 
           const liffAuth = await verifyMerchantLiffAction(slug, liffRes.profile.userId)
           if (liffAuth.success) {
@@ -365,7 +365,7 @@ export default function SettingsPage({ params }: PageProps) {
   // Handle Logout
   async function handleLogout() {
     await logoutMerchantAction(slug)
-    localStorage.removeItem('q flow_admin_line_profile')
+    localStorage.removeItem('qflow_admin_line_profile')
     setIsAuthenticated(false)
   }
 
@@ -625,7 +625,7 @@ export default function SettingsPage({ params }: PageProps) {
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
               />
             ) : (
-              <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
+              <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="inline-flex items-center gap-2 group shrink-0">
                 <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
               </Link>
             )}
@@ -733,7 +733,7 @@ export default function SettingsPage({ params }: PageProps) {
                           if (navigator.share) {
                             navigator.share({
                               title: `จองคิวออนไลน์ - ${merchant.name}`,
-                              text: `จองคิวทำนัดหมายร้าน ${merchant.name} ผ่านระบบ Q Flow`,
+                              text: `จองคิวทำนัดหมายร้าน ${merchant.name} ผ่านระบบ QFlow`,
                               url: bookUrl,
                             }).catch(() => { })
                           } else {
@@ -1208,9 +1208,9 @@ export default function SettingsPage({ params }: PageProps) {
             >
               {t('saveSettingsBtn')}
             </button>
-            {/* Powered by Q Flow Footer */}
+            {/* Powered by QFlow Footer */}
             <div className="flex justify-center items-center pt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-              <span>Powered by <span className='font-bold'>Q Flow</span></span>
+              <span>Powered by <span className='font-bold'>QFlow</span></span>
             </div>
           </form>
         )}

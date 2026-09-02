@@ -118,7 +118,7 @@ export async function verifySlipWithSlipOK(
     amount: expectedAmount,
     paidAt: new Date().toISOString(),
     senderName: 'ผู้โอนเงินทดสอบ',
-    receiverName: 'ร้านค้า (Q Flow)',
+    receiverName: 'ร้านค้า (QFlow)',
     receiverAccount: expectedPromptPayId,
     rawResponse: {
       is_simulated: true,

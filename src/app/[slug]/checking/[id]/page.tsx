@@ -338,7 +338,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
               <div className="flex flex-col gap-2.5 pt-1">
                 <a
                   href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                    `🎉 ตั๋วคิวการจอง Q Flow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                    `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -593,9 +593,9 @@ export default function BookingCheckingPage({ params }: PageProps) {
           )}
         </main>
 
-        {/* Powered by Q Flow Footer inside card */}
+        {/* Powered by QFlow Footer inside card */}
         <div className="flex justify-center items-center mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-          <span>Powered by <span className='font-bold'>Q Flow</span></span>
+          <span>Powered by <span className='font-bold'>QFlow</span></span>
         </div>
 
       </div>

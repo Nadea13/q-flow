@@ -275,7 +275,7 @@ function CreateShopContent() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <QFlowLogo className="h-7 w-7" />
-            <span className="font-bold text-lg text-slate-900 dark:text-white">Q Flow Shop Setup</span>
+            <span className="font-bold text-lg text-slate-900 dark:text-white">QFlow Shop Setup</span>
           </div>
           <NavbarControls />
         </div>
@@ -866,9 +866,9 @@ function CreateShopContent() {
           )}
         </AnimatePresence>
 
-        {/* Powered by Q Flow Footer */}
+        {/* Powered by QFlow Footer */}
         <div className="flex justify-center items-center text-center text-xs text-slate-400 dark:text-slate-500 pt-1">
-          <span>Powered by <span className='font-bold'>Q Flow</span></span>
+          <span>Powered by <span className='font-bold'>QFlow</span></span>
         </div>
       </div>
     </div>

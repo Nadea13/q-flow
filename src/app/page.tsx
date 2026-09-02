@@ -137,8 +137,8 @@ export default function Home() {
     {
       q: lang === 'th' ? 'ระบบตรวจสลิปอย่างไร ป้องกันสลิปปลอมได้จริงไหม?' : 'How does slip verification work? Does it prevent fake slips?',
       a: lang === 'th'
-        ? 'Q Flow เชื่อมต่อกับระบบ SlipOK API ซึ่งตรวจสอบข้อมูลกับระบบธนาคารโดยตรง โดยตรวจเช็คยอดเงิน บัญชีปลายทาง และเลขอ้างอิงสลิป (transRef) แบบเรียลไทม์ ป้องกันสลิปปลอม สลิปยอดไม่ตรง และสลิปที่ใช้ซ้ำ 100%'
-        : 'Q Flow connects directly with SlipOK API to verify real bank transfer metadata, exact amounts, receiver accounts, and duplicate transaction references.'
+        ? 'QFlow เชื่อมต่อกับระบบ SlipOK API ซึ่งตรวจสอบข้อมูลกับระบบธนาคารโดยตรง โดยตรวจเช็คยอดเงิน บัญชีปลายทาง และเลขอ้างอิงสลิป (transRef) แบบเรียลไทม์ ป้องกันสลิปปลอม สลิปยอดไม่ตรง และสลิปที่ใช้ซ้ำ 100%'
+        : 'QFlow connects directly with SlipOK API to verify real bank transfer metadata, exact amounts, receiver accounts, and duplicate transaction references.'
     },
     {
       q: lang === 'th' ? 'สามารถตั้งเวลาพักเที่ยง หรือบล็อกเวลาไม่ว่างได้ไหม?' : 'Can I set lunch breaks or quickly block busy hours?',
@@ -317,7 +317,7 @@ export default function Home() {
               <span>{lang === 'th' ? 'ขั้นตอนง่ายๆ ใน 3 สเต็ป' : 'Simple 3-Step Process'}</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {lang === 'th' ? 'วิธีใช้งานเบื้องต้น' : 'How Q Flow Works'}
+              {lang === 'th' ? 'วิธีใช้งานเบื้องต้น' : 'How QFlow Works'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
               {lang === 'th' ? 'ระบบที่ออกแบบมาให้ใช้งานง่ายที่สุดทั้งสำหรับร้านค้าและลูกค้าผู้จอง' : 'Engineered for seamless experience on both sides.'}
@@ -549,7 +549,7 @@ export default function Home() {
             {lang === 'th' ? 'คำถามที่พบบ่อย (FAQ)' : 'Frequently Asked Questions'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {lang === 'th' ? 'ข้อสงสัยทั่วไปเกี่ยวกับการใช้งานระบบ Q Flow' : 'Answers to common questions about Q Flow.'}
+            {lang === 'th' ? 'ข้อสงสัยทั่วไปเกี่ยวกับการใช้งานระบบ QFlow' : 'Answers to common questions about QFlow.'}
           </p>
         </div>
 
@@ -611,7 +611,7 @@ export default function Home() {
               <Link href="/" className="inline-flex items-center gap-2.5 group">
                 <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
                 <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  Q Flow
+                  QFlow
                 </span>
               </Link>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
@@ -732,11 +732,11 @@ export default function Home() {
         <div className="border-t border-slate-200/80 dark:border-slate-850/80 bg-slate-50/50 dark:bg-slate-900/40">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-500">
             <div className="flex items-center gap-2">
-              <span>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</span>
+              <span>© {new Date().getFullYear()} QFlow Platform. All rights reserved.</span>
             </div>
 
             <div className="flex items-center gap-4">
-              <span>Powered by <span className='font-bold'>Q Flow</span></span>
+              <span>Powered by <span className='font-bold'>QFlow</span></span>
             </div>
           </div>
         </div>

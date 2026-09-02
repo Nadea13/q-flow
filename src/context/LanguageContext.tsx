@@ -7,7 +7,7 @@ export type Language = 'th' | 'en'
 export const translations = {
   th: {
     // Brand & Common
-    appName: 'Q Flow',
+    appName: 'QFlow',
     appTagline: 'ระบบจองคิวบริการ & ตรวจสลิปมัดจำอัตโนมัติ',
     save: 'บันทึก',
     cancel: 'ยกเลิก',
@@ -235,7 +235,7 @@ export const translations = {
   },
   en: {
     // Brand & Common
-    appName: 'Q Flow',
+    appName: 'QFlow',
     appTagline: 'Smart Booking & Auto-Deposit Verification',
     save: 'Save',
     cancel: 'Cancel',

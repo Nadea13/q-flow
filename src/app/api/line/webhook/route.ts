@@ -98,7 +98,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   return NextResponse.json({
-    status: 'Q Flow LINE Webhook Gateway is Active',
+    status: 'QFlow LINE Webhook Gateway is Active',
     endpoints: {
       liff: 'https://liff.line.me/{LIFF_ID}',
       webhook: '/api/line/webhook',

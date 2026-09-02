@@ -92,7 +92,7 @@ export default function ShopSelectionPortalPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
-            <span className="font-bold text-lg text-slate-900 dark:text-white">Q Flow</span>
+            <span className="font-bold text-lg text-slate-900 dark:text-white">QFlow</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ export default function ShopSelectionPortalPage() {
               <Link href="/" className="inline-flex items-center gap-2.5 group">
                 <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
                 <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  Q Flow
+                  QFlow
                 </span>
               </Link>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
@@ -343,11 +343,11 @@ export default function ShopSelectionPortalPage() {
         <div className="border-t border-slate-200/80 dark:border-slate-850/80 bg-slate-50/50 dark:bg-slate-900/40">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-500">
             <div className="flex items-center gap-2">
-              <span>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</span>
+              <span>© {new Date().getFullYear()} QFlow Platform. All rights reserved.</span>
             </div>
 
             <div className="flex items-center gap-4">
-              <span>Powered by <span className='font-bold'>Q Flow</span></span>
+              <span>Powered by <span className='font-bold'>QFlow</span></span>
             </div>
           </div>
         </div>

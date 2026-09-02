@@ -235,9 +235,9 @@ export default function PricingPage() {
         },
         {
           name: lang === 'th' ? 'Custom Branding / White-label' : 'Custom Branding',
-          free: 'โลโก้ร้านค้า + ป้าย Q Flow',
-          professional: 'โลโก้ร้านค้า + ป้าย Q Flow',
-          business: 'White-label (ซ่อนป้าย Q Flow)',
+          free: 'โลโก้ร้านค้า + ป้าย QFlow',
+          professional: 'โลโก้ร้านค้า + ป้าย QFlow',
+          business: 'White-label (ซ่อนป้าย QFlow)',
           enterprise: '100% White-label + รองรับ Custom Domain',
         },
         {
@@ -286,7 +286,7 @@ export default function PricingPage() {
           <div className="flex items-center gap-3">
             <Link href="/" className="inline-flex items-center gap-2 group">
               <QFlowLogo className="h-8 w-8 group-hover:scale-105 transition-transform" />
-              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Q Flow</span>
+              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">QFlow</span>
             </Link>
           </div>
 
@@ -581,7 +581,7 @@ export default function PricingPage() {
               ⚡ ROI Analysis & Value
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {lang === 'th' ? 'ทำไม Q Flow ถึงคุ้มค่าตั้งแต่วันแรก?' : 'Why Q Flow pays for itself on Day 1'}
+              {lang === 'th' ? 'ทำไม QFlow ถึงคุ้มค่าตั้งแต่วันแรก?' : 'Why QFlow pays for itself on Day 1'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed font-normal">
               {lang === 'th' 
@@ -646,7 +646,7 @@ export default function PricingPage() {
               <Link href="/" className="inline-flex items-center gap-2.5 group">
                 <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
                 <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  Q Flow
+                  QFlow
                 </span>
               </Link>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
@@ -767,11 +767,11 @@ export default function PricingPage() {
         <div className="border-t border-slate-200/80 dark:border-slate-850/80 bg-slate-50/50 dark:bg-slate-900/40">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-500">
             <div className="flex items-center gap-2">
-              <span>© {new Date().getFullYear()} Q Flow Platform. All rights reserved.</span>
+              <span>© {new Date().getFullYear()} QFlow Platform. All rights reserved.</span>
             </div>
 
             <div className="flex items-center justify-center gap-4">
-              <span>Powered by <span className='font-bold'>Q Flow</span></span>
+              <span>Powered by <span className='font-bold'>QFlow</span></span>
             </div>
           </div>
         </div>
@@ -802,12 +802,12 @@ export default function PricingPage() {
 
               <div className="text-center space-y-1.5">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {lang === 'th' ? 'ยืนยันการเลือกแพ็กเกจ Q Flow Basic?' : 'Confirm Q Flow Basic Selection?'}
+                  {lang === 'th' ? 'ยืนยันการเลือกแพ็กเกจ QFlow Basic?' : 'Confirm QFlow Basic Selection?'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {lang === 'th' 
-                    ? 'แพ็กเกจ Q Flow Basic (ฟรี) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?' 
-                    : 'The Q Flow Basic Plan includes 30 bookings/month, 1 shop, 1 branch, and 1 staff member. Do you wish to proceed?'}
+                    ? 'แพ็กเกจ QFlow Basic (ฟรี) จะรองรับโควตา 30 คิว/เดือน, 1 ร้านค้า, 1 สาขา และ 1 ผู้ให้บริการ คุณต้องการดำเนินการต่อหรือไม่?' 
+                    : 'The QFlow Basic Plan includes 30 bookings/month, 1 shop, 1 branch, and 1 staff member. Do you wish to proceed?'}
                 </p>
               </div>
 

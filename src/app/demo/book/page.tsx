@@ -753,9 +753,9 @@ export default function DemoBookPage() {
           </AnimatePresence>
         </main>
 
-        {/* Powered by Q Flow Footer inside card */}
+        {/* Powered by QFlow Footer inside card */}
         <div className="flex justify-center items-center mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-          <span>Powered by <span className='font-bold'>Q Flow</span></span>
+          <span>Powered by <span className='font-bold'>QFlow</span></span>
         </div>
       </div>
     </div>

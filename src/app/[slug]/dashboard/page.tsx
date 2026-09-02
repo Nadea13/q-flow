@@ -163,7 +163,7 @@ export default function DashboardPage({ params }: PageProps) {
   function handleSelectBranch(branchId: string) {
     setSelectedBranchFilter(branchId)
     try {
-      localStorage.setItem(`q flow_selected_branch_${slug}`, branchId)
+      localStorage.setItem(`qflow_selected_branch_${slug}`, branchId)
     } catch { }
   }
 
@@ -249,7 +249,7 @@ export default function DashboardPage({ params }: PageProps) {
     async function initAuthAndData() {
       // 0. Load cached LINE profile if available
       try {
-        const cachedProfile = localStorage.getItem('q flow_admin_line_profile')
+        const cachedProfile = localStorage.getItem('qflow_admin_line_profile')
         if (cachedProfile) {
           setLineProfile(JSON.parse(cachedProfile))
         }
@@ -274,7 +274,7 @@ export default function DashboardPage({ params }: PageProps) {
             userId: liffRes.profile.userId,
           }
           setLineProfile(profileData)
-          localStorage.setItem('q flow_admin_line_profile', JSON.stringify(profileData))
+          localStorage.setItem('qflow_admin_line_profile', JSON.stringify(profileData))
 
           const liffAuth = await verifyMerchantLiffAction(slug, liffRes.profile.userId)
           if (liffAuth.success) {
@@ -329,18 +329,18 @@ export default function DashboardPage({ params }: PageProps) {
     // Synchronize selected branch filter with localStorage
     if (branchData.length > 0) {
       try {
-        const savedBranchId = localStorage.getItem(`q flow_selected_branch_${slug}`)
+        const savedBranchId = localStorage.getItem(`qflow_selected_branch_${slug}`)
         if (savedBranchId) {
           const exists = savedBranchId === 'all' || branchData.some((b) => b.id === savedBranchId)
           if (exists) {
             setSelectedBranchFilter(savedBranchId)
           } else {
             setSelectedBranchFilter(branchData[0].id)
-            localStorage.setItem(`q flow_selected_branch_${slug}`, branchData[0].id)
+            localStorage.setItem(`qflow_selected_branch_${slug}`, branchData[0].id)
           }
         } else {
           setSelectedBranchFilter(branchData[0].id)
-          localStorage.setItem(`q flow_selected_branch_${slug}`, branchData[0].id)
+          localStorage.setItem(`qflow_selected_branch_${slug}`, branchData[0].id)
         }
       } catch { }
     }
@@ -691,7 +691,7 @@ export default function DashboardPage({ params }: PageProps) {
         </motion.div>
 
         <div className="text-center text-xs text-slate-600 dark:text-slate-400">
-          © {new Date().getFullYear()} Q Flow. All rights reserved.
+          © {new Date().getFullYear()} QFlow. All rights reserved.
         </div>
       </div>
     )
@@ -742,7 +742,7 @@ export default function DashboardPage({ params }: PageProps) {
                 className="w-8 h-8 sm:w-9 sm:h-9 aspect-square rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
               />
             ) : (
-              <Link href="/" aria-label="กลับสู่หน้าแรก Q Flow" className="inline-flex items-center gap-2 group shrink-0">
+              <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="inline-flex items-center gap-2 group shrink-0">
                 <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
               </Link>
             )}
@@ -865,7 +865,7 @@ export default function DashboardPage({ params }: PageProps) {
                           if (navigator.share) {
                             navigator.share({
                               title: `จองคิวออนไลน์ - ${merchant.name}`,
-                              text: `จองคิวทำนัดหมายร้าน ${merchant.name} ผ่านระบบ Q Flow`,
+                              text: `จองคิวทำนัดหมายร้าน ${merchant.name} ผ่านระบบ QFlow`,
                               url: bookUrl,
                             }).catch(() => { })
                           } else {

@@ -26,7 +26,7 @@ export interface PricingPlan {
 export const PRICING_PLANS: Record<string, PricingPlan> = {
   basic: {
     id: 'basic',
-    name: 'Q Flow Basic',
+    name: 'QFlow Basic',
     tagline: 'เหมาะสำหรับร้านค้าขนาดเล็กเริ่มต้นทดลองใช้ระบบ',
     priceTHB: 0,
     priceYearlyTHB: 0,
@@ -49,7 +49,7 @@ export const PRICING_PLANS: Record<string, PricingPlan> = {
   },
   professional: {
     id: 'professional',
-    name: 'Q Flow Professional',
+    name: 'QFlow Professional',
     tagline: 'เหมาะสำหรับร้านค้าบริการเดี่ยว / สตูดิโอ / ฟรีแลนซ์',
     priceTHB: 790,
     priceYearlyTHB: 7900,
@@ -74,7 +74,7 @@ export const PRICING_PLANS: Record<string, PricingPlan> = {
   },
   business: {
     id: 'business',
-    name: 'Q Flow Business',
+    name: 'QFlow Business',
     tagline: 'ร้านเสริมสวย / คลินิกความงาม 2-5 สาขา และสตูดิโอที่มีทีมช่างหลายท่าน',
     priceTHB: 1590,
     priceYearlyTHB: 15900,
@@ -99,7 +99,7 @@ export const PRICING_PLANS: Record<string, PricingPlan> = {
   },
   enterprise: {
     id: 'enterprise',
-    name: 'Q Flow Enterprise',
+    name: 'QFlow Enterprise',
     tagline: 'แฟรนไชส์ / คลินิกใหญ่ / เชนธุรกิจ ไร้ข้อจำกัดเรื่องสาขาและช่าง',
     priceTHB: 3990,
     priceYearlyTHB: 39900,

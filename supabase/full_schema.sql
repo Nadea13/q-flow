@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Q Flow Full Schema Migration (Tables, RLS, Storage, Permissions, Demo Data)
+-- QFlow Full Schema Migration (Tables, RLS, Storage, Permissions, Demo Data)
 -- ==============================================================================
 
 -- Enable UUID extension
