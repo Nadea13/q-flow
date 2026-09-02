@@ -358,39 +358,43 @@ export default function DashboardPage({ params }: PageProps) {
 
     const supabase = createClient()
 
-    // Helper to play a modern, pleasant chat notification pop-chime (Bloop-Ting! 💬)
+    // Helper to play a crisp single-hit chat "ตึ้ง!" notification sound
     function playNotificationSound() {
       try {
         const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
         const audioCtx = new AudioCtxClass()
         const now = audioCtx.currentTime
 
-        // Tone 1: Soft intro bounce
-        const osc1 = audioCtx.createOscillator()
-        const gain1 = audioCtx.createGain()
-        osc1.type = 'sine'
-        osc1.frequency.setValueAtTime(659.25, now) // E5
-        osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.06) // G5
-        gain1.gain.setValueAtTime(0.2, now)
-        gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.07)
-        osc1.connect(gain1)
-        gain1.connect(audioCtx.destination)
-        osc1.start(now)
-        osc1.stop(now + 0.07)
+        // Primary Body Oscillator (The warm percussive "ตึ้ง" body)
+        const osc = audioCtx.createOscillator()
+        const gain = audioCtx.createGain()
+        osc.type = 'sine'
 
-        // Tone 2: Bright, crisp chat chime
-        const osc2 = audioCtx.createOscillator()
-        const gain2 = audioCtx.createGain()
-        osc2.type = 'sine'
-        osc2.frequency.setValueAtTime(1046.5, now + 0.07) // C6
-        osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12) // E6
-        gain2.gain.setValueAtTime(0.001, now + 0.06)
-        gain2.gain.setValueAtTime(0.25, now + 0.07)
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35)
-        osc2.connect(gain2)
-        gain2.connect(audioCtx.destination)
-        osc2.start(now + 0.07)
-        osc2.stop(now + 0.35)
+        // Slight pitch drop creates the percussive "ตึ้ง" mallet strike feeling
+        osc.frequency.setValueAtTime(880, now) // A5 initial strike
+        osc.frequency.exponentialRampToValueAtTime(740, now + 0.04) // drops to warm resonance F#5
+        
+        gain.gain.setValueAtTime(0.35, now)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
+
+        // Harmonic overtone (adds the crisp chat shimmer to the "ตึ้ง")
+        const overtone = audioCtx.createOscillator()
+        const overtoneGain = audioCtx.createGain()
+        overtone.type = 'triangle'
+        overtone.frequency.setValueAtTime(1760, now) // Octave harmonic
+        overtoneGain.gain.setValueAtTime(0.12, now)
+        overtoneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12)
+
+        osc.connect(gain)
+        gain.connect(audioCtx.destination)
+
+        overtone.connect(overtoneGain)
+        overtoneGain.connect(audioCtx.destination)
+
+        osc.start(now)
+        overtone.start(now)
+        osc.stop(now + 0.28)
+        overtone.stop(now + 0.12)
       } catch {
         // AudioContext not allowed or unsupported
       }
