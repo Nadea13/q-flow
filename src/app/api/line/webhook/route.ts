@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendLineReplyMessage } from '@/lib/line'
 import { buildShopMenuFlex, buildBookingSuccessFlex } from '@/lib/line-flex'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: Request) {
   try {
@@ -91,7 +92,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: 'Events processed' })
   } catch (err: unknown) {
-    console.error('Error handling LINE webhook:', err)
+    logger.error('Error handling LINE webhook:', err)
+    await logger.flush()
     return NextResponse.json({ success: true }) // Return 200 to acknowledge LINE webhook
   }
 }

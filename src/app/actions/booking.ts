@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { verifySlipWithSlipOK } from '@/lib/slipok'
 import { verifyTurnstileToken } from '@/lib/turnstile'
+import { logger } from '@/lib/logger'
 
 interface CreateBookingInput {
   merchantSlug: string
@@ -190,7 +191,7 @@ export async function createBookingAction(input: CreateBookingInput) {
         service: service,
       })
     } catch (notifyErr) {
-      console.error('Failed to dispatch LINE alert for 0 deposit booking', notifyErr)
+      logger.error('Failed to dispatch LINE alert for 0 deposit booking', notifyErr)
     }
   }
 
@@ -358,7 +359,7 @@ export async function verifyAndConfirmBookingAction(bookingId: string, formData:
       service: booking.services,
     })
   } catch (notifyErr) {
-    console.error('Failed to dispatch LINE alert', notifyErr)
+    logger.error('Failed to dispatch LINE alert', notifyErr)
   }
 
   return {

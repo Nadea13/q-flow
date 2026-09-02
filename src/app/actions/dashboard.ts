@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { BookingStatus } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 export async function updateBookingStatusAction(
   bookingId: string,
@@ -17,8 +18,11 @@ export async function updateBookingStatusAction(
     .eq('id', bookingId)
 
   if (error) {
+    logger.error('Failed to update booking status', { bookingId, status, error: error.message })
     return { success: false, error: error.message }
   }
+
+  logger.info('Booking status updated', { bookingId, status, merchantSlug })
 
   revalidatePath(`/${merchantSlug}/dashboard`)
   return { success: true }
@@ -181,6 +185,13 @@ export async function saveServiceAction(input: {
     if (error) return { success: false, error: error.message }
   }
 
+  logger.info(input.id ? 'Service updated' : 'Service created', {
+    serviceId: input.id,
+    title: input.title,
+    shopId: input.merchantId,
+    merchantSlug: input.merchantSlug,
+  })
+
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   return { success: true }
 }
@@ -191,8 +202,11 @@ export async function deleteServiceAction(serviceId: string, merchantSlug: strin
   const { error } = await supabase.from('services').delete().eq('id', serviceId)
 
   if (error) {
+    logger.error('Failed to delete service', { serviceId, error: error.message })
     return { success: false, error: error.message }
   }
+
+  logger.info('Service deleted', { serviceId, merchantSlug })
 
   revalidatePath(`/${merchantSlug}/dashboard`)
   return { success: true }
@@ -530,6 +544,13 @@ export async function saveStaffAction(input: {
     }
   }
 
+  logger.info(input.id ? 'Staff updated' : 'Staff created', {
+    staffId,
+    name: input.name,
+    shopId: input.merchantId,
+    merchantSlug: input.merchantSlug,
+  })
+
   revalidatePath(`/${input.merchantSlug}/dashboard`)
   revalidatePath(`/${input.merchantSlug}/book`)
   return { success: true, staffId }
@@ -539,7 +560,12 @@ export async function deleteStaffAction(staffId: string, merchantSlug: string) {
   const supabase = await createClient()
 
   const { error } = await supabase.from('staff').delete().eq('id', staffId)
-  if (error) return { success: false, error: error.message }
+  if (error) {
+    logger.error('Failed to delete staff', { staffId, error: error.message })
+    return { success: false, error: error.message }
+  }
+
+  logger.info('Staff deleted', { staffId, merchantSlug })
 
   revalidatePath(`/${merchantSlug}/dashboard`)
   revalidatePath(`/${merchantSlug}/book`)

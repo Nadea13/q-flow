@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe, PRICING_PLANS } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import type { PlanType } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err)
-    console.error(`⚠️ Stripe Webhook signature verification failed: ${errorMsg}`)
+    logger.error(`⚠️ Stripe Webhook signature verification failed: ${errorMsg}`, err)
     return NextResponse.json({ error: `Webhook Error: ${errorMsg}` }, { status: 400 })
   }
 
@@ -106,13 +107,15 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        console.log(`Unhandled Stripe event type: ${event.type}`)
+        logger.info(`Unhandled Stripe event type: ${event.type}`)
     }
 
+    await logger.flush()
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : String(error)
-    console.error('Error handling Stripe webhook:', errMessage)
+    logger.error('Error handling Stripe webhook:', error)
+    await logger.flush()
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }

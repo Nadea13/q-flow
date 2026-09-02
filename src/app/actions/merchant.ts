@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { PRICING_PLANS } from '@/lib/stripe'
+import { logger } from '@/lib/logger'
 
 interface CreateMerchantInput {
   name: string
@@ -178,6 +179,13 @@ export async function createMerchantAction(input: CreateMerchantInput) {
       service_id: service.id,
     })
   }
+
+  logger.info('New shop created', {
+    shopId: merchant.id,
+    name: merchant.name,
+    slug: merchant.slug,
+    plan: merchant.plan || 'free',
+  })
 
   revalidatePath('/')
   return { success: true, merchant }
