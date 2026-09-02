@@ -358,21 +358,39 @@ export default function DashboardPage({ params }: PageProps) {
 
     const supabase = createClient()
 
-    // Helper to play a pleasant notification chime
+    // Helper to play a modern, pleasant chat notification pop-chime (Bloop-Ting! 💬)
     function playNotificationSound() {
       try {
-        const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-        const osc = audioCtx.createOscillator()
-        const gain = audioCtx.createGain()
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime) // D5
-        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15) // A5
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4)
-        osc.connect(gain)
-        gain.connect(audioCtx.destination)
-        osc.start()
-        osc.stop(audioCtx.currentTime + 0.4)
+        const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        const audioCtx = new AudioCtxClass()
+        const now = audioCtx.currentTime
+
+        // Tone 1: Soft intro bounce
+        const osc1 = audioCtx.createOscillator()
+        const gain1 = audioCtx.createGain()
+        osc1.type = 'sine'
+        osc1.frequency.setValueAtTime(659.25, now) // E5
+        osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.06) // G5
+        gain1.gain.setValueAtTime(0.2, now)
+        gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.07)
+        osc1.connect(gain1)
+        gain1.connect(audioCtx.destination)
+        osc1.start(now)
+        osc1.stop(now + 0.07)
+
+        // Tone 2: Bright, crisp chat chime
+        const osc2 = audioCtx.createOscillator()
+        const gain2 = audioCtx.createGain()
+        osc2.type = 'sine'
+        osc2.frequency.setValueAtTime(1046.5, now + 0.07) // C6
+        osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12) // E6
+        gain2.gain.setValueAtTime(0.001, now + 0.06)
+        gain2.gain.setValueAtTime(0.25, now + 0.07)
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35)
+        osc2.connect(gain2)
+        gain2.connect(audioCtx.destination)
+        osc2.start(now + 0.07)
+        osc2.stop(now + 0.35)
       } catch {
         // AudioContext not allowed or unsupported
       }
