@@ -565,14 +565,14 @@ export default function BookingCheckingPage({ params }: PageProps) {
               <div className="flex flex-col gap-2.5 pt-1">
                 <a
                   href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                    `🎉 ตั๋วคิวการจอง QFlow: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n🔗 ดูรายละเอียด: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                    `🎟️ ตั๋วคิวของฉัน - ${merchant.name}\n\n📌 บริการ: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} - ${format(endTime, 'HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n👤 ลูกค้า: ${booking.customer_name}\n${booking.staff ? `✂️ ช่าง: ${booking.staff.name}\n` : ''}${booking.branch ? `📍 สาขา: ${booking.branch.name}\n` : ''}\n👉 ดูตั๋วคิวและติดตามสถานะสดได้ที่:\n${typeof window !== 'undefined' ? `${window.location.origin}/${slug}/checking/${booking.id}` : ''}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs transition active:scale-98"
+                  className="w-full py-3.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs sm:text-sm font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-[#06C755]/25 transition active:scale-98"
                 >
-                  <MessageSquare className="w-4 h-4 fill-white" />
-                  แชร์ตั๋วคิวเข้า LINE
+                  <MessageSquare className="w-4 h-4 fill-white shrink-0" />
+                  <span>บันทึกตั๋วเข้า LINE</span>
                 </a>
 
                 <Link
