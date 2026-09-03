@@ -418,10 +418,10 @@ export default function BookingPage({ params }: PageProps) {
                 <form
                   onSubmit={handleSearchQueue}
                   className={`flex items-center transition-all duration-300 overflow-hidden ${
-                    isSearchOpen ? 'w-48 sm:w-64 opacity-100 mr-1' : 'w-0 opacity-0'
+                    isSearchOpen ? 'w-48 sm:w-64 opacity-100 mr-2' : 'w-0 opacity-0'
                   }`}
                 >
-                  <div className="relative w-full">
+                  <div className="relative w-full h-9 flex items-center">
                     <input
                       type="text"
                       value={searchQuery}
@@ -430,15 +430,15 @@ export default function BookingPage({ params }: PageProps) {
                         if (searchError) setSearchError(null)
                       }}
                       placeholder="ค้นหาคิว (เบอร์โทร/#รหัส)..."
-                      className="w-full pl-3 pr-7 py-1.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 shadow-xs"
+                      className="w-full h-9 pl-3.5 pr-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 shadow-xs box-border"
                     />
                     {searchQuery && (
                       <button
                         type="button"
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
