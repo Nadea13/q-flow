@@ -56,6 +56,7 @@ export default function BookingPage({ params }: PageProps) {
 
   // Step state (1: Branch/Staff/Service, 2: Slot, 3: Customer Info)
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Date & Slot state
   const today = startOfToday()
@@ -422,11 +423,37 @@ export default function BookingPage({ params }: PageProps) {
 
       {/* 2. Content Body Area */}
       <div className="grow flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 w-full">
-        {/* Main Card Container (70-80% Height on Mobile) */}
-        <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[75vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
-          {/* Mobile Pull Indicator */}
-          <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
-            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        {/* Main Card Container (Draggable Sheet with interactive pull-down) */}
+        <motion.div
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0, bottom: 0.7 }}
+          onDragEnd={(_, info) => {
+            if (info.offset.y > 100 || info.velocity.y > 400) {
+              setIsCollapsed(true)
+            } else if (info.offset.y < -50 || info.velocity.y < -300) {
+              setIsCollapsed(false)
+            }
+          }}
+          animate={{
+            y: isCollapsed ? '72%' : '0%',
+          }}
+          transition={{
+            type: 'spring',
+            damping: 28,
+            stiffness: 280,
+          }}
+          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden will-change-transform"
+        >
+          {/* Mobile Pull Indicator / Drag Handle */}
+          <div
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="flex flex-col items-center justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing select-none group"
+          >
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full group-hover:bg-indigo-500 transition-colors" />
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium sm:hidden">
+              {isCollapsed ? 'แตะหรือลากขึ้นเพื่อเปิด' : 'ลากลงหรือแตะเพื่อพับ'}
+            </span>
           </div>
 
           {/* Inner Scrollable Container */}
@@ -1076,8 +1103,8 @@ export default function BookingPage({ params }: PageProps) {
           </div>
         </div>
         </div>
+        </motion.div>
       </div>
     </div>
-  </div>
   )
 }
