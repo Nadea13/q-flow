@@ -14,7 +14,9 @@ import {
   Clock,
   Hourglass,
   RefreshCw,
-  ArrowLeft
+  ArrowLeft,
+  Ticket,
+  Calendar
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
@@ -46,6 +48,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
   // PromptPay QR state
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copiedPayId, setCopiedPayId] = useState(false)
+  const [copiedBookingId, setCopiedBookingId] = useState(false)
 
   // Slip upload state
   const [slipFile, setSlipFile] = useState<File | null>(null)
@@ -331,48 +334,178 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 </p>
               </div>
 
-              {/* Voucher Card */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 relative overflow-hidden">
-                <div className="# border-slate-200 dark:border-slate-800 pb-3 flex justify-between items-center">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('bookingId')}
-                  </span>
-                  <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-extrabold bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/60">
-                    #{booking.id.slice(0, 8).toUpperCase()}
-                  </span>
+              {/* Authentic Boarding Pass / Queue Ticket Card */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm relative">
+                {/* Top Ticket Header Banner */}
+                <div className="bg-linear-to-r from-indigo-600 via-indigo-500 to-emerald-500 text-white p-4 sm:p-5 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Ticket className="w-4 h-4 text-emerald-200" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100">
+                        QFLOW QUEUE PASS
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[10px] font-extrabold uppercase tracking-wider text-white border border-white/30">
+                      {isCompleted ? 'COMPLETED' : 'CONFIRMED'}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="min-w-0 pr-2">
+                      <h3 className="text-base font-extrabold text-white truncate drop-shadow-2xs">
+                        {merchant.name}
+                      </h3>
+                      <p className="text-[11px] text-indigo-100/90 truncate">
+                        {service.title}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-[10px] uppercase font-bold text-indigo-200">
+                        {t('bookingId')}
+                      </div>
+                      <div className="font-mono text-xs sm:text-sm font-black text-white tracking-wider">
+                        #{booking.id.slice(0, 8).toUpperCase()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-right">{service.title}</span>
+                {/* Perforated Tear Line with Left & Right Cutout Notches (Top) */}
+                <div className="relative flex items-center bg-slate-50/70 dark:bg-slate-950/40">
+                  <div className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 -translate-x-1/2 shrink-0 z-10" />
+                  <div className="grow border-b-2 border-dashed border-slate-300 dark:border-slate-700 mx-2" />
+                  <div className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 translate-x-1/2 shrink-0 z-10" />
+                </div>
+
+                {/* Ticket Main Details Body */}
+                <div className="p-4 sm:p-5 bg-slate-50/70 dark:bg-slate-950/40 space-y-3.5">
+                  {/* Highlight: Big Date & Time Section */}
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <Calendar className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                          {t('dateTime')}
+                        </div>
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                          {format(startTime, 'dd/MM/yyyy')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {t('selectTimeSlot')}
+                      </div>
+                      <div className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
+                        {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">
-                      {format(startTime, 'dd/MM/yyyy')}
-                    </span>
+
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-xl p-3">
+                      <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-0.5">
+                        {t('customer')}
+                      </div>
+                      <div className="font-bold text-slate-900 dark:text-white truncate">
+                        {booking.customer_name}
+                      </div>
+                      <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {booking.customer_phone}
+                      </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-xl p-3">
+                      <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-0.5">
+                        {t('depositAmount')}
+                      </div>
+                      <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                        ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
+                      </div>
+                      <div className="text-[10px] font-semibold text-emerald-600/80 dark:text-emerald-400/80">
+                        ✓ {isCompleted ? 'เสร็จสิ้น' : 'ยืนยันแล้ว'}
+                      </div>
+                    </div>
+
+                    {booking.staff && (
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-xl p-3">
+                        <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-0.5">
+                          ช่าง / ผู้ให้บริการ
+                        </div>
+                        <div className="font-bold text-slate-900 dark:text-white truncate">
+                          {booking.staff.name}
+                        </div>
+                      </div>
+                    )}
+
+                    {booking.branch && (
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800/80 rounded-xl p-3">
+                        <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-0.5">
+                          สาขา
+                        </div>
+                        <div className="font-bold text-slate-900 dark:text-white truncate">
+                          {booking.branch.name}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('selectTimeSlot')}:</span>
-                    <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                      {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
-                    </span>
+                </div>
+
+                {/* Perforated Tear Line with Left & Right Cutout Notches (Bottom) */}
+                <div className="relative flex items-center bg-slate-50/70 dark:bg-slate-950/40">
+                  <div className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 -translate-x-1/2 shrink-0 z-10" />
+                  <div className="grow border-b-2 border-dashed border-slate-300 dark:border-slate-700 mx-2" />
+                  <div className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 translate-x-1/2 shrink-0 z-10" />
+                </div>
+
+                {/* Ticket Stub & Barcode */}
+                <div className="p-4 bg-white dark:bg-slate-900 text-center space-y-2">
+                  {/* Barcode Graphic */}
+                  <div className="flex items-center justify-center gap-[2.5px] h-8 select-none opacity-80 max-w-[220px] mx-auto">
+                    <div className="w-1.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-2 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-2 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-2.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-2 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-2 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-0.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1.5 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
+                    <div className="w-1 h-full bg-slate-800 dark:bg-slate-200 rounded-xs" />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">{booking.customer_name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('phone')}:</span>
-                    <span className="font-mono text-slate-800 dark:text-slate-200">{booking.customer_phone}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-2.5 font-bold text-sm">
-                    <span className="text-emerald-600 dark:text-emerald-400">{t('depositAmount')}:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
-                    </span>
-                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(booking.id.slice(0, 8).toUpperCase())
+                      setCopiedBookingId(true)
+                      setTimeout(() => setCopiedBookingId(false), 2000)
+                    }}
+                    className="inline-flex items-center gap-1.5 font-mono text-xs font-black tracking-widest text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer px-2.5 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <span>#{booking.id.slice(0, 8).toUpperCase()}</span>
+                    {copiedBookingId ? (
+                      <Check className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-slate-400" />
+                    )}
+                  </button>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                    กรุณาแสดงตั๋วคิวนี้เมื่อถึงร้านเพื่อเข้ารับบริการ
+                  </p>
                 </div>
               </div>
 
