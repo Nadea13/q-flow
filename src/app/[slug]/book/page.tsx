@@ -418,8 +418,8 @@ export default function BookingPage({ params }: PageProps) {
                 {/* Desktop Expandable Search Input (Hidden on mobile) */}
                 <form
                   onSubmit={handleSearchQueue}
-                  className={`hidden sm:flex items-center transition-all duration-300 overflow-hidden ${
-                    isSearchOpen ? 'w-64 opacity-100 mr-2' : 'w-0 opacity-0'
+                  className={`hidden sm:flex items-center transition-all duration-300 py-1.5 ${
+                    isSearchOpen ? 'w-64 opacity-100 mr-2 overflow-visible' : 'w-0 opacity-0 overflow-hidden pointer-events-none'
                   }`}
                 >
                   <div className="relative w-full h-9 flex items-center">
@@ -431,7 +431,7 @@ export default function BookingPage({ params }: PageProps) {
                         if (searchError) setSearchError(null)
                       }}
                       placeholder="ค้นหาคิว (เบอร์โทร/#รหัส)..."
-                      className="w-full h-9 pl-3.5 pr-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 shadow-xs box-border"
+                      className="w-full h-9 pl-3.5 pr-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 shadow-xs box-border transition"
                     />
                     {searchQuery && (
                       <button
