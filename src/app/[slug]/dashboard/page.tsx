@@ -822,7 +822,7 @@ export default function DashboardPage({ params }: PageProps) {
   // 1. Loading State
   if (loading && isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-primary/10 flex items-center justify-center p-4">
         <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -831,7 +831,7 @@ export default function DashboardPage({ params }: PageProps) {
   // 2. AUTHENTICATION GATE SCREEN (PIN / LINE LOGIN)
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 transition-colors">
+      <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 transition-colors">
         <div className="flex justify-between items-center max-w-md w-full mx-auto">
           <Link href="/" className="inline-flex items-center gap-2 group">
             <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
@@ -945,7 +945,7 @@ export default function DashboardPage({ params }: PageProps) {
   // 3. Shop Not Found
   if (!merchant) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 text-center">
+      <div className="min-h-screen bg-primary/10 flex items-center justify-center p-4 text-center">
         <div className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xs">
           <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
           <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-1">ไม่พบร้านค้านี้</h1>
@@ -975,7 +975,7 @@ export default function DashboardPage({ params }: PageProps) {
 
   // 4. MAIN AUTHENTICATED DASHBOARD
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-16 sm:pb-6 transition-colors font-sans antialiased">
+    <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 pb-16 sm:pb-6 transition-colors font-sans antialiased">
       {/* Top Navbar */}
       <header className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">

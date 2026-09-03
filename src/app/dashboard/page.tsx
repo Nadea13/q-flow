@@ -86,7 +86,7 @@ export default function ShopSelectionPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors">
+    <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col justify-between font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors">
       {/* Top Navbar */}
       <header className="border-b border-slate-200/80 dark:border-slate-850/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -346,8 +346,18 @@ export default function ShopSelectionPortalPage() {
               <span>© {new Date().getFullYear()} QFlow Platform. All rights reserved.</span>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <span>Powered by <span className='font-bold'>QFlow</span></span>
+              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+              <div className="flex items-center gap-2">
+                <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+                  {lang === 'th' ? 'เงื่อนไขบริการ' : 'Terms of Service'}
+                </Link>
+                <span>•</span>
+                <Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+                  {lang === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+                </Link>
+              </div>
             </div>
           </div>
         </div>

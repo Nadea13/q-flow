@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -69,7 +69,7 @@ export default function SmartSettingsRedirect() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-primary/10 flex flex-col items-center justify-center p-4 font-sans">
       <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm text-center space-y-5">
         <div className="flex justify-center">
           <QFlowLogo className="h-10 w-10" />
