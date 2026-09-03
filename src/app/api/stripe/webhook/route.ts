@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : String(error)
-    logger.error('Error handling Stripe webhook:', error)
+    logger.error('Error handling Stripe webhook:', { error, message: errMessage })
     await logger.flush()
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }

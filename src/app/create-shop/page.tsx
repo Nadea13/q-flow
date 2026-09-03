@@ -866,9 +866,18 @@ function CreateShopContent() {
           )}
         </AnimatePresence>
 
-        {/* Powered by QFlow Footer */}
-        <div className="flex justify-center items-center text-center text-xs text-slate-400 dark:text-slate-500 pt-1">
+        {/* Powered by QFlow & Legal Links Footer */}
+        <div className="flex flex-col items-center justify-center gap-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500 pt-1">
           <span>Powered by <span className='font-bold'>QFlow</span></span>
+          <div className="flex items-center gap-2">
+            <Link href="/terms" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+              {lang === 'th' ? 'เงื่อนไขบริการ' : 'Terms of Service'}
+            </Link>
+            <span>•</span>
+            <Link href="/privacy" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+              {lang === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

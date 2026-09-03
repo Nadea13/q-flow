@@ -129,7 +129,7 @@ export function FormattedDateInput({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-9 flex items-center justify-center gap-2 px-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border rounded-xl transition cursor-pointer shadow-2xs group ${
+        className={`w-full h-9 flex items-center justify-center gap-2 px-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border rounded-xl transition cursor-pointer shadow-xs group ${
           isOpen
             ? 'border-indigo-500 ring-2 ring-indigo-500/20'
             : 'border-slate-300 dark:border-slate-800'

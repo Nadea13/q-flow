@@ -766,12 +766,22 @@ export default function PricingPage() {
         {/* Bottom Copyright & Legal Sub-footer */}
         <div className="border-t border-slate-200/80 dark:border-slate-850/80 bg-slate-50/50 dark:bg-slate-900/40">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-500">
-            <div className="flex items-center gap-2">
+            <div>
               <span>© {new Date().getFullYear()} QFlow Platform. All rights reserved.</span>
             </div>
 
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <span>Powered by <span className='font-bold'>QFlow</span></span>
+              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+              <div className="flex items-center gap-2">
+                <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+                  {lang === 'th' ? 'เงื่อนไขบริการ' : 'Terms of Service'}
+                </Link>
+                <span>•</span>
+                <Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+                  {lang === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+                </Link>
+              </div>
             </div>
           </div>
         </div>

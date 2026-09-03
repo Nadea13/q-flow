@@ -41,7 +41,8 @@ import {
   saveBranchAction,
   deleteBranchAction
 } from '@/app/actions/dashboard'
-import { createMerchantAction } from '@/app/actions/merchant'
+import { createMerchantAction, deleteMerchantAction } from '@/app/actions/merchant'
+import { listShopsByLineUserIdAction } from '@/app/actions/portal'
 import {
   checkMerchantAuthAction,
   verifyMerchantPinAction,
@@ -53,6 +54,7 @@ import { PRICING_PLANS } from '@/lib/stripe'
 import { useLanguage } from '@/context/LanguageContext'
 import { useTheme } from '@/context/ThemeContext'
 import { CustomDropdown } from '@/components/CustomDropdown'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { TimePicker24h } from '@/components/TimePicker24h'
 import { ThaiAddressSelector } from '@/components/ThaiAddressSelector'
 import { PricingSection } from '@/components/PricingSection'
@@ -90,6 +92,13 @@ export default function SettingsPage({ params }: PageProps) {
   const [staffList, setStaffList] = useState<Staff[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Multi-shop switcher state
+  const [userShops, setUserShops] = useState<{ id: string; name: string; slug: string; logo_url?: string | null }[]>([])
+
+  // Delete Shop Confirmation Modal state
+  const [isDeleteShopModalOpen, setIsDeleteShopModalOpen] = useState(false)
+  const [isDeletingShop, setIsDeletingShop] = useState(false)
 
   // Active Sub-Tab synced with URL: 'shop' (ตั้งค่าร้าน) | 'billing' (แพ็กเกจ & บิลลิ่ง)
   const tabParam = searchParams.get('tab')
@@ -337,7 +346,58 @@ export default function SettingsPage({ params }: PageProps) {
     setBranches(branchRes.data || [])
     setStaffList((staffRes.data as unknown as Staff[]) || [])
     setBookings(bookingRes.data || [])
+
+    // Fetch all shops for this LINE account or owner
+    let lineUid = mData.line_user_id
+    if (!lineUid && lineProfile?.userId) {
+      lineUid = lineProfile.userId
+    }
+    if (!lineUid) {
+      try {
+        const saved = localStorage.getItem('qflow_admin_line_profile')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          lineUid = parsed.userId || null
+        }
+      } catch { }
+    }
+
+    if (lineUid) {
+      const portalRes = await listShopsByLineUserIdAction(lineUid)
+      if (portalRes.success && portalRes.shops && portalRes.shops.length > 0) {
+        setUserShops(portalRes.shops)
+      } else {
+        setUserShops([{ id: mData.id, name: mData.name, slug: mData.slug, logo_url: mData.logo_url }])
+      }
+    } else {
+      setUserShops([{ id: mData.id, name: mData.name, slug: mData.slug, logo_url: mData.logo_url }])
+    }
+
     setLoading(false)
+  }
+
+  // Handle Delete Entire Shop
+  async function handleDeleteShop() {
+    if (!merchant) return
+    setIsDeletingShop(true)
+    try {
+      const res = await deleteMerchantAction(merchant.id, slug)
+      if (res.success) {
+        toast.success(lang === 'th' ? `ลบร้านค้า "${merchant.name}" เรียบร้อยแล้ว` : `Shop "${merchant.name}" deleted successfully`)
+        setIsDeleteShopModalOpen(false)
+        // Check if there are other shops remaining for this user
+        const otherShops = userShops.filter((s) => s.slug !== slug)
+        if (otherShops.length > 0) {
+          router.push(`/${otherShops[0].slug}/settings`)
+        } else {
+          router.push('/shops')
+        }
+      } else {
+        toast.error(res.error || 'เกิดข้อผิดพลาดในการลบร้านค้า')
+      }
+    } finally {
+      setIsDeletingShop(false)
+    }
   }
 
   // Handle PIN Login
@@ -600,7 +660,7 @@ export default function SettingsPage({ params }: PageProps) {
               </span>
             ) : (
               <>
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.035 9.608.391.082.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.573-3.844 2.573-5.292z" />
                 </svg>
                 <span>{lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Log in with LINE'}</span>
@@ -652,17 +712,39 @@ export default function SettingsPage({ params }: PageProps) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Multi-shop Switcher Dropdown */}
+            {userShops.length > 1 && (
+              <CustomDropdown
+                value={slug}
+                onChange={(targetSlug) => {
+                  if (targetSlug !== slug) {
+                    router.push(`/${targetSlug}/settings`)
+                  }
+                }}
+                prefixIcon={<Store className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                dropdownWidth="w-56"
+                options={userShops.map((s) => ({
+                  value: s.slug,
+                  label: s.name,
+                  sublabel: s.slug === slug ? (lang === 'th' ? 'ร้านปัจจุบัน' : 'Current Shop') : undefined,
+                  icon: <Store className="w-4 h-4 text-indigo-500" />,
+                  avatarUrl: s.logo_url,
+                  avatarFallback: s.name.charAt(0),
+                }))}
+              />
+            )}
+
             {/* Back to Dashboard Button */}
             <Link
               href={`/${slug}/dashboard`}
-              className="h-9 w-9 xs:w-auto xs:px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs active:scale-95 shrink-0"
+              className="h-9 w-9 xs:w-auto xs:px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs active:scale-95 shrink-0"
               title="กลับหน้าแดชบอร์ด"
             >
               <ArrowLeft className="w-4 h-4 xs:w-3.5 xs:h-3.5 shrink-0" />
               <span className="hidden xs:inline">{lang === 'th' ? 'แดชบอร์ด' : 'Dashboard'}</span>
             </Link>
 
-            {/* Copy Customer Booking Link Button (1:1 Aspect Ratio - Matches Dropdown height) */}
+            {/* Copy Customer Booking Link Button */}
             <button
               type="button"
               onClick={() => {
@@ -674,7 +756,7 @@ export default function SettingsPage({ params }: PageProps) {
               }}
               aria-label={lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link'}
               title={copiedLink ? (lang === 'th' ? 'คัดลอกแล้ว!' : 'Copied!') : (lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link')}
-              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-2xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${copiedLink
+              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${copiedLink
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
                   : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border-slate-300 dark:border-slate-800'
                 }`}
@@ -682,23 +764,23 @@ export default function SettingsPage({ params }: PageProps) {
               {copiedLink ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
             </button>
 
-            {/* Profile Dropdown Menu (1:1 Aspect Ratio - Matches Dropdown height) */}
+            {/* Profile Dropdown Menu */}
             <div className="relative shrink-0" ref={userMenuRef}>
               <button
                 type="button"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 transition active:scale-95 focus:outline-none flex items-center justify-center aspect-square shadow-2xs cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 transition active:scale-95 focus:outline-none flex items-center justify-center aspect-square shadow-xs cursor-pointer"
                 aria-label="User Profile Menu"
               >
                 {lineProfile?.pictureUrl ? (
                   <img
                     src={lineProfile.pictureUrl}
                     alt={lineProfile.displayName || 'LINE Profile'}
-                    className="w-6 h-6 rounded-lg object-cover border border-emerald-500/60 shadow-xs"
+                    className="w-9 h-9 rounded-xl object-cover border border-emerald-500/60 shadow-xs"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+                  <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                   </div>
                 )}
               </button>
@@ -706,24 +788,24 @@ export default function SettingsPage({ params }: PageProps) {
               <AnimatePresence>
                 {userMenuOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                    initial={{ opacity: 0, y: 5, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 p-2 overflow-hidden"
+                    exit={{ opacity: 0, y: 3, scale: 0.96 }}
+                    transition={{ duration: 0.12, ease: 'easeOut' }}
+                    className="absolute right-0 top-full mt-1.5 w-60 max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-2 text-slate-800 dark:text-slate-200 divide-y divide-slate-100 dark:divide-slate-800"
                   >
-                    {/* User Info Header */}
-                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 mb-1.5">
+                    {/* User Profile Header */}
+                    <div className="px-2 py-2 mb-1">
                       <div className="flex items-center gap-2.5">
                         {lineProfile?.pictureUrl ? (
                           <img
                             src={lineProfile.pictureUrl}
                             alt={lineProfile.displayName || 'LINE Profile'}
-                            className="w-9 h-9 rounded-xl object-cover border border-emerald-500/60 shrink-0"
+                            className="w-9 h-9 rounded-xl object-cover border border-emerald-500/60 shadow-xs shrink-0"
                           />
                         ) : (
                           <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                            {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                            {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
@@ -742,23 +824,14 @@ export default function SettingsPage({ params }: PageProps) {
 
                     {/* Menu Actions */}
                     <div className="pt-1 space-y-1">
-                      {/* Share Booking Link in Menu */}
                       <button
                         type="button"
                         onClick={() => {
                           const bookUrl = `${window.location.origin}/${slug}/book`
-                          if (navigator.share) {
-                            navigator.share({
-                              title: `จองคิวออนไลน์ - ${merchant.name}`,
-                              text: `จองคิวทำนัดหมายร้าน ${merchant.name} ผ่านระบบ QFlow`,
-                              url: bookUrl,
-                            }).catch(() => { })
-                          } else {
-                            navigator.clipboard.writeText(bookUrl)
-                            setCopiedLink(true)
-                            toast.success(lang === 'th' ? 'คัดลอกลิงก์จองคิวเรียบร้อยแล้ว!' : 'Booking link copied to clipboard!')
-                            setTimeout(() => setCopiedLink(false), 2500)
-                          }
+                          navigator.clipboard.writeText(bookUrl)
+                          setCopiedLink(true)
+                          toast.success(lang === 'th' ? 'คัดลอกลิงก์จองคิวเรียบร้อยแล้ว!' : 'Booking link copied to clipboard!')
+                          setTimeout(() => setCopiedLink(false), 2000)
                         }}
                         className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
                       >
@@ -771,7 +844,6 @@ export default function SettingsPage({ params }: PageProps) {
                         ) : null}
                       </button>
 
-                      {/* Language Switcher */}
                       <button
                         type="button"
                         onClick={toggleLang}
@@ -786,7 +858,6 @@ export default function SettingsPage({ params }: PageProps) {
                         </span>
                       </button>
 
-                      {/* Theme Switcher */}
                       <button
                         type="button"
                         onClick={toggleTheme}
@@ -794,30 +865,28 @@ export default function SettingsPage({ params }: PageProps) {
                       >
                         <div className="flex items-center gap-2">
                           {theme === 'dark' ? (
-                            <Moon className="w-4 h-4 text-indigo-400" />
-                          ) : (
                             <Sun className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <Moon className="w-4 h-4 text-indigo-500" />
                           )}
-                          <span>{lang === 'th' ? 'ธีมการแสดงผล' : 'Theme'}</span>
+                          <span>{theme === 'dark' ? (lang === 'th' ? 'โหมดสว่าง' : 'Light Mode') : (lang === 'th' ? 'โหมดมืด' : 'Dark Mode')}</span>
                         </div>
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                          {theme === 'dark' ? (lang === 'th' ? 'โหมดมืด' : 'Dark') : (lang === 'th' ? 'โหมดสว่าง' : 'Light')}
+                        <span className="text-[10px] font-semibold text-slate-400 capitalize">
+                          {theme}
                         </span>
                       </button>
 
-                      <div className="border-t border-slate-100 dark:border-slate-800/80 my-1 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUserMenuOpen(false)
-                            handleLogout()
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition cursor-pointer"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span>ออกจากระบบ</span>
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false)
+                          handleLogout()
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>ออกจากระบบ</span>
+                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -835,29 +904,29 @@ export default function SettingsPage({ params }: PageProps) {
             type="button"
             onClick={() => setActiveTab('shop')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'shop'
-              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
-            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <Settings className="w-4 h-4 shrink-0" />
             <span>{lang === 'th' ? 'ตั้งค่าร้านค้า & สาขา' : 'Shop & Branch Settings'}</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('billing')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'billing'
-              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
-            <CreditCard className="w-3.5 h-3.5 shrink-0" />
+            <CreditCard className="w-4 h-4 shrink-0" />
             <span>{lang === 'th' ? 'แพ็กเกจ & บิลลิ่ง' : 'Plans & Billing'}</span>
           </button>
         </div>
 
         {/* TAB 1: SHOP & BRANCH SETTINGS */}
         {activeTab === 'shop' && (
-          <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 space-y-6 w-full shadow-2xs">
+          <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-8 space-y-4 w-full shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -874,13 +943,13 @@ export default function SettingsPage({ params }: PageProps) {
                 onClick={handleOpenNewShop}
                 className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-2xs cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
                 <span>{lang === 'th' ? 'เพิ่มร้านค้าใหม่' : '+ Add New Shop'}</span>
               </button>
             </div>
 
             {/* SHOP LOGO / PROFILE SECTION */}
-            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="relative group shrink-0">
                   {settingsForm.logo_url || merchant?.logo_url ? (
@@ -896,14 +965,14 @@ export default function SettingsPage({ params }: PageProps) {
                   )}
                   {uploadingLogo && (
                     <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center text-white">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     </div>
                   )}
                 </div>
 
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Camera className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <span>{t('shopLogoLabel')}</span>
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-sm">
@@ -929,7 +998,7 @@ export default function SettingsPage({ params }: PageProps) {
                   onClick={() => logoInputRef.current?.click()}
                   className="w-full sm:w-auto px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 shadow-2xs cursor-pointer disabled:opacity-50"
                 >
-                  <Upload className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <Upload className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   <span>{uploadingLogo ? t('uploadingLogo') : t('uploadLogoBtn')}</span>
                 </button>
               </div>
@@ -979,7 +1048,7 @@ export default function SettingsPage({ params }: PageProps) {
               </div>
 
               {/* BRANCHES MANAGEMENT SECTION */}
-              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -1007,7 +1076,7 @@ export default function SettingsPage({ params }: PageProps) {
                     }}
                     className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                     <span>{t('addNewBranchBtn')}</span>
                   </button>
                 </div>
@@ -1024,13 +1093,13 @@ export default function SettingsPage({ params }: PageProps) {
                       return (
                         <div
                           key={b.id}
-                          className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-2.5"
+                          className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-2.5"
                         >
                           <div>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
-                                  <Building2 className="w-3.5 h-3.5" />
+                                  <Building2 className="w-4 h-4" />
                                 </div>
                                 <h5 className="font-bold text-slate-900 dark:text-white text-xs">{b.name}</h5>
                               </div>
@@ -1041,14 +1110,14 @@ export default function SettingsPage({ params }: PageProps) {
 
                             {b.address && (
                               <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-2 flex items-start gap-1">
-                                <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400 mt-0.5" />
+                                <MapPin className="w-4 h-4 shrink-0 text-slate-400 mt-0.5" />
                                 <span className="line-clamp-2">{b.address}</span>
                               </p>
                             )}
 
                             {b.phone && (
                               <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                <Phone className="w-4 h-4 text-slate-400" />
                                 <span>{b.phone}</span>
                               </p>
                             )}
@@ -1068,7 +1137,7 @@ export default function SettingsPage({ params }: PageProps) {
                               }}
                               className="px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition flex items-center gap-1 cursor-pointer"
                             >
-                              <Edit3 className="w-3.5 h-3.5" />
+                              <Edit3 className="w-4 h-4" />
                               <span>{t('edit')}</span>
                             </button>
                             <button
@@ -1077,7 +1146,7 @@ export default function SettingsPage({ params }: PageProps) {
                               className="p-1 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                               title={t('delete')}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -1192,7 +1261,7 @@ export default function SettingsPage({ params }: PageProps) {
                 <CustomDropdown
                   value={settingsForm.slot_interval_min}
                   onChange={(val) => setSettingsForm({ ...settingsForm, slot_interval_min: val })}
-                  prefixIcon={<Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                  prefixIcon={<Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
                   dropdownWidth="w-full sm:w-60"
                   className="w-full"
                   options={[
@@ -1219,12 +1288,45 @@ export default function SettingsPage({ params }: PageProps) {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-98 cursor-pointer"
-            >
-              {t('saveSettingsBtn')}
-            </button>
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <button
+                type="submit"
+                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-98 cursor-pointer"
+              >
+                {t('saveSettingsBtn')}
+              </button>
+            </div>
+
+            {/* Danger Zone: Delete Entire Shop */}
+            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+              <div className="p-5 rounded-3xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400">
+                      <Trash2 className="w-4 h-4" />
+                    </span>
+                    <h4 className="text-sm font-bold text-rose-950 dark:text-rose-200">
+                      {lang === 'th' ? 'ลบร้านค้านี้ถาวร' : 'Delete Shop'}
+                    </h4>
+                  </div>
+                  <p className="text-xs text-rose-700/80 dark:text-rose-300/70 max-w-xl leading-relaxed">
+                    {lang === 'th'
+                      ? 'เมื่อลบร้านค้านี้แล้ว ข้อมูลการจอง บริการ ช่าง และสาขาทั้งหมดของร้านนี้จะถูกลบออกจากระบบอย่างถาวรและไม่สามารถกู้คืนได้'
+                      : 'Deleting this shop will permanently remove all booking records, services, staff, and branch data. This action cannot be undone.'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteShopModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{lang === 'th' ? 'ลบร้านค้านี้' : 'Delete This Shop'}</span>
+                </button>
+              </div>
+            </div>
+
             {/* Powered by QFlow Footer */}
             <div className="flex justify-center items-center pt-2 text-center text-xs text-slate-400 dark:text-slate-500">
               <span>Powered by <span className='font-bold'>QFlow</span></span>
@@ -1368,7 +1470,7 @@ export default function SettingsPage({ params }: PageProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsBranchModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 overflow-y-auto"
           >
             <motion.form
               initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
@@ -1438,9 +1540,9 @@ export default function SettingsPage({ params }: PageProps) {
                 </div>
 
                 {/* PromptPay Info for Branch (Optional) */}
-                <div className="p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-3">
+                <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-3">
                   <div className="flex items-center gap-1.5">
-                    <CreditCard className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <CreditCard className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200">
                       {lang === 'th' ? 'บัญชีพร้อมเพย์เฉพาะสาขานี้ (ไม่บังคับ)' : 'Branch PromptPay (Optional)'}
                     </span>
@@ -1522,7 +1624,7 @@ export default function SettingsPage({ params }: PageProps) {
                   type="submit"
                   className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs cursor-pointer transition flex items-center gap-1.5"
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   <span>{t('save')}</span>
                 </button>
               </div>
@@ -1539,7 +1641,7 @@ export default function SettingsPage({ params }: PageProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsNewShopModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 overflow-y-auto"
           >
             <motion.form
               initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
@@ -1652,7 +1754,7 @@ export default function SettingsPage({ params }: PageProps) {
                     <span>{lang === 'th' ? 'กำลังสร้างร้าน...' : 'Creating...'}</span>
                   ) : (
                     <>
-                      <Check className="w-3.5 h-3.5" />
+                      <Check className="w-4 h-4" />
                       <span>{lang === 'th' ? 'ยืนยันสร้างร้าน' : 'Create Shop'}</span>
                     </>
                   )}
@@ -1679,7 +1781,7 @@ export default function SettingsPage({ params }: PageProps) {
               }`}
           >
             <div className="relative">
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4" />
             </div>
             <span className="text-[10px] mt-0.5 leading-tight">{lang === 'th' ? 'ตั้งค่าร้านค้า & สาขา' : 'Shop & Branches'}</span>
             {activeTab === 'shop' && (
@@ -1700,7 +1802,7 @@ export default function SettingsPage({ params }: PageProps) {
               }`}
           >
             <div className="relative">
-              <CreditCard className="w-5 h-5" />
+              <CreditCard className="w-4 h-4" />
             </div>
             <span className="text-[10px] mt-0.5 leading-tight">{lang === 'th' ? 'แพ็กเกจ & บิลลิ่ง' : 'Plans & Billing'}</span>
             {activeTab === 'billing' && (
@@ -1709,6 +1811,25 @@ export default function SettingsPage({ params }: PageProps) {
           </button>
         </div>
       </nav>
+
+      {/* Confirmation Alert Modal for Deleting Shop */}
+      {merchant && (
+        <ConfirmModal
+          isOpen={isDeleteShopModalOpen}
+          onClose={() => {
+            if (!isDeletingShop) setIsDeleteShopModalOpen(false)
+          }}
+          onConfirm={handleDeleteShop}
+          title={lang === 'th' ? `ยืนยันการลบร้านค้า "${merchant.name}"` : `Delete Shop "${merchant.name}"`}
+          description={lang === 'th'
+            ? `คุณแน่ใจหรือไม่ว่าต้องการลบร้านค้า "${merchant.name}" (Slug: ${slug})? ข้อมูลทั้งหมดรวมถึงประวัติการจอง รายการบริการ รายชื่อช่าง และสาขาจะถูกลบถาวรและไม่สามารถกู้คืนได้`
+            : `Are you sure you want to delete "${merchant.name}"? All bookings, services, staff, and branches will be permanently deleted.`}
+          confirmText={lang === 'th' ? 'ยืนยันลบร้านค้านี้ถาวร' : 'Permanently Delete Shop'}
+          cancelText={lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+          confirmVariant="danger"
+          loading={isDeletingShop}
+        />
+      )}
     </div>
   )
 }

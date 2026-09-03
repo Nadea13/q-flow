@@ -68,6 +68,7 @@ import { NavbarControls } from '@/components/NavbarControls'
 import { QFlowLogo } from '@/components/QFlowLogo'
 
 import { CustomDropdown } from '@/components/CustomDropdown'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import type { Booking, Merchant, Service, Slot, BookingStatus, TimeSlotOption, Branch, Staff } from '@/types/database'
 
 interface PageProps {
@@ -215,6 +216,19 @@ export default function DashboardPage({ params }: PageProps) {
   const [blockStartTime, setBlockStartTime] = useState('12:00')
   const [blockEndTime, setBlockEndTime] = useState('13:00')
   const [blockReason, setBlockReason] = useState('')
+
+  // Confirmation Alert Modal state (for delete block, cancel booking, delete service, delete staff)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    type: 'delete_block' | 'cancel_booking' | 'delete_service' | 'delete_staff'
+    id: string
+    title: string
+    description: string
+    confirmText?: string
+    confirmVariant?: 'danger' | 'warning' | 'primary'
+    details?: React.ReactNode
+  } | null>(null)
+  const [isConfirmLoading, setIsConfirmLoading] = useState(false)
 
 
 
@@ -771,12 +785,12 @@ export default function DashboardPage({ params }: PageProps) {
 
   // Handle Delete Service
   async function handleDeleteService(serviceId: string) {
-    if (confirm('Delete this service?')) {
-      const res = await deleteServiceAction(serviceId, slug)
-      if (res.success) {
-        toast.success(t('delete'))
-        loadDashboardData()
-      }
+    const res = await deleteServiceAction(serviceId, slug)
+    if (res.success) {
+      toast.success(t('delete'))
+      loadDashboardData()
+    } else {
+      toast.error(res.error || 'เกิดข้อผิดพลาดในการลบบริการ')
     }
   }
 
@@ -816,14 +830,34 @@ export default function DashboardPage({ params }: PageProps) {
 
   // Handle Delete Staff
   async function handleDeleteStaff(staffId: string) {
-    if (confirm('ต้องการลบข้อมูลช่างท่านนี้หรือไม่?')) {
-      const res = await deleteStaffAction(staffId, slug)
-      if (res.success) {
-        toast.success(t('delete'))
-        loadDashboardData()
-      } else {
-        toast.error(res.error || 'เกิดข้อผิดพลาด')
+    const res = await deleteStaffAction(staffId, slug)
+    if (res.success) {
+      toast.success(t('delete'))
+      setIsStaffModalOpen(false)
+      setEditingStaff(null)
+      loadDashboardData()
+    } else {
+      toast.error(res.error || 'เกิดข้อผิดพลาด')
+    }
+  }
+
+  // Execute confirmed action from custom modal
+  async function handleExecuteConfirm() {
+    if (!confirmModal) return
+    setIsConfirmLoading(true)
+    try {
+      if (confirmModal.type === 'delete_block') {
+        await handleDeleteBlock(confirmModal.id)
+      } else if (confirmModal.type === 'cancel_booking') {
+        await handleStatusChange(confirmModal.id, 'cancelled')
+      } else if (confirmModal.type === 'delete_service') {
+        await handleDeleteService(confirmModal.id)
+      } else if (confirmModal.type === 'delete_staff') {
+        await handleDeleteStaff(confirmModal.id)
       }
+      setConfirmModal(null)
+    } finally {
+      setIsConfirmLoading(false)
     }
   }
 
@@ -841,7 +875,7 @@ export default function DashboardPage({ params }: PageProps) {
   // 2. AUTHENTICATION GATE SCREEN (PIN / LINE LOGIN)
   if (isAuthenticated === false) {
     return (
-      <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 transition-colors">
+      <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 transition-colors">
         <div className="flex justify-between items-center max-w-md w-full mx-auto">
           <Link href="/" className="inline-flex items-center gap-2 group">
             <QFlowLogo className="h-8 w-8 transition-transform group-hover:scale-105" />
@@ -853,7 +887,7 @@ export default function DashboardPage({ params }: PageProps) {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6"
+          className="max-w-sm w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4"
         >
           <div className="text-center">
             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-2xs">
@@ -928,7 +962,7 @@ export default function DashboardPage({ params }: PageProps) {
               </span>
             ) : (
               <>
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.035 9.608.391.082.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.573-3.844 2.573-5.292z" />
                 </svg>
                 <span>{lang === 'th' ? 'เข้าสู่ระบบด้วย LINE' : 'Log in with LINE'}</span>
@@ -993,7 +1027,7 @@ export default function DashboardPage({ params }: PageProps) {
             : 'border-b border-transparent shadow-none'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">
               <QFlowLogo className="w-full h-full" />
@@ -1019,7 +1053,7 @@ export default function DashboardPage({ params }: PageProps) {
               <CustomDropdown
                 value={selectedBranchFilter}
                 onChange={(val) => handleSelectBranch(val)}
-                prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                prefixIcon={<Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
                 dropdownWidth="w-56"
                 options={[
                   {
@@ -1050,7 +1084,7 @@ export default function DashboardPage({ params }: PageProps) {
               }}
               aria-label={lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link'}
               title={copiedLink ? (lang === 'th' ? 'คัดลอกแล้ว!' : 'Copied!') : (lang === 'th' ? 'คัดลอกลิงก์จองคิว' : 'Copy Booking Link')}
-              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-2xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${
+              className={`w-9 h-9 rounded-xl border transition active:scale-95 shadow-xs aspect-square shrink-0 flex items-center justify-center cursor-pointer ${
                 copiedLink
                   ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
                   : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border-slate-300 dark:border-slate-800'
@@ -1064,18 +1098,18 @@ export default function DashboardPage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 transition active:scale-95 focus:outline-none flex items-center justify-center aspect-square shadow-2xs cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 transition active:scale-95 focus:outline-none flex items-center justify-center aspect-square shadow-xs cursor-pointer"
                 aria-label="User Profile Menu"
               >
                 {lineProfile?.pictureUrl ? (
                   <img
                     src={lineProfile.pictureUrl}
                     alt={lineProfile.displayName || 'LINE Profile'}
-                    className="w-6 h-6 rounded-lg object-cover border border-emerald-500/60 shadow-xs"
+                    className="w-9 h-9 rounded-xl object-cover border border-emerald-500/60 shadow-xs"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+                  <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                   </div>
                 )}
               </button>
@@ -1100,7 +1134,7 @@ export default function DashboardPage({ params }: PageProps) {
                           />
                         ) : (
                           <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                            {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+                            {lineProfile?.displayName ? lineProfile.displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
@@ -1204,36 +1238,36 @@ export default function DashboardPage({ params }: PageProps) {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 pt-0 pb-4 sm:px-8 sm:pt-0 sm:pb-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 pt-0 pb-4 sm:px-8 sm:pt-0 sm:pb-8 space-y-4">
         {/* Metric Cards - Clean Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
-              <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               {t('todayBookings')}
             </div>
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{todayBookings.length}</div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               {t('todayConfirmed')}
             </div>
             <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">{todayConfirmed.length}</div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
-              <DollarSign className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <DollarSign className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
               {t('todayDepositTotal')}
             </div>
             <div className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">฿{todayDepositTotal.toLocaleString()}</div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5 mb-1">
-              <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+              <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               {activeSelectedBranch ? `เวลาทำการ (${activeSelectedBranch.name})` : t('shopHours')}
             </div>
             <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
@@ -1256,40 +1290,40 @@ export default function DashboardPage({ params }: PageProps) {
             type="button"
             onClick={() => setActiveTab('bookings')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'bookings'
-              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
-            <CalendarIcon className="w-3.5 h-3.5 shrink-0" />
+            <CalendarIcon className="w-4 h-4 shrink-0" />
             <span>{t('tabBookings')} ({branchBookings.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('block-slots')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'block-slots'
-              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
-            <Lock className="w-3.5 h-3.5 shrink-0" />
+            <Lock className="w-4 h-4 shrink-0" />
             <span>{t('tabBlockSlots')} ({slots.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('services')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${activeTab === 'services'
-              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-2xs'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
           >
-            <Users className="w-3.5 h-3.5 shrink-0" />
+            <Users className="w-4 h-4 shrink-0" />
             <span>{lang === 'th' ? 'ช่าง และบริการ' : 'Staff & Services'} ({services.length})</span>
           </button>
           <Link
             href={`/${slug}/settings`}
             className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 whitespace-nowrap active:scale-95 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <Settings className="w-4 h-4 shrink-0" />
             <span>{lang === 'th' ? 'ตั้งค่าร้าน & แพ็กเกจ' : 'Settings & Plans'}</span>
           </Link>
         </div>
@@ -1298,9 +1332,9 @@ export default function DashboardPage({ params }: PageProps) {
         {activeTab === 'bookings' && (
           <div className="space-y-4">
             {/* Filters & Actions Bar */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-sm space-y-4">
               {/* Top Row: Date Selector & Add Manual Booking CTA */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
                 {/* Date Navigation Bar (Full Width on Mobile, Inline on Desktop) */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   {/* Previous Day Arrow (1:1 Aspect Ratio) */}
@@ -1314,7 +1348,7 @@ export default function DashboardPage({ params }: PageProps) {
                         setSelectedDate(format(subDays(cur, 1), 'yyyy-MM-dd'))
                       }
                     }}
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 transition active:scale-95 shadow-2xs border border-slate-200 dark:border-slate-700/60 cursor-pointer flex items-center justify-center aspect-square shrink-0"
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 transition active:scale-95 shadow-xs border border-slate-200 dark:border-slate-700/60 cursor-pointer flex items-center justify-center aspect-square shrink-0"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -1339,7 +1373,7 @@ export default function DashboardPage({ params }: PageProps) {
                         setSelectedDate(format(addDays(cur, 1), 'yyyy-MM-dd'))
                       }
                     }}
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 transition active:scale-95 shadow-2xs border border-slate-200 dark:border-slate-700/60 cursor-pointer flex items-center justify-center aspect-square shrink-0"
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 transition active:scale-95 shadow-xs border border-slate-200 dark:border-slate-700/60 cursor-pointer flex items-center justify-center aspect-square shrink-0"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -1348,7 +1382,7 @@ export default function DashboardPage({ params }: PageProps) {
                   <button
                     type="button"
                     onClick={() => setSelectedDate(format(today, 'yyyy-MM-dd'))}
-                    className={`hidden sm:inline-flex items-center text-xs px-3.5 h-9 rounded-xl font-semibold transition active:scale-95 border cursor-pointer shadow-2xs shrink-0 ${
+                    className={`hidden sm:inline-flex items-center text-xs px-3.5 h-9 rounded-xl font-semibold transition active:scale-95 border cursor-pointer shadow-xs shrink-0 ${
                       selectedDate === format(today, 'yyyy-MM-dd')
                         ? 'bg-indigo-600 text-white border-indigo-700 font-bold'
                         : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
@@ -1376,9 +1410,9 @@ export default function DashboardPage({ params }: PageProps) {
                     })
                     setIsManualBookingModalOpen(true)
                   }}
-                  className="w-full sm:w-auto h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer shrink-0"
+                  className="w-full sm:w-auto h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs active:scale-95 cursor-pointer shrink-0"
                 >
-                  <PhoneCall className="w-3.5 h-3.5" />
+                  <PhoneCall className="w-4 h-4" />
                   <span>{t('addManualBookingBtn')}</span>
                 </button>
               </div>
@@ -1393,7 +1427,7 @@ export default function DashboardPage({ params }: PageProps) {
                       <CustomDropdown
                         value={selectedBranchFilter}
                         onChange={(val) => handleSelectBranch(val)}
-                        prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                        prefixIcon={<Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
                         className="w-full"
                         dropdownWidth="w-56"
                         options={[
@@ -1420,7 +1454,7 @@ export default function DashboardPage({ params }: PageProps) {
                       <CustomDropdown
                         value={selectedStaffFilter}
                         onChange={(val) => setSelectedStaffFilter(val)}
-                        prefixIcon={<Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                        prefixIcon={<Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
                         className="w-full"
                         dropdownWidth="w-64"
                         options={[
@@ -1443,7 +1477,7 @@ export default function DashboardPage({ params }: PageProps) {
                   )}
 
                   {/* View Mode Toggle: Grid Timeline vs Detailed List (Fixed at Far Right on mobile, directly inline on desktop) */}
-                  <div className="h-9 flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs shrink-0">
+                  <div className="h-9 flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-xs shrink-0">
                     <button
                       type="button"
                       aria-label="แสดงแบบตารางเวลา (Grid Timeline)"
@@ -1451,7 +1485,7 @@ export default function DashboardPage({ params }: PageProps) {
                       onClick={() => setBookingsViewMode('timeline')}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center transition active:scale-95 cursor-pointer aspect-square ${
                         bookingsViewMode === 'timeline'
-                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
@@ -1464,7 +1498,7 @@ export default function DashboardPage({ params }: PageProps) {
                       onClick={() => setBookingsViewMode('list')}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center transition active:scale-95 cursor-pointer aspect-square ${
                         bookingsViewMode === 'list'
-                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
@@ -1475,7 +1509,7 @@ export default function DashboardPage({ params }: PageProps) {
 
                 {/* Mobile: Row 2 / Desktop: Right Side (Status Filter Segmented Badges) - Only visible in List view */}
                 {bookingsViewMode === 'list' && (
-                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-2xs overflow-x-auto max-w-full shrink-0">
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-xs overflow-x-auto max-w-full shrink-0">
                     {[
                       { id: 'all', label: t('all') },
                       { id: 'confirmed', label: t('statusConfirmed') },
@@ -1489,7 +1523,7 @@ export default function DashboardPage({ params }: PageProps) {
                         onClick={() => setStatusFilter(st.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer active:scale-95 ${
                           statusFilter === st.id
-                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
+                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                             : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
@@ -1597,7 +1631,7 @@ export default function DashboardPage({ params }: PageProps) {
                 return (
                   <div className="space-y-4">
                     {/* Summary Bar & Quick Period Filter Tabs */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-2xs space-y-3">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-sm space-y-4">
                       <div className="flex flex-wrap items-center justify-between gap-2.5">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -1624,13 +1658,13 @@ export default function DashboardPage({ params }: PageProps) {
 
                       {/* Period Switcher Tabs */}
                       {computedTimelineSlots.length > 0 && (
-                        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-slate-100 dark:border-slate-800/80 scrollbar-none">
+                        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
                           <button
                             type="button"
                             onClick={() => setTimelinePeriodFilter('all')}
                             className={`px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
                               timelinePeriodFilter === 'all'
-                                ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-xs'
                                 : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
                             }`}
                           >
@@ -1643,11 +1677,11 @@ export default function DashboardPage({ params }: PageProps) {
                               onClick={() => setTimelinePeriodFilter('morning')}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
                                 timelinePeriodFilter === 'morning'
-                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-xs'
                                   : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
                               }`}
                             >
-                              <Sun className="w-3.5 h-3.5 text-amber-500" />
+                              <Sun className="w-4 h-4 text-amber-500" />
                               <span>{lang === 'th' ? 'รอบเช้า' : 'Morning'}</span>
                               <span className="text-[10px] opacity-80 font-bold">({morningAvail})</span>
                             </button>
@@ -1659,11 +1693,11 @@ export default function DashboardPage({ params }: PageProps) {
                               onClick={() => setTimelinePeriodFilter('afternoon')}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
                                 timelinePeriodFilter === 'afternoon'
-                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-xs'
                                   : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
                               }`}
                             >
-                              <CloudSun className="w-3.5 h-3.5 text-orange-500" />
+                              <CloudSun className="w-4 h-4 text-orange-500" />
                               <span>{lang === 'th' ? 'รอบบ่าย' : 'Afternoon'}</span>
                               <span className="text-[10px] opacity-80 font-bold">({afternoonAvail})</span>
                             </button>
@@ -1675,11 +1709,11 @@ export default function DashboardPage({ params }: PageProps) {
                               onClick={() => setTimelinePeriodFilter('evening')}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
                                 timelinePeriodFilter === 'evening'
-                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-xs'
                                   : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
                               }`}
                             >
-                              <Sunset className="w-3.5 h-3.5 text-rose-500" />
+                              <Sunset className="w-4 h-4 text-rose-500" />
                               <span>{lang === 'th' ? 'รอบเย็น' : 'Evening'}</span>
                               <span className="text-[10px] opacity-80 font-bold">({eveningAvail})</span>
                             </button>
@@ -1691,11 +1725,11 @@ export default function DashboardPage({ params }: PageProps) {
                               onClick={() => setTimelinePeriodFilter('night')}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition cursor-pointer border ${
                                 timelinePeriodFilter === 'night'
-                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-2xs'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 font-bold shadow-xs'
                                   : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750'
                               }`}
                             >
-                              <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                              <Moon className="w-4 h-4 text-indigo-400" />
                               <span>{lang === 'th' ? 'รอบค่ำ' : 'Night'}</span>
                               <span className="text-[10px] opacity-80 font-bold">({nightAvail})</span>
                             </button>
@@ -1713,11 +1747,11 @@ export default function DashboardPage({ params }: PageProps) {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-6">
+                      <div className="space-y-4">
                         {timelineSections.map((sec) => {
                           const SecIcon = sec.icon
                           return (
-                            <div key={sec.id} className="space-y-3">
+                            <div key={sec.id} className="space-y-4">
                               {/* Section Title Header */}
                               <div className="flex items-center justify-between px-1">
                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
@@ -1766,13 +1800,13 @@ export default function DashboardPage({ params }: PageProps) {
                                   return (
                                     <div
                                       key={i}
-                                      className={`p-3 rounded-2xl border transition-colors flex flex-col justify-between min-h-[76px] ${
+                                      className={`p-4 rounded-2xl border transition-colors flex flex-col justify-between min-h-[76px] ${
                                         slot.isAvailable
-                                          ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-sm'
+                                          ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-xs hover:shadow-sm'
                                           : isBreak
                                           ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
                                           : isBooked
-                                          ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80'
+                                          ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80 shadow-xs'
                                           : 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
                                       }`}
                                     >
@@ -1879,7 +1913,7 @@ export default function DashboardPage({ params }: PageProps) {
                   <p className="text-xs text-slate-500 dark:text-slate-400">{t('noBookingsFound')}</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {filteredBookings.map((b) => {
                     const sTime = new Date(b.start_time)
                     const eTime = new Date(b.end_time)
@@ -1887,7 +1921,7 @@ export default function DashboardPage({ params }: PageProps) {
                     return (
                       <div
                         key={b.id}
-                        className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition space-y-3"
+                        className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition space-y-4"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
@@ -1940,7 +1974,7 @@ export default function DashboardPage({ params }: PageProps) {
                         </div>
 
                         {/* Customer Details */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl text-xs">
                           <div>
                             <span className="text-slate-400 dark:text-slate-500 block text-[10px]">{t('customer')}</span>
                             <span className="font-semibold text-slate-900 dark:text-white">{b.customer_name}</span>
@@ -1970,7 +2004,7 @@ export default function DashboardPage({ params }: PageProps) {
                                 onClick={() => setSelectedSlipUrl(b.slip_url)}
                                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 font-semibold active:scale-95 transition"
                               >
-                                <ImageIcon className="w-3.5 h-3.5" />
+                                <ImageIcon className="w-4 h-4" />
                                 {t('viewSlip')} ({b.slip_trans_ref ? `Ref: ${b.slip_trans_ref.slice(0, 8)}...` : 'Slip'})
                               </button>
                             )}
@@ -1987,8 +2021,22 @@ export default function DashboardPage({ params }: PageProps) {
                             )}
                             {b.status !== 'cancelled' && b.status !== 'completed' && (
                               <button
-                                onClick={() => handleStatusChange(b.id, 'cancelled')}
-                                className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-500/20 transition active:scale-95"
+                                onClick={() => {
+                                  const customerInfo = b.customer_name || 'ลูกค้า'
+                                  const svcName = b.services?.title ? ` (${b.services.title})` : ''
+                                  setConfirmModal({
+                                    isOpen: true,
+                                    type: 'cancel_booking',
+                                    id: b.id,
+                                    title: lang === 'th' ? 'ยืนยันการยกเลิกคิว' : 'Confirm Cancel Booking',
+                                    description: lang === 'th'
+                                      ? `คุณต้องการยกเลิกการจองคิวของ "${customerInfo}${svcName}" หรือไม่? เมื่อยกเลิกแล้วสถานะจะถูกเปลี่ยนเป็นยกเลิก`
+                                      : `Are you sure you want to cancel the booking for "${customerInfo}${svcName}"?`,
+                                    confirmText: lang === 'th' ? 'ยกเลิกคิวนี้' : 'Cancel Booking',
+                                    confirmVariant: 'danger',
+                                  })
+                                }}
+                                className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-200 dark:border-rose-500/20 transition active:scale-95 cursor-pointer"
                               >
                                 {t('cancelBooking')}
                               </button>
@@ -2006,11 +2054,11 @@ export default function DashboardPage({ params }: PageProps) {
 
         {/* TAB 2: QUICK BLOCK SLOTS */}
         {activeTab === 'block-slots' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Create Block Form */}
             <form
               onSubmit={handleCreateBlock}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-sm"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 space-y-4 shadow-sm"
             >
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -2058,14 +2106,15 @@ export default function DashboardPage({ params }: PageProps) {
                 type="submit"
                 className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs active:scale-98"
               >
-                <Lock className="w-3.5 h-3.5" />
+                <Lock className="w-4 h-4" />
                 {t('saveBlockBtn')}
               </button>
             </form>
 
             {/* List of Blocked Slots */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                 {t('blockedListTitle')}
               </h4>
 
@@ -2089,8 +2138,21 @@ export default function DashboardPage({ params }: PageProps) {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleDeleteBlock(s.id)}
-                        className="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95"
+                        onClick={() => {
+                          const slotTimeText = `${format(new Date(s.start_time), 'dd/MM/yyyy HH:mm')} - ${format(new Date(s.end_time), 'HH:mm')} น.`
+                          setConfirmModal({
+                            isOpen: true,
+                            type: 'delete_block',
+                            id: s.id,
+                            title: lang === 'th' ? 'ยืนยันการลบการบล็อคเวลา' : 'Confirm Unblock Time Slot',
+                            description: lang === 'th'
+                              ? `ต้องการยกเลิกการบล็อคช่วงเวลา ${slotTimeText} หรือไม่? ช่วงเวลานี้จะกลับมาเปิดให้ลูกค้าจองได้ตามปกติ`
+                              : `Are you sure you want to unblock the slot ${slotTimeText}?`,
+                            confirmText: lang === 'th' ? 'ลบการบล็อคนี้' : 'Unblock Slot',
+                            confirmVariant: 'danger',
+                          })
+                        }}
+                        className="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95 cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -2104,9 +2166,9 @@ export default function DashboardPage({ params }: PageProps) {
 
         {/* TAB 3: MANAGE STAFF & SERVICES */}
         {activeTab === 'services' && (
-          <div className="space-y-6 w-full">
+          <div className="space-y-4 w-full">
             {/* Header & Controls: Staff Selector Dropdown & Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-sm">
               <div className="flex flex-wrap items-center gap-3">
                 {/* Staff Selector Custom Rich Dropdown */}
                 <div className="space-y-1">
@@ -2117,7 +2179,7 @@ export default function DashboardPage({ params }: PageProps) {
                     <CustomDropdown
                       value={selectedStaffFilter}
                       onChange={(val) => setSelectedStaffFilter(val)}
-                      prefixIcon={<Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                      prefixIcon={<Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
                       dropdownWidth="w-72"
                       options={[
                         {
@@ -2183,7 +2245,7 @@ export default function DashboardPage({ params }: PageProps) {
                   }}
                   className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-indigo-700 dark:text-indigo-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-2xs cursor-pointer"
                 >
-                  <UserPlus className="w-3.5 h-3.5" />
+                  <UserPlus className="w-4 h-4" />
                   <span>{t('addNewStaffBtn')}</span>
                 </button>
 
@@ -2195,7 +2257,7 @@ export default function DashboardPage({ params }: PageProps) {
                   }}
                   className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>{t('addNewServiceBtn')}</span>
                 </button>
               </div>
@@ -2203,16 +2265,16 @@ export default function DashboardPage({ params }: PageProps) {
 
             {/* Staff Section: When 'all' is selected, show list of all staff members */}
             {selectedStaffFilter === 'all' ? (
-              <div className="space-y-2.5">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <span>{lang === 'th' ? `รายชื่อช่างผู้ให้บริการทั้งหมด (${staffList.length} ท่าน)` : `All Staff / Providers (${staffList.length})`}</span>
                   </h3>
                 </div>
 
                 {staffList.length === 0 ? (
-                  <div className="p-6 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 shadow-2xs">
+                  <div className="p-6 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4 shadow-2xs">
                     <Users className="w-8 h-8 text-slate-400 mx-auto" />
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -2237,7 +2299,7 @@ export default function DashboardPage({ params }: PageProps) {
                       }}
                       className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer mx-auto"
                     >
-                      <UserPlus className="w-3.5 h-3.5" />
+                      <UserPlus className="w-4 h-4" />
                       <span>{t('addNewStaffBtn')}</span>
                     </button>
                   </div>
@@ -2249,7 +2311,7 @@ export default function DashboardPage({ params }: PageProps) {
                       return (
                         <div
                           key={stf.id}
-                          className="bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/50 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-2xs hover:border-indigo-400 transition"
+                          className="bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/50 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-2xs hover:border-indigo-400 transition"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             {stf.avatar_url ? (
@@ -2334,7 +2396,7 @@ export default function DashboardPage({ params }: PageProps) {
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                          <Building2 className="w-4 h-4 text-indigo-500" />
                           <span>{curStaffBranch ? `สาขา: ${curStaffBranch.name}` : 'ทุกสาขา'}</span>
                           <span>•</span>
                           <span>เปิดให้บริการ {curStaffServiceIds.length} รายการ</span>
@@ -2363,10 +2425,10 @@ export default function DashboardPage({ params }: PageProps) {
             )}
 
             {/* Services List Grid (Filtered by Selected Staff) */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   <span>
                     {selectedStaffFilter === 'all'
                       ? (lang === 'th' ? `รายการบริการทั้งหมด (${services.length})` : `All Services (${services.length})`)
@@ -2391,7 +2453,7 @@ export default function DashboardPage({ params }: PageProps) {
 
                 if (displayedServices.length === 0) {
                   return (
-                    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 shadow-2xs">
+                    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4 shadow-2xs">
                       <Sparkles className="w-8 h-8 text-slate-400 mx-auto" />
                       <div className="space-y-1">
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -2414,7 +2476,7 @@ export default function DashboardPage({ params }: PageProps) {
                           }}
                           className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer mx-auto"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4" />
                           <span>{t('addNewServiceBtn')}</span>
                         </button>
                       ) : (
@@ -2434,7 +2496,7 @@ export default function DashboardPage({ params }: PageProps) {
                               }}
                               className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer mx-auto"
                             >
-                              <Edit3 className="w-3.5 h-3.5" />
+                              <Edit3 className="w-4 h-4" />
                               <span>{lang === 'th' ? 'ปรับรายการบริการ' : 'Edit Services'}</span>
                             </button>
                           )
@@ -2454,7 +2516,7 @@ export default function DashboardPage({ params }: PageProps) {
                       return (
                         <div
                           key={svc.id}
-                          className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-3"
+                          className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-4"
                         >
                           <div>
                             <div className="flex justify-between items-start">
@@ -2498,7 +2560,19 @@ export default function DashboardPage({ params }: PageProps) {
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteService(svc.id)}
+                              onClick={() => {
+                                setConfirmModal({
+                                  isOpen: true,
+                                  type: 'delete_service',
+                                  id: svc.id,
+                                  title: lang === 'th' ? 'ยืนยันการลบบริการ' : 'Confirm Delete Service',
+                                  description: lang === 'th'
+                                    ? `คุณต้องการลบบริการ "${svc.title}" ออกจากระบบหรือไม่? ข้อมูลการให้บริการนี้จะถูกนำออกจากหน้าร้าน`
+                                    : `Are you sure you want to delete the service "${svc.title}"?`,
+                                  confirmText: lang === 'th' ? 'ลบบริการนี้' : 'Delete Service',
+                                  confirmVariant: 'danger',
+                                })
+                              }}
                               className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                               title={t('delete')}
                             >
@@ -2535,7 +2609,7 @@ export default function DashboardPage({ params }: PageProps) {
             }`}
           >
             <div className="relative">
-              <CalendarIcon className="w-5 h-5" />
+              <CalendarIcon className="w-4 h-4" />
               {branchBookings.length > 0 && (
                 <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-indigo-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
                   {branchBookings.length}
@@ -2562,7 +2636,7 @@ export default function DashboardPage({ params }: PageProps) {
             }`}
           >
             <div className="relative">
-              <Lock className="w-5 h-5" />
+              <Lock className="w-4 h-4" />
               {slots.length > 0 && (
                 <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
                   {slots.length}
@@ -2593,11 +2667,11 @@ export default function DashboardPage({ params }: PageProps) {
               })
               setIsManualBookingModalOpen(true)
             }}
-            className="flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 active:scale-95"
+            className="flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer text-primary dark:text-primary hover:opacity-80 active:scale-95"
             title="ลงคิวเอง / รับจองหน้าร้าน"
           >
-            <div className="w-5 h-5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <div className="w-4 h-4 rounded-full bg-primary hover:bg-primary/90 text-white flex items-center justify-center shadow-xs">
+              <Plus className="w-4 h-4 stroke-[3]" />
             </div>
             <span className="text-[10px] mt-0.5 leading-tight font-medium">ลงคิว</span>
           </button>
@@ -2616,7 +2690,7 @@ export default function DashboardPage({ params }: PageProps) {
             }`}
           >
             <div className="relative">
-              <Users className="w-5 h-5" />
+              <Users className="w-4 h-4" />
               {services.length > 0 && (
                 <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] bg-emerald-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center px-0.5">
                   {services.length}
@@ -2634,7 +2708,7 @@ export default function DashboardPage({ params }: PageProps) {
             href={`/${slug}/settings`}
             className="flex flex-col items-center justify-center py-1 rounded-xl transition cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4" />
             <span className="text-[10px] mt-0.5 leading-tight">ตั้งค่าร้าน</span>
           </Link>
         </div>
@@ -2649,7 +2723,7 @@ export default function DashboardPage({ params }: PageProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedSlipUrl(null)}
-            className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0"
           >
             <motion.div
               initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
@@ -2657,7 +2731,7 @@ export default function DashboardPage({ params }: PageProps) {
               exit={{ y: '100%', opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="max-w-md w-full bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 space-y-3 shadow-2xl safe-area-bottom"
+              className="max-w-md w-full bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl p-4 space-y-4 shadow-2xl safe-area-bottom"
             >
               <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-xs font-bold text-slate-900 dark:text-white">{t('viewSlip')}</span>
@@ -2687,7 +2761,7 @@ export default function DashboardPage({ params }: PageProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsStaffModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 overflow-y-auto"
           >
             <motion.form
               initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
@@ -2725,7 +2799,7 @@ export default function DashboardPage({ params }: PageProps) {
               </div>
 
               {/* Scrollable Body */}
-              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+              <div className="p-4 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
@@ -2771,7 +2845,7 @@ export default function DashboardPage({ params }: PageProps) {
                     <CustomDropdown
                       value={editingStaff.branch_id || (branches[0]?.id || '')}
                       onChange={(val) => setEditingStaff({ ...editingStaff, branch_id: val || null })}
-                      prefixIcon={<Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+                      prefixIcon={<Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
                       dropdownWidth="w-full"
                       className="w-full"
                       options={branches.map((b) => ({
@@ -2789,7 +2863,7 @@ export default function DashboardPage({ params }: PageProps) {
                   <label className="text-xs font-bold text-slate-900 dark:text-white block">
                     {t('staffServices')} (เลือกบริการที่ช่างท่านนี้ทำได้) <span className="text-rose-500">*</span>
                   </label>
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800 custom-scrollbar">
+                  <div className="max-h-48 overflow-y-auto space-y-2 p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800 custom-scrollbar">
                     {services.map((svc) => {
                       const isChecked = editingStaff.serviceIds?.includes(svc.id)
                       return (
@@ -2825,13 +2899,24 @@ export default function DashboardPage({ params }: PageProps) {
                     type="button"
                     onClick={() => {
                       if (editingStaff.id) {
-                        handleDeleteStaff(editingStaff.id)
-                        setIsStaffModalOpen(false)
+                        const staffName = editingStaff.name || 'ช่าง'
+                        const staffNickname = editingStaff.nickname ? ` (${editingStaff.nickname})` : ''
+                        setConfirmModal({
+                          isOpen: true,
+                          type: 'delete_staff',
+                          id: editingStaff.id,
+                          title: lang === 'th' ? 'ยืนยันการลบข้อมูลช่าง' : 'Confirm Delete Staff',
+                          description: lang === 'th'
+                            ? `คุณต้องการลบข้อมูลช่าง "${staffName}${staffNickname}" ออกจากร้านหรือไม่? เมื่อลบแล้วคิวในระบบของช่างจะได้รับผลกระทบ`
+                            : `Are you sure you want to delete staff member "${staffName}${staffNickname}"?`,
+                          confirmText: lang === 'th' ? 'ลบช่างท่านนี้' : 'Delete Staff',
+                          confirmVariant: 'danger',
+                        })
                       }
                     }}
                     className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                     <span>{t('delete')}</span>
                   </button>
                 ) : <div />}
@@ -2848,7 +2933,7 @@ export default function DashboardPage({ params }: PageProps) {
                     type="submit"
                     className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs cursor-pointer transition flex items-center gap-1.5"
                   >
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-4 h-4" />
                     <span>{t('save')}</span>
                   </button>
                 </div>
@@ -2866,7 +2951,7 @@ export default function DashboardPage({ params }: PageProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsServiceModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 overflow-y-auto"
           >
             <motion.form
               initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
@@ -2904,7 +2989,7 @@ export default function DashboardPage({ params }: PageProps) {
               </div>
 
               {/* Scrollable Body */}
-              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+              <div className="p-4 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     {t('serviceName')} <span className="text-rose-500">*</span>
@@ -2998,7 +3083,7 @@ export default function DashboardPage({ params }: PageProps) {
                   type="submit"
                   className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs cursor-pointer transition flex items-center gap-1.5"
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   <span>{t('save')}</span>
                 </button>
               </div>
@@ -3013,7 +3098,7 @@ export default function DashboardPage({ params }: PageProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsManualBookingModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 overflow-y-auto"
           >
             <motion.form
               initial={{ y: '100%', opacity: 0.5, scale: 0.98 }}
@@ -3045,7 +3130,7 @@ export default function DashboardPage({ params }: PageProps) {
               </div>
 
               {/* Scrollable Body */}
-              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+              <div className="p-4 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
                 {/* Branch & Staff Selection (Optional / Multi-Branch) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -3061,7 +3146,7 @@ export default function DashboardPage({ params }: PageProps) {
                           selectedSlot: null,
                         })
                       }}
-                      prefixIcon={<Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                      prefixIcon={<Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                       dropdownWidth="w-full"
                       className="w-full"
                       options={[
@@ -3094,7 +3179,7 @@ export default function DashboardPage({ params }: PageProps) {
                           selectedSlot: null,
                         })
                       }}
-                      prefixIcon={<Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                      prefixIcon={<Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                       dropdownWidth="w-full"
                       className="w-full"
                       options={[
@@ -3134,7 +3219,7 @@ export default function DashboardPage({ params }: PageProps) {
                         selectedSlot: null,
                       })
                     }}
-                    prefixIcon={<Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                    prefixIcon={<Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                     dropdownWidth="w-full"
                     className="w-full"
                     placeholder="-- เลือกบริการที่ต้องการ --"
@@ -3168,7 +3253,7 @@ export default function DashboardPage({ params }: PageProps) {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>
                         {lang === 'th'
                           ? `เลือกรอบเวลาว่าง (${selectedManualService?.duration_min || 30} นาที)`
@@ -3245,7 +3330,7 @@ export default function DashboardPage({ params }: PageProps) {
                   type="submit"
                   className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold active:scale-95 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle2 className="w-4 h-4" />
                   <span>{t('createBookingBtn')}</span>
                 </button>
               </div>
@@ -3253,6 +3338,24 @@ export default function DashboardPage({ params }: PageProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Reusable Confirmation Alert Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => {
+            if (!isConfirmLoading) setConfirmModal(null)
+          }}
+          onConfirm={handleExecuteConfirm}
+          title={confirmModal.title}
+          description={confirmModal.description}
+          confirmText={confirmModal.confirmText || (lang === 'th' ? 'ยืนยัน' : 'Confirm')}
+          cancelText={lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+          confirmVariant={confirmModal.confirmVariant || 'danger'}
+          loading={isConfirmLoading}
+          details={confirmModal.details}
+        />
+      )}
     </div>
   )
 }

@@ -449,11 +449,19 @@ export default function BookingDetailPage({ params }: PageProps) {
                       <div className="bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-5 pb-4 border-b border-indigo-900/40">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
-                              <Ticket className="w-3.5 h-3.5 text-indigo-300" />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/90">
-                              QFLOW QUEUE PASS
+                            {merchant.logo_url ? (
+                              <img
+                                src={merchant.logo_url}
+                                alt={merchant.name}
+                                className="w-6 h-6 rounded-lg object-cover border border-white/20 shadow-xs"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center font-bold text-xs text-indigo-200">
+                                {merchant.name ? merchant.name.charAt(0).toUpperCase() : <Store className="w-3.5 h-3.5 text-indigo-300" />}
+                              </div>
+                            )}
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/90 truncate max-w-[200px]">
+                              {merchant.name} PASS
                             </span>
                           </div>
 

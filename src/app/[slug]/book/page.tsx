@@ -32,7 +32,7 @@ import { QFlowLogo } from '@/components/QFlowLogo'
 import { BookingCalendar } from '@/components/BookingCalendar'
 import { SegmentedTimeSlotPicker } from '@/components/SegmentedTimeSlotPicker'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
-import type { Merchant, Service, TimeSlotOption, Branch, Staff } from '@/types/database'
+import type { Merchant, Service, TimeSlotOption, Branch, Staff, Booking } from '@/types/database'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -83,12 +83,12 @@ export default function BookingPage({ params }: PageProps) {
   // Queue Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
-  const [searchResults, setSearchResults] = useState<any[] | null>(null)
+  const [searchResults, setSearchResults] = useState<Booking[] | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
-  async function handleSearchQueue(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSearchQueue(e?: React.FormEvent) {
+    if (e) e.preventDefault()
     const trimmed = searchQuery.trim()
     if (!trimmed) return
 
@@ -465,7 +465,7 @@ export default function BookingPage({ params }: PageProps) {
                   type="button"
                   onClick={() => {
                     if (isSearchOpen && searchQuery.trim()) {
-                      handleSearchQueue({ preventDefault: () => {} } as any)
+                      handleSearchQueue()
                     } else {
                       setIsSearchOpen(!isSearchOpen)
                     }

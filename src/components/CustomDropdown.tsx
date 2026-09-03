@@ -88,7 +88,7 @@ export function CustomDropdown<T extends string = string>({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-9 inline-flex items-center justify-between gap-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs transition active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+        className={`w-full h-9 inline-flex items-center justify-between gap-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs transition active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
           isOpen ? 'ring-2 ring-indigo-500/20 border-indigo-500' : ''
         }`}
       >

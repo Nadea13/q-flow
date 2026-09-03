@@ -190,3 +190,42 @@ export async function createMerchantAction(input: CreateMerchantInput) {
   revalidatePath('/')
   return { success: true, merchant }
 }
+
+export async function deleteMerchantAction(shopId: string, slug: string) {
+  const supabase = await createClient()
+
+  // 1. Delete associated data (cascade or manual cleanup)
+  // Staff services
+  const { data: staffList } = await supabase.from('staff').select('id').eq('shop_id', shopId)
+  if (staffList && staffList.length > 0) {
+    const staffIds = staffList.map((s) => s.id)
+    await supabase.from('staff_services').delete().in('staff_id', staffIds)
+  }
+
+  // Bookings & blocked slots
+  await supabase.from('bookings').delete().eq('shop_id', shopId)
+  await supabase.from('slots').delete().eq('shop_id', shopId)
+
+  // Staff & Services & Branches
+  await supabase.from('staff').delete().eq('shop_id', shopId)
+  await supabase.from('services').delete().eq('shop_id', shopId)
+  await supabase.from('branches').delete().eq('shop_id', shopId)
+
+  // 2. Delete the shop
+  const { error } = await supabase.from('shops').delete().eq('id', shopId)
+  if (error) {
+    logger.error('Failed to delete shop', { shopId, slug, error: error.message })
+    return { success: false, error: error.message }
+  }
+
+  // 3. Clear auth cookie for this shop
+  const cookieStore = await cookies()
+  cookieStore.delete(`qflow_auth_${slug}`)
+
+  logger.info('Shop deleted successfully', { shopId, slug })
+
+  revalidatePath('/')
+  revalidatePath('/shops')
+  return { success: true }
+}
+
