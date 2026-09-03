@@ -27,7 +27,6 @@ import { generatePromptPayQR } from '@/lib/promptpay'
 import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
-import { QFlowLogo } from '@/components/QFlowLogo'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -283,59 +282,38 @@ export default function BookingDetailPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
-      {/* Top Navbar Outside Card */}
-      <nav className="w-full max-w-md px-4 py-3 sm:px-0 sm:pb-4 flex items-center justify-between z-20 shrink-0">
-        <Link href={`/${slug}/book`} className="flex items-center gap-2 group text-white">
-          <QFlowLogo className="w-7 h-7 drop-shadow-sm" />
-          <span className="font-bold text-sm tracking-tight text-white/95">
-            QFlow
-          </span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <NavbarControls />
-        </div>
-      </nav>
-
-      {/* Bottom Sheet Card */}
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
-        {/* Mobile Pull Indicator */}
-        <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
-          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
-        </div>
-
-        {/* Inner Scrollable Container */}
-        <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
-          {/* Header (Matching [slug]/book & Onboarding Layout) */}
-          <div className="flex items-center justify-between pb-1">
+    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
+      {/* 1. Header (Outside Card: Floats on Top of Gradient Background) */}
+      <div className="w-full max-w-md px-5 sm:px-1 py-4 sm:py-3 shrink-0">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             {merchant.logo_url ? (
               <img
                 src={merchant.logo_url}
                 alt={merchant.name}
-                className="w-8 h-8 aspect-square rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+                className="w-9 h-9 aspect-square rounded-xl object-cover border border-white/20 shadow-md shrink-0 bg-white/10"
               />
             ) : (
-              <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+              <div className="p-2 rounded-xl bg-white/15 text-white shrink-0 border border-white/20 backdrop-blur-md">
                 <Store className="h-5 w-5" />
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
+              <h1 className="font-bold text-base text-white truncate drop-shadow-xs">
                 {merchant.name}
               </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-[11px] text-indigo-100/80 truncate">
                 {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span
-              className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${isConfirmed
-                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
+              className={`text-[10px] px-2.5 py-1 rounded-full font-extrabold uppercase tracking-wider backdrop-blur-md ${isConfirmed
+                ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-xs'
                 : isCancelledOrExpired
-                  ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80'
-                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
+                  ? 'bg-rose-500/20 text-rose-200 border border-rose-400/40'
+                  : 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
                 }`}
             >
               {isConfirmed
@@ -347,6 +325,17 @@ export default function BookingDetailPage({ params }: PageProps) {
             <NavbarControls />
           </div>
         </div>
+      </div>
+
+      {/* 2. Main Card Container (70-80% Height on Mobile) */}
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[75vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
+        {/* Mobile Pull Indicator */}
+        <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
+
+        {/* Inner Scrollable Container */}
+        <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
 
         <main className="w-full space-y-4">
           {/* 1. SUCCESS CONFIRMED STATE */}
