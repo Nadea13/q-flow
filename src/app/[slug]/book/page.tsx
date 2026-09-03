@@ -390,13 +390,7 @@ export default function BookingPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
       {/* 1. Top Navbar */}
-      <nav
-        className={`w-full sticky top-0 z-40 transition-all duration-200 ${
-          isScrolled
-            ? 'bg-[#e7e8fa] dark:bg-[#0c102d] border-b border-primary/20 shadow-xs'
-            : 'bg-transparent border-b border-transparent'
-        }`}
-      >
+      <nav className="w-full sticky top-0 z-40 bg-[#e7e8fa] dark:bg-[#0c102d] border-b border-primary/20 shadow-xs transition-colors">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             {step > 1 ? (

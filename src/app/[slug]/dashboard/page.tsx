@@ -987,13 +987,7 @@ export default function DashboardPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 pb-16 sm:pb-6 transition-colors font-sans antialiased">
       {/* Top Navbar */}
-      <header
-        className={`sticky top-0 z-40 transition-all duration-200 ${
-          isScrolled
-            ? 'bg-[#e7e8fa] dark:bg-[#0c102d] border-b border-primary/20 shadow-xs'
-            : 'bg-transparent border-b border-transparent'
-        }`}
-      >
+      <header className="sticky top-0 z-40 bg-[#e7e8fa] dark:bg-[#0c102d] border-b border-primary/20 shadow-xs transition-colors">
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">
