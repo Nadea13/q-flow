@@ -87,7 +87,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
     async function loadData() {
       const { data: bData, error } = await supabase
         .from('bookings')
-        .select('*, shops(*), services(*)')
+        .select('*, shops(*), services(*), branch:branches(*), staff:staff(*)')
         .eq('id', id)
         .single()
 
@@ -300,12 +300,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
       <nav className="w-full sticky top-0 z-40 bg-transparent">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <Link
-              href={`/${slug}/book`}
-              className="w-9 h-9 rounded-xl bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-white flex items-center justify-center transition active:scale-95 shrink-0 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60 shadow-xs"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
             <Link href="/" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">
               <QFlowLogo className="w-full h-full" />
             </Link>
