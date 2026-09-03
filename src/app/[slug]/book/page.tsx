@@ -375,7 +375,7 @@ export default function BookingPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-950 via-slate-900 to-indigo-900 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
+    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[80vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
         {/* Mobile Pull Indicator */}
         <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
