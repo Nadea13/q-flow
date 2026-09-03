@@ -377,7 +377,7 @@ export default function BookingPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
       {/* 1. Top Navbar (Transparent, No Background) */}
       <nav className="w-full sticky top-0 z-40 bg-transparent">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -386,23 +386,23 @@ export default function BookingPage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition active:scale-95 shrink-0 backdrop-blur-md border border-white/20"
+                className="w-9 h-9 rounded-xl bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-white flex items-center justify-center transition active:scale-95 shrink-0 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60 shadow-xs"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-white/15 p-2 text-white shrink-0 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 p-2 text-primary shrink-0 border border-slate-200/60 dark:border-slate-700/60 backdrop-blur-md flex items-center justify-center shadow-xs">
                 <QFlowLogo className="w-full h-full" />
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="font-bold text-sm sm:text-base text-white truncate drop-shadow-xs">
+              <h1 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
                 {merchant.name}
               </h1>
-              <p className="text-[11px] text-indigo-200/90 truncate">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
                 {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
                 {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
-                  <span className="text-amber-300 ml-1.5 font-medium">
+                  <span className="text-amber-600 dark:text-amber-400 ml-1.5 font-medium">
                     (Break {merchant.break_start_time.slice(0, 5)}-{merchant.break_end_time.slice(0, 5)})
                   </span>
                 )}
@@ -428,17 +428,17 @@ export default function BookingPage({ params }: PageProps) {
             <img
               src={merchant.logo_url}
               alt={merchant.name}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-2xl border-2 border-white/20 bg-white/10 backdrop-blur-md"
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md"
             />
           ) : (
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white/15 backdrop-blur-md border-2 border-white/20 shadow-2xl flex items-center justify-center text-white">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-xl flex items-center justify-center text-primary">
               <Store className="w-12 h-12" />
             </div>
           )}
-          <h2 className="mt-3.5 text-lg sm:text-xl font-black text-white drop-shadow-md text-center px-4 tracking-tight">
+          <h2 className="mt-3.5 text-lg sm:text-xl font-black text-slate-900 dark:text-white drop-shadow-xs text-center px-4 tracking-tight">
             {merchant.name}
           </h2>
-          <p className="text-xs text-indigo-100/80 mt-0.5 text-center">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 text-center">
             {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
           </p>
         </div>

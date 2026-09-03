@@ -4,6 +4,7 @@
 
 @theme {
   --font-sans: var(--font-ibm-plex-sans-thai), "IBM Plex Sans Thai", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-primary: var(--primary);
 }
 
 :root {
