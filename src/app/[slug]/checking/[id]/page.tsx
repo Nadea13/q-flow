@@ -15,7 +15,8 @@ import {
   Hourglass,
   RefreshCw,
   ArrowLeft,
-  Ticket
+  Ticket,
+  Store
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
@@ -337,7 +338,32 @@ export default function BookingCheckingPage({ params }: PageProps) {
       </nav>
 
       {/* 2. Content Body Area */}
-      <div className="grow flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 w-full">
+      <div className="grow relative flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 w-full overflow-hidden">
+        {/* Centered Shop Logo & Info in the Backdrop when sheet is collapsed */}
+        <div
+          className={`absolute inset-0 pb-36 pointer-events-none flex flex-col items-center justify-center transition-all duration-500 z-0 ${
+            isCollapsed ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-4'
+          }`}
+        >
+          {merchant.logo_url ? (
+            <img
+              src={merchant.logo_url}
+              alt={merchant.name}
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-2xl border-2 border-white/20 bg-white/10 backdrop-blur-md"
+            />
+          ) : (
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white/15 backdrop-blur-md border-2 border-white/20 shadow-2xl flex items-center justify-center text-white">
+              <Store className="w-12 h-12" />
+            </div>
+          )}
+          <h2 className="mt-3.5 text-lg sm:text-xl font-black text-white drop-shadow-md text-center px-4 tracking-tight">
+            {merchant.name}
+          </h2>
+          <p className="text-xs text-indigo-100/80 mt-0.5 text-center">
+            {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
+          </p>
+        </div>
+
         {/* Main Card Container (Draggable Sheet with interactive pull-down) */}
         <motion.div
           drag="y"
@@ -351,14 +377,14 @@ export default function BookingCheckingPage({ params }: PageProps) {
             }
           }}
           animate={{
-            y: isCollapsed ? '72%' : '0%',
+            y: isCollapsed ? '75%' : '0%',
           }}
           transition={{
             type: 'spring',
             damping: 28,
             stiffness: 280,
           }}
-          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden will-change-transform"
+          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden will-change-transform z-10"
         >
           {/* Mobile Pull Indicator / Drag Handle */}
           <div
@@ -393,7 +419,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
               </div>
 
               {/* High-End Boarding Pass / Queue Ticket */}
-              <div ref={ticketRef} className="shadow-xs select-none bg-white dark:bg-slate-900 rounded-3xl p-1">
+              <div ref={ticketRef} className="shadow-xs select-none">
                 {/* 1. Top Section: Ticket Header & Main Body (No Bottom Border) */}
                 <div className="bg-slate-50/70 dark:bg-slate-950/60 border-t border-x border-slate-200 dark:border-slate-800 rounded-t-3xl overflow-hidden">
                   {/* Header (Sleek Modern Indigo-Navy Gradient) */}
@@ -605,18 +631,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
                     </>
                   )}
                 </button>
-
-                <a
-                  href={`https://line.me/R/msg/text/?${encodeURIComponent(
-                    `🎟️ ตั๋วคิวของฉัน - ${merchant.name}\n\n📌 บริการ: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} - ${format(endTime, 'HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n👤 ลูกค้า: ${booking.customer_name}\n${booking.staff ? `✂️ ช่าง: ${booking.staff.name}\n` : ''}${booking.branch ? `📍 สาขา: ${booking.branch.name}\n` : ''}\n👉 ดูตั๋วคิวและติดตามสถานะสดได้ที่:\n${typeof window !== 'undefined' ? `${window.location.origin}/${slug}/checking/${booking.id}` : ''}`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs sm:text-sm font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-[#06C755]/25 transition active:scale-98"
-                >
-                  <MessageSquare className="w-4 h-4 fill-white shrink-0" />
-                  <span>แชร์ / บันทึกตั๋วเข้า LINE</span>
-                </a>
 
                 <Link
                   href={`/${slug}/book`}
