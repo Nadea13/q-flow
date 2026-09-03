@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, use, useRef } from 'react'
 import Link from 'next/link'
+import { toPng } from 'html-to-image'
 import {
   Copy,
   Download,
@@ -54,6 +55,28 @@ export default function BookingCheckingPage({ params }: PageProps) {
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [savingTicket, setSavingTicket] = useState(false)
+  const ticketRef = useRef<HTMLDivElement>(null)
+
+  async function handleSaveTicketImage() {
+    if (!ticketRef.current || savingTicket) return
+    try {
+      setSavingTicket(true)
+      const dataUrl = await toPng(ticketRef.current, {
+        cacheBust: true,
+        quality: 0.95,
+        pixelRatio: 2,
+      })
+      const link = document.createElement('a')
+      link.download = `qflow-ticket-${booking?.id.slice(0, 8).toUpperCase() || 'pass'}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Failed to save ticket image:', err)
+    } finally {
+      setSavingTicket(false)
+    }
+  }
 
   // Load Booking Data
   useEffect(() => {
@@ -370,7 +393,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
               </div>
 
               {/* High-End Boarding Pass / Queue Ticket */}
-              <div className="shadow-xs select-none">
+              <div ref={ticketRef} className="shadow-xs select-none bg-white dark:bg-slate-900 rounded-3xl p-1">
                 {/* 1. Top Section: Ticket Header & Main Body (No Bottom Border) */}
                 <div className="bg-slate-50/70 dark:bg-slate-950/60 border-t border-x border-slate-200 dark:border-slate-800 rounded-t-3xl overflow-hidden">
                   {/* Header (Sleek Modern Indigo-Navy Gradient) */}
@@ -563,6 +586,26 @@ export default function BookingCheckingPage({ params }: PageProps) {
               </div>
 
               <div className="flex flex-col gap-2.5 pt-1">
+                {/* Save Ticket Image to Device */}
+                <button
+                  type="button"
+                  onClick={handleSaveTicketImage}
+                  disabled={savingTicket}
+                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-indigo-600/25 transition active:scale-98 cursor-pointer"
+                >
+                  {savingTicket ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                      <span>กำลังสร้างรูปตั๋ว...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 shrink-0" />
+                      <span>บันทึกรูปตั๋วลงเครื่อง</span>
+                    </>
+                  )}
+                </button>
+
                 <a
                   href={`https://line.me/R/msg/text/?${encodeURIComponent(
                     `🎟️ ตั๋วคิวของฉัน - ${merchant.name}\n\n📌 บริการ: ${service.title}\n📅 วันที่: ${format(startTime, 'dd/MM/yyyy HH:mm')} - ${format(endTime, 'HH:mm')} น.\n🔖 รหัสคิว: #${booking.id.slice(0, 8).toUpperCase()}\n👤 ลูกค้า: ${booking.customer_name}\n${booking.staff ? `✂️ ช่าง: ${booking.staff.name}\n` : ''}${booking.branch ? `📍 สาขา: ${booking.branch.name}\n` : ''}\n👉 ดูตั๋วคิวและติดตามสถานะสดได้ที่:\n${typeof window !== 'undefined' ? `${window.location.origin}/${slug}/checking/${booking.id}` : ''}`
@@ -572,7 +615,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                   className="w-full py-3.5 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs sm:text-sm font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-[#06C755]/25 transition active:scale-98"
                 >
                   <MessageSquare className="w-4 h-4 fill-white shrink-0" />
-                  <span>บันทึกตั๋วเข้า LINE</span>
+                  <span>แชร์ / บันทึกตั๋วเข้า LINE</span>
                 </a>
 
                 <Link
