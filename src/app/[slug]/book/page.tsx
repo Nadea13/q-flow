@@ -391,21 +391,21 @@ export default function BookingPage({ params }: PageProps) {
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 p-2 text-primary shrink-0 border border-slate-200/60 dark:border-slate-700/60 backdrop-blur-md flex items-center justify-center shadow-xs">
+              <Link href="/" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">
                 <QFlowLogo className="w-full h-full" />
-              </div>
+              </Link>
             )}
             <div className="min-w-0">
-              <h1 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">
+                  QFlow
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-bold">
+                  Queue
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {merchant.name}
-              </h1>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
-                {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
-                  <span className="text-amber-600 dark:text-amber-400 ml-1.5 font-medium">
-                    (Break {merchant.break_start_time.slice(0, 5)}-{merchant.break_end_time.slice(0, 5)})
-                  </span>
-                )}
               </p>
             </div>
           </div>
