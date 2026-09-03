@@ -411,14 +411,15 @@ export default function BookingPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Right Controls + Integrated Navbar Search */}
+          {/* Right Controls + Integrated Navbar Search Button */}
           <div className="flex items-center gap-2 shrink-0">
             {step === 1 && (
               <div className="relative flex items-center">
+                {/* Desktop Expandable Search Input (Hidden on mobile) */}
                 <form
                   onSubmit={handleSearchQueue}
-                  className={`flex items-center transition-all duration-300 overflow-hidden ${
-                    isSearchOpen ? 'w-48 sm:w-64 opacity-100 mr-2' : 'w-0 opacity-0'
+                  className={`hidden sm:flex items-center transition-all duration-300 overflow-hidden ${
+                    isSearchOpen ? 'w-64 opacity-100 mr-2' : 'w-0 opacity-0'
                   }`}
                 >
                   <div className="relative w-full h-9 flex items-center">
@@ -444,6 +445,7 @@ export default function BookingPage({ params }: PageProps) {
                   </div>
                 </form>
 
+                {/* Search Toggle Button */}
                 <button
                   type="button"
                   onClick={() => {
@@ -472,6 +474,52 @@ export default function BookingPage({ params }: PageProps) {
             <NavbarControls />
           </div>
         </div>
+
+        {/* Mobile Drop-down Search Bar (Appears below Navbar on Mobile) */}
+        <AnimatePresence>
+          {step === 1 && isSearchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="sm:hidden w-full px-4 pb-3 overflow-hidden"
+            >
+              <form onSubmit={handleSearchQueue} className="relative w-full flex items-center gap-2">
+                <div className="relative grow h-10 flex items-center">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    autoFocus
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      if (searchError) setSearchError(null)
+                    }}
+                    placeholder="ค้นหาคิวของคุณ (เบอร์โทร หรือ รหัสคิว #...)"
+                    className="w-full h-10 pl-9 pr-8 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 shadow-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSearching || !searchQuery.trim()}
+                  className="h-10 px-4 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center shrink-0 shadow-xs active:scale-95"
+                >
+                  {isSearching ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : 'ค้นหา'}
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* 2. Content Body Area */}
