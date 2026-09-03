@@ -483,7 +483,7 @@ export default function BookingPage({ params }: PageProps) {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="sm:hidden w-full px-4 pb-3 overflow-hidden"
+              className="sm:hidden w-full px-4 pt-1.5 pb-4 overflow-visible"
             >
               <form onSubmit={handleSearchQueue} className="relative w-full flex items-center gap-2">
                 <div className="relative grow h-10 flex items-center">
@@ -497,7 +497,7 @@ export default function BookingPage({ params }: PageProps) {
                       if (searchError) setSearchError(null)
                     }}
                     placeholder="ค้นหาคิวของคุณ (เบอร์โทร หรือ รหัสคิว #...)"
-                    className="w-full h-10 pl-9 pr-8 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 shadow-sm"
+                    className="w-full h-10 pl-9 pr-8 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 shadow-xs transition"
                   />
                   {searchQuery && (
                     <button
