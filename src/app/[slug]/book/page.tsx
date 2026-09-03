@@ -85,6 +85,7 @@ export default function BookingPage({ params }: PageProps) {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<any[] | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   async function handleSearchQueue(e: React.FormEvent) {
     e.preventDefault()
@@ -410,7 +411,64 @@ export default function BookingPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* Right Controls + Integrated Navbar Search */}
           <div className="flex items-center gap-2 shrink-0">
+            {step === 1 && (
+              <div className="relative flex items-center">
+                <form
+                  onSubmit={handleSearchQueue}
+                  className={`flex items-center transition-all duration-300 overflow-hidden ${
+                    isSearchOpen ? 'w-48 sm:w-64 opacity-100 mr-1' : 'w-0 opacity-0'
+                  }`}
+                >
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        if (searchError) setSearchError(null)
+                      }}
+                      placeholder="ค้นหาคิว (เบอร์โทร/#รหัส)..."
+                      className="w-full pl-3 pr-7 py-1.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 shadow-xs"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </form>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isSearchOpen && searchQuery.trim()) {
+                      handleSearchQueue({ preventDefault: () => {} } as any)
+                    } else {
+                      setIsSearchOpen(!isSearchOpen)
+                    }
+                  }}
+                  disabled={isSearching}
+                  aria-label="ค้นหาคิว"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0 backdrop-blur-md border shadow-xs cursor-pointer ${
+                    isSearchOpen
+                      ? 'bg-primary text-white border-primary shadow-primary/20'
+                      : 'bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-white border-slate-200/60 dark:border-slate-700/60'
+                  }`}
+                >
+                  {isSearching ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            )}
             <NavbarControls />
           </div>
         </div>
@@ -479,59 +537,16 @@ export default function BookingPage({ params }: PageProps) {
           {/* Inner Scrollable Container */}
           <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
 
-        {/* Quick Search Queue Bar */}
-        {step === 1 && (
+        {/* Search Results / Notification Modal when searched from Navbar */}
+        {step === 1 && (searchResults !== null || searchError) && (
           <div className="space-y-2.5 pt-1">
-            <form onSubmit={handleSearchQueue} className="flex items-center gap-2">
-              <div className="relative grow">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    if (searchError) setSearchError(null)
-                  }}
-                  placeholder="ค้นหาคิวของคุณ (เบอร์โทร หรือ รหัสคิว #...)"
-                  className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('')
-                      setSearchResults(null)
-                      setSearchError(null)
-                    }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-              <button
-                type="submit"
-                disabled={isSearching || !searchQuery.trim()}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-2xs shrink-0 active:scale-95"
-              >
-                {isSearching ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <Search className="w-3.5 h-3.5" />
-                    <span>ค้นหา</span>
-                  </>
-                )}
-              </button>
-            </form>
-
             {/* Search Results Display */}
             {searchResults !== null && (
               <div className="bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Ticket className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span>ผลการค้นหา ({searchResults.length})</span>
+                    <Ticket className="w-3.5 h-3.5 text-primary" />
+                    <span>ผลการค้นหาคิว ({searchResults.length})</span>
                   </span>
                   <button
                     type="button"
@@ -546,7 +561,7 @@ export default function BookingPage({ params }: PageProps) {
                 </div>
 
                 {searchResults.length === 0 ? (
-                  <div className="text-center py-4 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-center py-3 text-xs text-slate-500 dark:text-slate-400">
                     <p className="font-semibold text-slate-700 dark:text-slate-300">ไม่พบคิวที่ตรงกับข้อมูล</p>
                     <p className="text-[11px] mt-0.5">กรุณาตรวจสอบเบอร์โทรศัพท์หรือรหัสคิวอีกครั้ง</p>
                   </div>
@@ -565,7 +580,7 @@ export default function BookingPage({ params }: PageProps) {
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/70 px-1.5 py-0.5 rounded-md">
+                              <span className="font-mono text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
                                 #{b.id.slice(0, 8).toUpperCase()}
                               </span>
                               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${
@@ -590,7 +605,7 @@ export default function BookingPage({ params }: PageProps) {
 
                           <Link
                             href={`/${slug}/checking/${b.id}`}
-                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold shrink-0 transition flex items-center gap-1 active:scale-95"
+                            className="px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-xl text-xs font-semibold shrink-0 transition flex items-center gap-1 active:scale-95 shadow-xs"
                           >
                             <span>ดูตั๋วคิว</span>
                             <ChevronRight className="w-3 h-3" />
@@ -604,9 +619,18 @@ export default function BookingPage({ params }: PageProps) {
             )}
 
             {searchError && (
-              <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{searchError}</span>
+              <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{searchError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSearchError(null)}
+                  className="text-rose-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </div>
