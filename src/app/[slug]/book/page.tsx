@@ -28,6 +28,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createBookingAction, searchCustomerBookingsAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import { BookingCalendar } from '@/components/BookingCalendar'
 import { SegmentedTimeSlotPicker } from '@/components/SegmentedTimeSlotPicker'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
@@ -375,8 +376,22 @@ export default function BookingPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[80vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
+      {/* Top Navbar Outside Card */}
+      <nav className="w-full max-w-md px-4 py-3 sm:px-0 sm:pb-4 flex items-center justify-between z-20 shrink-0">
+        <Link href="/" className="flex items-center gap-2 group text-white">
+          <QFlowLogo className="w-7 h-7 drop-shadow-sm" />
+          <span className="font-bold text-sm tracking-tight text-white/95">
+            QFlow
+          </span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <NavbarControls />
+        </div>
+      </nav>
+
+      {/* Bottom Sheet Card */}
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
         {/* Mobile Pull Indicator */}
         <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
           <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
@@ -384,46 +399,43 @@ export default function BookingPage({ params }: PageProps) {
 
         {/* Inner Scrollable Container */}
         <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
-          {/* Header (Matching Onboarding & Checkout Layout) */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95 shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-            ) : merchant.logo_url ? (
-              <img
-                src={merchant.logo_url}
-                alt={merchant.name}
-                className="w-8 h-8 aspect-square rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
-              />
-            ) : (
-              <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
-                <Store className="h-5 w-5" />
+          {/* Shop Header */}
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => (s - 1) as 1 | 2)}
+                  className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95 shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+              ) : merchant.logo_url ? (
+                <img
+                  src={merchant.logo_url}
+                  alt={merchant.name}
+                  className="w-8 h-8 aspect-square rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
+                />
+              ) : (
+                <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <Store className="h-5 w-5" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
+                  {merchant.name}
+                </h1>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
+                  {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
+                    <span className="text-amber-600 dark:text-amber-400 ml-1">
+                      (Break {merchant.break_start_time.slice(0, 5)}-{merchant.break_end_time.slice(0, 5)})
+                    </span>
+                  )}
+                </p>
               </div>
-            )}
-            <div className="min-w-0">
-              <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
-                {merchant.name}
-              </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
-                {merchant.has_break && merchant.break_start_time && merchant.break_end_time && (
-                  <span className="text-amber-600 dark:text-amber-400 ml-1">
-                    (Break {merchant.break_start_time.slice(0, 5)}-{merchant.break_end_time.slice(0, 5)})
-                  </span>
-                )}
-              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <NavbarControls />
-          </div>
-        </div>
 
         {/* Quick Search Queue Bar */}
         {step === 1 && (

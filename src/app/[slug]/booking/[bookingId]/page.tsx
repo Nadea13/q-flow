@@ -27,6 +27,7 @@ import { generatePromptPayQR } from '@/lib/promptpay'
 import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -282,8 +283,22 @@ export default function BookingDetailPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[80vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
+      {/* Top Navbar Outside Card */}
+      <nav className="w-full max-w-md px-4 py-3 sm:px-0 sm:pb-4 flex items-center justify-between z-20 shrink-0">
+        <Link href={`/${slug}/book`} className="flex items-center gap-2 group text-white">
+          <QFlowLogo className="w-7 h-7 drop-shadow-sm" />
+          <span className="font-bold text-sm tracking-tight text-white/95">
+            QFlow
+          </span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <NavbarControls />
+        </div>
+      </nav>
+
+      {/* Bottom Sheet Card */}
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
         {/* Mobile Pull Indicator */}
         <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
           <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
@@ -292,7 +307,7 @@ export default function BookingDetailPage({ params }: PageProps) {
         {/* Inner Scrollable Container */}
         <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
           {/* Header (Matching [slug]/book & Onboarding Layout) */}
-        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-2.5 min-w-0">
             {merchant.logo_url ? (
               <img

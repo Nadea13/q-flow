@@ -23,6 +23,7 @@ import { generatePromptPayQR } from '@/lib/promptpay'
 import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -269,8 +270,22 @@ export default function BookingCheckingPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[80vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
+      {/* Top Navbar Outside Card */}
+      <nav className="w-full max-w-md px-4 py-3 sm:px-0 sm:pb-4 flex items-center justify-between z-20 shrink-0">
+        <Link href={`/${slug}/book`} className="flex items-center gap-2 group text-white">
+          <QFlowLogo className="w-7 h-7 drop-shadow-sm" />
+          <span className="font-bold text-sm tracking-tight text-white/95">
+            QFlow
+          </span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <NavbarControls />
+        </div>
+      </nav>
+
+      {/* Bottom Sheet Card */}
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
         {/* Mobile Pull Indicator */}
         <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
           <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
@@ -279,43 +294,42 @@ export default function BookingCheckingPage({ params }: PageProps) {
         {/* Inner Scrollable Container */}
         <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
           {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Link
-              href={`/${slug}/book`}
-              className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95 shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
-                {merchant.name}
-              </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
-              </p>
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Link
+                href={`/${slug}/book`}
+                className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition active:scale-95 shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+              <div className="min-w-0">
+                <h1 className="font-bold text-base text-slate-900 dark:text-white truncate">
+                  {merchant.name}
+                </h1>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${isConfirmed || isCompleted
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
+                    : isCancelledOrExpired
+                      ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80'
+                      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
+                  }`}
+              >
+                {isConfirmed
+                  ? 'ยืนยันคิวแล้ว'
+                  : isCompleted
+                    ? 'เสร็จสิ้นบริการ'
+                    : isCancelledOrExpired
+                      ? 'หลุดจอง / ยกเลิก'
+                      : 'รอชำระมัดจำ'}
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span
-              className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${isConfirmed || isCompleted
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80'
-                  : isCancelledOrExpired
-                    ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/80'
-                    : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80'
-                }`}
-            >
-              {isConfirmed
-                ? 'ยืนยันคิวแล้ว'
-                : isCompleted
-                  ? 'เสร็จสิ้นบริการ'
-                  : isCancelledOrExpired
-                    ? 'หลุดจอง / ยกเลิก'
-                    : 'รอชำระมัดจำ'}
-            </span>
-            <NavbarControls />
-          </div>
-        </div>
 
         <main className="w-full space-y-4">
           {/* 1. SUCCESS / CONFIRMED / COMPLETED STATE */}
