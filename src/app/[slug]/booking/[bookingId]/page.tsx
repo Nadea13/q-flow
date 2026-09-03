@@ -283,8 +283,8 @@ export default function BookingDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
-      {/* 1. Top Sticky Navbar */}
-      <nav className="w-full sticky top-0 z-40 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md border-b border-white/10 shadow-xs">
+      {/* 1. Top Navbar (Transparent, No Background) */}
+      <nav className="w-full sticky top-0 z-40 bg-transparent">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             {merchant.logo_url ? (
