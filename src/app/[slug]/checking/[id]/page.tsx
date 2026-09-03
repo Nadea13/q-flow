@@ -25,6 +25,7 @@ import { generatePromptPayQR } from '@/lib/promptpay'
 import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -305,6 +306,9 @@ export default function BookingCheckingPage({ params }: PageProps) {
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
+            <div className="w-10 h-10 rounded-xl bg-white/15 p-2 text-white shrink-0 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-md">
+              <QFlowLogo className="w-full h-full" />
+            </div>
             <div className="min-w-0">
               <h1 className="font-bold text-sm sm:text-base text-white truncate drop-shadow-xs">
                 {merchant.name}

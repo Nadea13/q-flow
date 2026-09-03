@@ -28,6 +28,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createBookingAction, searchCustomerBookingsAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import { BookingCalendar } from '@/components/BookingCalendar'
 import { SegmentedTimeSlotPicker } from '@/components/SegmentedTimeSlotPicker'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
@@ -389,15 +390,9 @@ export default function BookingPage({ params }: PageProps) {
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-            ) : merchant.logo_url ? (
-              <img
-                src={merchant.logo_url}
-                alt={merchant.name}
-                className="w-10 h-10 aspect-square rounded-xl object-cover border border-white/20 shadow-md shrink-0 bg-white/10"
-              />
             ) : (
-              <div className="p-2.5 rounded-xl bg-white/15 text-white shrink-0 border border-white/20 backdrop-blur-md">
-                <Store className="h-5 w-5" />
+              <div className="w-10 h-10 rounded-xl bg-white/15 p-2 text-white shrink-0 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-md">
+                <QFlowLogo className="w-full h-full" />
               </div>
             )}
             <div className="min-w-0">

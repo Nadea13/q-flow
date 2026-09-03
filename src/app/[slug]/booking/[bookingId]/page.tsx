@@ -24,6 +24,7 @@ import { generatePromptPayQR } from '@/lib/promptpay'
 import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/actions/booking'
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
+import { QFlowLogo } from '@/components/QFlowLogo'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -307,17 +308,9 @@ export default function BookingDetailPage({ params }: PageProps) {
       <nav className="w-full sticky top-0 z-40 bg-transparent">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            {merchant.logo_url ? (
-              <img
-                src={merchant.logo_url}
-                alt={merchant.name}
-                className="w-10 h-10 aspect-square rounded-xl object-cover border border-white/20 shadow-md shrink-0 bg-white/10"
-              />
-            ) : (
-              <div className="p-2.5 rounded-xl bg-white/15 text-white shrink-0 border border-white/20 backdrop-blur-md">
-                <Store className="h-5 w-5" />
-              </div>
-            )}
+            <div className="w-10 h-10 rounded-xl bg-white/15 p-2 text-white shrink-0 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-md">
+              <QFlowLogo className="w-full h-full" />
+            </div>
             <div className="min-w-0">
               <h1 className="font-bold text-sm sm:text-base text-white truncate drop-shadow-xs">
                 {merchant.name}
@@ -360,7 +353,7 @@ export default function BookingDetailPage({ params }: PageProps) {
             <img
               src={merchant.logo_url}
               alt={merchant.name}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-2xl border-2 border-white/20 bg-white/10 backdrop-blur-md"
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-2xl border-white/20 bg-white/10 backdrop-blur-md"
             />
           ) : (
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white/15 backdrop-blur-md border-2 border-white/20 shadow-2xl flex items-center justify-center text-white">
