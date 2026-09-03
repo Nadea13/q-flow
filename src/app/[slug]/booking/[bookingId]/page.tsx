@@ -36,7 +36,7 @@ interface PageProps {
 export default function BookingDetailPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const { slug, bookingId } = resolvedParams
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
 
   const [booking, setBooking] = useState<Booking | null>(null)
   const [merchant, setMerchant] = useState<Merchant | null>(null)
@@ -282,11 +282,17 @@ export default function BookingDetailPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-3 sm:p-6 font-sans antialiased">
-      <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+    <div className="min-h-screen bg-linear-to-br from-indigo-950 via-slate-900 to-indigo-900 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[80vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Mobile Pull Indicator */}
+        <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
 
-        {/* Header (Matching [slug]/book & Onboarding Layout) */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        {/* Inner Scrollable Container */}
+        <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
+          {/* Header (Matching [slug]/book & Onboarding Layout) */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             {merchant.logo_url ? (
               <img
@@ -336,10 +342,7 @@ export default function BookingDetailPage({ params }: PageProps) {
               transition={{ duration: 0.3 }}
               className="space-y-5"
             >
-              <div className="text-center pt-2">
-                <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 shadow-2xs">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
+              <div className="text-center">
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   {t('bookingSuccessTitle')}
                 </h2>
@@ -845,9 +848,19 @@ export default function BookingDetailPage({ params }: PageProps) {
           )}
         </main>
 
-        {/* Powered by QFlow Footer inside card */}
-        <div className="flex justify-center items-center mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
+        {/* Powered by QFlow & Legal Links Footer */}
+        <div className="flex flex-col items-center justify-center gap-1.5 mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">
           <span>Powered by <span className='font-bold'>QFlow</span></span>
+          <div className="flex items-center gap-2">
+            <Link href="/terms" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+              {lang === 'th' ? 'เงื่อนไขบริการ' : 'Terms of Service'}
+            </Link>
+            <span>•</span>
+            <Link href="/privacy" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+              {lang === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+            </Link>
+          </div>
+        </div>
         </div>
       </div>
     </div>
