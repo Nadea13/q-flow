@@ -269,26 +269,27 @@ export default function BookingCheckingPage({ params }: PageProps) {
   const isUrgent = secondsLeft !== null && secondsLeft <= 180 // <= 3 minutes
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 font-sans antialiased">
-      {/* 1. Header (Outside Card: Floats on Top of Gradient Background) */}
-      <div className="w-full max-w-md px-5 sm:px-1 py-4 sm:py-3 shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
+    <div className="min-h-screen bg-linear-to-tr from-indigo-600 via-indigo-700 to-indigo-900 dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
+      {/* 1. Top Sticky Navbar */}
+      <nav className="w-full sticky top-0 z-40 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md border-b border-white/10 shadow-xs">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               href={`/${slug}/book`}
-              className="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition active:scale-95 shrink-0 backdrop-blur-md"
+              className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition active:scale-95 shrink-0 backdrop-blur-md border border-white/20"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div className="min-w-0">
-              <h1 className="font-bold text-base text-white truncate drop-shadow-xs">
+              <h1 className="font-bold text-sm sm:text-base text-white truncate drop-shadow-xs">
                 {merchant.name}
               </h1>
-              <p className="text-[11px] text-indigo-100/80 truncate">
+              <p className="text-[11px] text-indigo-200/90 truncate">
                 {merchant.open_time.slice(0, 5)} - {merchant.close_time.slice(0, 5)} น.
               </p>
             </div>
           </div>
+
           <div className="flex items-center gap-2 shrink-0">
             <span
               className={`text-[10px] px-2.5 py-1 rounded-full font-extrabold uppercase tracking-wider backdrop-blur-md ${isConfirmed || isCompleted
@@ -309,17 +310,19 @@ export default function BookingCheckingPage({ params }: PageProps) {
             <NavbarControls />
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* 2. Main Card Container (70-80% Height on Mobile) */}
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[75vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
-        {/* Mobile Pull Indicator */}
-        <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
-          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
-        </div>
+      {/* 2. Content Body Area */}
+      <div className="grow flex flex-col justify-end sm:justify-center items-center p-0 sm:p-6 w-full">
+        {/* Main Card Container (70-80% Height on Mobile) */}
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[75vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
+          {/* Mobile Pull Indicator */}
+          <div className="sm:hidden flex items-center justify-center pt-3 pb-1 shrink-0">
+            <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+          </div>
 
-        {/* Inner Scrollable Container */}
-        <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
+          {/* Inner Scrollable Container */}
+          <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
 
         <main className="w-full space-y-4">
           {/* 1. SUCCESS / CONFIRMED / COMPLETED STATE */}
@@ -807,5 +810,6 @@ export default function BookingCheckingPage({ params }: PageProps) {
 
       </div>
     </div>
+  </div>
   )
 }
