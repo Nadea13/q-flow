@@ -828,7 +828,7 @@ export default function SettingsPage({ params }: PageProps) {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 pt-0 pb-4 sm:px-8 sm:pt-0 sm:pb-8 space-y-6">
         {/* Tab Navigation - Desktop Segmented Pill (Hidden on Mobile) */}
         <div className="hidden sm:flex gap-2 overflow-x-auto scrollbar-none no-scrollbar flex-nowrap">
           <button
