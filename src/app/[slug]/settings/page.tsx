@@ -614,23 +614,25 @@ export default function SettingsPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 pb-16 sm:pb-6 transition-colors font-sans antialiased">
-      {/* Top Navbar - Matching Dashboard exactly */}
-      <header className="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+      {/* Top Navbar - Matching Dashboard and Book exactly */}
+      <header className="bg-transparent sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {merchant.logo_url ? (
-              <img
-                src={merchant.logo_url}
-                alt={merchant.name}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0"
-              />
-            ) : (
-              <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="inline-flex items-center gap-2 group shrink-0">
-                <QFlowLogo className="h-7 w-7 sm:h-8 sm:w-8 transition-transform group-hover:scale-105" />
-              </Link>
-            )}
-            <div className="min-w-0 flex flex-col justify-center">
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight truncate max-w-[130px] sm:max-w-xs">{merchant.name}</h1>
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">
+              <QFlowLogo className="w-full h-full" />
+            </Link>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">
+                  QFlow
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-bold">
+                  Queue
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {merchant.name}
+              </p>
             </div>
           </div>
 
