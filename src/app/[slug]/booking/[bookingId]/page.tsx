@@ -409,543 +409,543 @@ export default function BookingDetailPage({ params }: PageProps) {
           {/* Inner Scrollable Container */}
           <div className="overflow-y-auto p-5 sm:p-7 space-y-5 grow overscroll-contain">
 
-        <main className="w-full space-y-4">
-          {/* 1. SUCCESS CONFIRMED STATE */}
-          {isConfirmed ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-5"
-            >
-              <div className="text-center">
-                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {t('bookingSuccessTitle')}
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {t('bookingSuccessSubtitle')}
-                </p>
-              </div>
-
-              {/* High-End Boarding Pass / Queue Ticket */}
-              <div ref={ticketRef} className="shadow-xs select-none">
-                {/* 1. Top Section: Ticket Header & Main Body (No Bottom Border) */}
-                <div className="bg-slate-50/70 dark:bg-slate-950/60 border-t border-x border-slate-200 dark:border-slate-800 rounded-t-3xl overflow-hidden">
-                  {/* Header (Sleek Modern Indigo-Navy Gradient) */}
-                  <div className="bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-5 pb-4 border-b border-indigo-900/40">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
-                          <Ticket className="w-3.5 h-3.5 text-indigo-300" />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/90">
-                          QFLOW QUEUE PASS
-                        </span>
-                      </div>
-
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-extrabold tracking-wider text-emerald-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        {isConfirmed ? 'CONFIRMED' : 'PENDING'}
-                      </div>
-                    </div>
-
-                    <div className="flex items-end justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-semibold text-indigo-300/80 uppercase tracking-wider mb-0.5">
-                          {merchant.name}
-                        </div>
-                        <h3 className="text-lg font-black text-white truncate tracking-tight">
-                          {service.title}
-                        </h3>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-[9px] uppercase font-bold text-indigo-300/70 tracking-widest">
-                          {t('bookingId')}
-                        </div>
-                        <div className="font-mono text-xs sm:text-sm font-black text-indigo-200 tracking-wider">
-                          #{booking.id.slice(0, 8).toUpperCase()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ticket Body (Clean Boarding Pass Info) */}
-                  <div className="p-5 space-y-4">
-                    {/* Date & Time Highlight */}
-                    <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-slate-800">
-                      <div>
-                        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block">
-                          {t('dateTime')}
-                        </span>
-                        <span className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5 block">
-                          {format(startTime, 'dd/MM/yyyy')}
-                        </span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                          {format(startTime, 'EEEE')}
-                        </span>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block">
-                          {t('selectTimeSlot')}
-                        </span>
-                        <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 tracking-tight mt-0.5 block">
-                          {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                          <Clock className="w-3 h-3 text-slate-400" />
-                          {service.duration_min} {t('minutes')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Clean 2-Column Metadata */}
-                    <div className="grid grid-cols-2 gap-y-3.5 gap-x-4 text-xs">
-                      <div>
-                        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
-                          {t('customer')}
-                        </span>
-                        <span className="font-bold text-slate-900 dark:text-white text-sm block truncate">
-                          {booking.customer_name}
-                        </span>
-                        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                          {booking.customer_phone}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
-                          {t('depositAmount')}
-                        </span>
-                        <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm block">
-                          ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          {isConfirmed ? 'ยืนยันเรียบร้อย' : 'รอชำระ'}
-                        </span>
-                      </div>
-
-                      {booking.staff && (
-                        <div>
-                          <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
-                            ช่าง / ผู้ให้บริการ
-                          </span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
-                            {booking.staff.name}
-                          </span>
-                        </div>
-                      )}
-
-                      {booking.branch && (
-                        <div>
-                          <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
-                            สาขา
-                          </span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
-                            {booking.branch.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Middle Section: Truly Inward Curved Cutout Notches with Perforated Tear Line (No Straight Border Line) */}
-                <div className="flex items-center h-6 -my-[1px] relative select-none">
-                  {/* Left Notch SVG (Curves border inward with zero vertical straight line) */}
-                  <svg width="14" height="24" viewBox="0 0 14 24" fill="none" className="shrink-0 text-slate-200 dark:text-slate-800">
-                    <path d="M0 0 A12 12 0 0 1 0 24 H14 V0 Z" className="fill-slate-50/70 dark:fill-slate-950/60" />
-                    <path d="M0 0 A12 12 0 0 1 0 24" stroke="currentColor" strokeWidth="1" fill="none" />
-                  </svg>
-
-                  {/* Dashed Tear Line */}
-                  <div className="grow border-b border-dashed border-slate-300 dark:border-slate-700 mx-1" />
-
-                  {/* Right Notch SVG (Curves border inward with zero vertical straight line) */}
-                  <svg width="14" height="24" viewBox="0 0 14 24" fill="none" className="shrink-0 text-slate-200 dark:text-slate-800">
-                    <path d="M14 0 A12 12 0 0 0 14 24 H0 V0 Z" className="fill-slate-50/70 dark:fill-slate-950/60" />
-                    <path d="M14 0 A12 12 0 0 0 14 24" stroke="currentColor" strokeWidth="1" fill="none" />
-                  </svg>
-                </div>
-
-                {/* 3. Bottom Section: Ticket Stub & Barcode (No Top Border) */}
-                <div className="bg-slate-50/70 dark:bg-slate-950/60 border-b border-x border-slate-200 dark:border-slate-800 rounded-b-3xl overflow-hidden p-4 sm:p-5 pt-3 text-center space-y-2.5">
-                  {/* Realistic Slim Barcode */}
-                  <div className="flex items-center justify-center gap-[2.5px] h-9 select-none opacity-85 max-w-[240px] mx-auto py-0.5">
-                    <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-2.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-2 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-3 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-2 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-2 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-2.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                    <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(booking.id.slice(0, 8).toUpperCase())
-                      setCopiedBookingId(true)
-                      setTimeout(() => setCopiedBookingId(false), 2000)
-                    }}
-                    className="inline-flex items-center gap-1.5 font-mono text-xs font-black tracking-widest text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs"
-                  >
-                    <span>#{booking.id.slice(0, 8).toUpperCase()}</span>
-                    {copiedBookingId ? (
-                      <Check className="w-3 h-3 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-3 h-3 text-slate-400" />
-                    )}
-                  </button>
-
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                    กรุณาแสดงตั๋วคิวนี้เมื่อถึงร้านเพื่อเข้ารับบริการ
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2.5 pt-1">
-                {/* Save Ticket Image to Device */}
-                <button
-                  type="button"
-                  onClick={handleSaveTicketImage}
-                  disabled={savingTicket}
-                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-indigo-600/25 transition active:scale-98 cursor-pointer"
+            <main className="w-full space-y-4">
+              {/* 1. SUCCESS CONFIRMED STATE */}
+              {isConfirmed ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-5"
                 >
-                  {savingTicket ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                      <span>กำลังสร้างรูปตั๋ว...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 shrink-0" />
-                      <span>บันทึกรูปตั๋วลงเครื่อง</span>
-                    </>
-                  )}
-                </button>
-
-                <Link
-                  href={`/${slug}/book`}
-                  className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold text-center transition border border-slate-200 dark:border-slate-700 shadow-2xs active:scale-98"
-                >
-                  {t('bookMoreBtn')}
-                </Link>
-              </div>
-            </motion.div>
-          ) : isCancelledOrExpired ? (
-            /* 2. EXPIRED / CANCELLED STATE */
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="space-y-5 text-center pt-2"
-            >
-              <div className="w-14 h-14 bg-rose-50 dark:bg-rose-950/60 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-2xs">
-                <Hourglass className="w-8 h-8" />
-              </div>
-
-              <div className="space-y-1.5">
-                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {t('bookingExpiredTitle')}
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                  {t('bookingExpiredDesc')}
-                </p>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs space-y-2 text-left">
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">
-                    {format(startTime, 'dd/MM/yyyy HH:mm')} น.
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{booking.customer_name}</span>
-                </div>
-              </div>
-
-              <Link
-                href={`/${slug}/book`}
-                className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition active:scale-98"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>{t('bookAgainBtn')}</span>
-              </Link>
-            </motion.div>
-          ) : (
-            /* 3. PENDING PAYMENT & SLIP UPLOAD WITH 10-MIN COUNTDOWN */
-            <div className="space-y-4">
-              {/* 10-MINUTE COUNTDOWN URGENCY BANNER */}
-              <div className={`p-4 rounded-2xl border transition-colors flex items-center justify-between gap-3 shadow-2xs ${isUrgent
-                ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
-                : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
-                }`}>
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isUrgent
-                    ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 animate-pulse'
-                    : 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400'
-                    }`}>
-                    <Clock className="w-5 h-5" />
+                  <div className="text-center">
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                      {t('bookingSuccessTitle')}
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {t('bookingSuccessSubtitle')}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold">{t('payWithin10Min')}</p>
-                    <p className="text-[11px] opacity-80 mt-0.5">{t('expiredWarning')}</p>
-                  </div>
-                </div>
 
-                <div className={`px-3 py-1.5 rounded-xl font-mono text-sm font-extrabold tracking-wider shrink-0 border ${isUrgent
-                  ? 'bg-rose-600 text-white border-rose-700 animate-pu'
-                  : 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 shadow-2xs'
-                  }`}>
-                  {formattedTimer}
-                </div>
-              </div>
+                  {/* High-End Boarding Pass / Queue Ticket */}
+                  <div ref={ticketRef} className="shadow-xs select-none">
+                    {/* 1. Top Section: Ticket Header & Main Body (No Bottom Border) */}
+                    <div className="bg-slate-50/70 dark:bg-slate-950/60 border-t border-x border-slate-200 dark:border-slate-800 rounded-t-3xl overflow-hidden">
+                      {/* Header (Sleek Modern Indigo-Navy Gradient) */}
+                      <div className="bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-5 pb-4 border-b border-indigo-900/40">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
+                              <Ticket className="w-3.5 h-3.5 text-indigo-300" />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/90">
+                              QFLOW QUEUE PASS
+                            </span>
+                          </div>
 
-              {/* Ticket Reservation Slip */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xs">
-                <div className="p-4 sm:p-5 pb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black tracking-widest text-indigo-600 dark:text-indigo-400 uppercase flex items-center gap-1.5">
-                      <Ticket className="w-3.5 h-3.5" />
-                      {t('bookingSummary')}
-                    </span>
-                    <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                      #{booking.id.slice(0, 8).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-baseline text-xs mb-1">
-                    <span className="font-bold text-slate-900 dark:text-white text-sm">{service.title}</span>
-                    <span className="text-slate-500 dark:text-slate-400">{service.duration_min} {t('minutes')}</span>
-                  </div>
-                </div>
-
-                {/* Notches & Perforated Line */}
-                <div className="relative flex items-center">
-                  <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 -translate-x-1/2 shrink-0 z-10" />
-                  <div className="grow border-b-2 border-dashed border-slate-200 dark:border-slate-800 mx-1.5" />
-                  <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 translate-x-1/2 shrink-0 z-10" />
-                </div>
-
-                <div className="p-4 sm:p-5 pt-3 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
-                    <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                      {format(startTime, 'dd/MM/yyyy')} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.)
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
-                    <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.customer_name} ({booking.customer_phone})</span>
-                  </div>
-                  {booking.staff && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">ช่าง / ผู้ให้บริการ:</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.staff.name}</span>
-                    </div>
-                  )}
-                  {booking.branch && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">สาขา:</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.branch.name}</span>
-                    </div>
-                  )}
-                  <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
-                    <span className="text-emerald-600 dark:text-emerald-400">{t('depositToPay')}:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* PromptPay QR Code Box */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center space-y-4 shadow-2xs">
-                <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                  <ShieldCheck className="w-4 h-4" />
-                  {t('scanPromptPay')}
-                </div>
-
-                {qrDataUrl ? (
-                  <div className="inline-block p-4 bg-white border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-                    <img
-                      src={qrDataUrl}
-                      alt="PromptPay QR Code"
-                      className="w-52 h-52 mx-auto"
-                    />
-                    <div className="text-slate-800 font-bold text-xs mt-2">
-                      {t('depositPrice')}: ฿{Number(booking.deposit_amount).toLocaleString()}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-52 h-52 bg-slate-100 dark:bg-slate-800 rounded-2xl mx-auto flex items-center justify-center">
-                    <span className="text-xs text-slate-500">{t('loading')}</span>
-                  </div>
-                )}
-
-                {/* PromptPay Details */}
-                {(() => {
-                  const activePromptPayId = booking.branch?.promptpay_id || merchant.promptpay_id
-                  const activePromptPayName = booking.branch?.promptpay_name || merchant.promptpay_name || merchant.name
-                  return (
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
-                      <div className="text-left">
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                          {t('promptpayNumber')} ({activePromptPayName})
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-extrabold tracking-wider text-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            {isConfirmed ? 'CONFIRMED' : 'PENDING'}
+                          </div>
                         </div>
-                        <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{activePromptPayId}</div>
+
+                        <div className="flex items-end justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold text-indigo-300/80 uppercase tracking-wider mb-0.5">
+                              {merchant.name}
+                            </div>
+                            <h3 className="text-lg font-black text-white truncate tracking-tight">
+                              {service.title}
+                            </h3>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-[9px] uppercase font-bold text-indigo-300/70 tracking-widest">
+                              {t('bookingId')}
+                            </div>
+                            <div className="font-mono text-xs sm:text-sm font-black text-indigo-200 tracking-wider">
+                              #{booking.id.slice(0, 8).toUpperCase()}
+                            </div>
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Ticket Body (Clean Boarding Pass Info) */}
+                      <div className="p-5 space-y-4">
+                        {/* Date & Time Highlight */}
+                        <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-slate-800">
+                          <div>
+                            <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block">
+                              {t('dateTime')}
+                            </span>
+                            <span className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5 block">
+                              {format(startTime, 'dd/MM/yyyy')}
+                            </span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              {format(startTime, 'EEEE')}
+                            </span>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block">
+                              {t('selectTimeSlot')}
+                            </span>
+                            <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 tracking-tight mt-0.5 block">
+                              {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                              <Clock className="w-3 h-3 text-slate-400" />
+                              {service.duration_min} {t('minutes')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Clean 2-Column Metadata */}
+                        <div className="grid grid-cols-2 gap-y-3.5 gap-x-4 text-xs">
+                          <div>
+                            <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
+                              {t('customer')}
+                            </span>
+                            <span className="font-bold text-slate-900 dark:text-white text-sm block truncate">
+                              {booking.customer_name}
+                            </span>
+                            <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                              {booking.customer_phone}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
+                              {t('depositAmount')}
+                            </span>
+                            <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm block">
+                              ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                              {isConfirmed ? 'ยืนยันเรียบร้อย' : 'รอชำระ'}
+                            </span>
+                          </div>
+
+                          {booking.staff && (
+                            <div>
+                              <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
+                                ช่าง / ผู้ให้บริการ
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
+                                {booking.staff.name}
+                              </span>
+                            </div>
+                          )}
+
+                          {booking.branch && (
+                            <div>
+                              <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mb-0.5">
+                                สาขา
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
+                                {booking.branch.name}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Middle Section: Truly Inward Curved Cutout Notches with Perforated Tear Line (No Straight Border Line) */}
+                    <div className="flex items-center h-6 -my-[1px] relative select-none">
+                      {/* Left Notch SVG (Curves border inward with zero vertical straight line) */}
+                      <svg width="14" height="24" viewBox="0 0 14 24" fill="none" className="shrink-0 text-slate-200 dark:text-slate-800">
+                        <path d="M0 0 A12 12 0 0 1 0 24 H14 V0 Z" className="fill-slate-50/70 dark:fill-slate-950/60" />
+                        <path d="M0 0 A12 12 0 0 1 0 24" stroke="currentColor" strokeWidth="1" fill="none" />
+                      </svg>
+
+                      {/* Dashed Tear Line */}
+                      <div className="grow border-b border-dashed border-slate-300 dark:border-slate-700 mx-1" />
+
+                      {/* Right Notch SVG (Curves border inward with zero vertical straight line) */}
+                      <svg width="14" height="24" viewBox="0 0 14 24" fill="none" className="shrink-0 text-slate-200 dark:text-slate-800">
+                        <path d="M14 0 A12 12 0 0 0 14 24 H0 V0 Z" className="fill-slate-50/70 dark:fill-slate-950/60" />
+                        <path d="M14 0 A12 12 0 0 0 14 24" stroke="currentColor" strokeWidth="1" fill="none" />
+                      </svg>
+                    </div>
+
+                    {/* 3. Bottom Section: Ticket Stub & Barcode (No Top Border) */}
+                    <div className="bg-slate-50/70 dark:bg-slate-950/60 border-b border-x border-slate-200 dark:border-slate-800 rounded-b-3xl overflow-hidden p-4 sm:p-5 pt-3 text-center space-y-2.5">
+                      {/* Realistic Slim Barcode */}
+                      <div className="flex items-center justify-center gap-[2.5px] h-9 select-none opacity-85 max-w-[240px] mx-auto py-0.5">
+                        <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-2.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-2 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-3 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-2 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-2 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-2.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-0.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1.5 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                        <div className="w-1 h-full bg-slate-900 dark:bg-slate-100 rounded-2xs" />
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => {
-                          if (activePromptPayId) {
-                            navigator.clipboard.writeText(activePromptPayId)
-                            setCopiedPayId(true)
-                            setTimeout(() => setCopiedPayId(false), 2000)
-                          }
+                          navigator.clipboard.writeText(booking.id.slice(0, 8).toUpperCase())
+                          setCopiedBookingId(true)
+                          setTimeout(() => setCopiedBookingId(false), 2000)
                         }}
-                        className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 font-mono text-xs font-black tracking-widest text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer px-3 py-1 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs"
                       >
-                        {copiedPayId ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                            <span>{t('copied')}</span>
-                          </>
+                        <span>#{booking.id.slice(0, 8).toUpperCase()}</span>
+                        {copiedBookingId ? (
+                          <Check className="w-3 h-3 text-emerald-500" />
                         ) : (
-                          <>
-                            <Copy className="w-3 h-3 text-slate-500" />
-                            <span>{t('copy')}</span>
-                          </>
+                          <Copy className="w-3 h-3 text-slate-400" />
                         )}
                       </button>
+
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                        กรุณาแสดงตั๋วคิวนี้เมื่อถึงร้านเพื่อเข้ารับบริการ
+                      </p>
                     </div>
-                  )
-                })()}
-
-                {qrDataUrl && (
-                  <a
-                    href={qrDataUrl}
-                    download={`promptpay-deposit-${booking.id.slice(0, 6)}.png`}
-                    className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    {t('saveQrImage')}
-                  </a>
-                )}
-              </div>
-
-              {/* Slip Upload & SlipOK Verification Section */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <UploadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    {t('attachSlipTitle')}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t('attachSlipSubtitle')}
-                  </p>
-                </div>
-
-                {verifyError && (
-                  <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{verifyError}</span>
                   </div>
-                )}
 
-                {/* Upload Input Zone */}
-                <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-850 transition relative overflow-hidden">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
+                  <div className="flex flex-col gap-2.5 pt-1">
+                    {/* Save Ticket Image to Device */}
+                    <button
+                      type="button"
+                      onClick={handleSaveTicketImage}
+                      disabled={savingTicket}
+                      className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-bold text-center flex items-center justify-center gap-2 shadow-md shadow-indigo-600/25 transition active:scale-98 cursor-pointer"
+                    >
+                      {savingTicket ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                          <span>กำลังสร้างรูปตั๋ว...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 shrink-0" />
+                          <span>บันทึกรูปตั๋วลงเครื่อง</span>
+                        </>
+                      )}
+                    </button>
 
-                  {slipPreview ? (
-                    <div className="space-y-2 text-center">
-                      <img
-                        src={slipPreview}
-                        alt="Slip Preview"
-                        className="max-h-44 rounded-lg mx-auto shadow-sm border border-slate-200 dark:border-slate-800"
-                      />
-                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold block">
-                        {t('changeSlipImage')}
+                    <Link
+                      href={`/${slug}/book`}
+                      className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold text-center transition border border-slate-200 dark:border-slate-700 shadow-2xs active:scale-98"
+                    >
+                      {t('bookMoreBtn')}
+                    </Link>
+                  </div>
+                </motion.div>
+              ) : isCancelledOrExpired ? (
+                /* 2. EXPIRED / CANCELLED STATE */
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="space-y-5 text-center pt-2"
+                >
+                  <div className="w-14 h-14 bg-rose-50 dark:bg-rose-950/60 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-2xs">
+                    <Hourglass className="w-8 h-8" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                      {t('bookingExpiredTitle')}
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                      {t('bookingExpiredDesc')}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs space-y-2 text-left">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">{t('service')}:</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{service.title}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        {format(startTime, 'dd/MM/yyyy HH:mm')} น.
                       </span>
                     </div>
-                  ) : (
-                    <div className="text-center space-y-2">
-                      <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto">
-                        <UploadCloud className="w-4 h-4" />
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">{booking.customer_name}</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/${slug}/book`}
+                    className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition active:scale-98"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>{t('bookAgainBtn')}</span>
+                  </Link>
+                </motion.div>
+              ) : (
+                /* 3. PENDING PAYMENT & SLIP UPLOAD WITH 10-MIN COUNTDOWN */
+                <div className="space-y-4">
+                  {/* 10-MINUTE COUNTDOWN URGENCY BANNER */}
+                  <div className={`p-4 rounded-2xl border transition-colors flex items-center justify-between gap-3 shadow-2xs ${isUrgent
+                    ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
+                    : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
+                    }`}>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isUrgent
+                        ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 animate-pulse'
+                        : 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400'
+                        }`}>
+                        <Clock className="w-5 h-5" />
                       </div>
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        {t('chooseSlipImage')}
-                      </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-500">
-                        {t('supportedFiles')}
+                      <div>
+                        <p className="text-xs font-bold">{t('payWithin10Min')}</p>
+                        <p className="text-[11px] opacity-80 mt-0.5">{t('expiredWarning')}</p>
                       </div>
                     </div>
-                  )}
-                </label>
 
-                <button
-                  type="button"
-                  disabled={!slipFile || verifying}
-                  onClick={handleVerifySlip}
-                  className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
-                >
-                  {verifying ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      {t('verifyingSlip')}
-                    </span>
-                  ) : (
-                    <>
+                    <div className={`px-3 py-1.5 rounded-xl font-mono text-sm font-extrabold tracking-wider shrink-0 border ${isUrgent
+                      ? 'bg-rose-600 text-white border-rose-700 animate-pu'
+                      : 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 shadow-2xs'
+                      }`}>
+                      {formattedTimer}
+                    </div>
+                  </div>
+
+                  {/* Ticket Reservation Slip */}
+                  <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xs">
+                    <div className="p-4 sm:p-5 pb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black tracking-widest text-indigo-600 dark:text-indigo-400 uppercase flex items-center gap-1.5">
+                          <Ticket className="w-3.5 h-3.5" />
+                          {t('bookingSummary')}
+                        </span>
+                        <span className="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                          #{booking.id.slice(0, 8).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-baseline text-xs mb-1">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">{service.title}</span>
+                        <span className="text-slate-500 dark:text-slate-400">{service.duration_min} {t('minutes')}</span>
+                      </div>
+                    </div>
+
+                    {/* Notches & Perforated Line */}
+                    <div className="relative flex items-center">
+                      <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 -translate-x-1/2 shrink-0 z-10" />
+                      <div className="grow border-b-2 border-dashed border-slate-200 dark:border-slate-800 mx-1.5" />
+                      <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 translate-x-1/2 shrink-0 z-10" />
+                    </div>
+
+                    <div className="p-4 sm:p-5 pt-3 space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                          {format(startTime, 'dd/MM/yyyy')} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.)
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 dark:text-slate-400">{t('customer')}:</span>
+                        <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.customer_name} ({booking.customer_phone})</span>
+                      </div>
+                      {booking.staff && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-500 dark:text-slate-400">ช่าง / ผู้ให้บริการ:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.staff.name}</span>
+                        </div>
+                      )}
+                      {booking.branch && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-500 dark:text-slate-400">สาขา:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-medium">{booking.branch.name}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between text-sm font-bold">
+                        <span className="text-emerald-600 dark:text-emerald-400">{t('depositToPay')}:</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          ฿{Number(booking.deposit_amount).toLocaleString()} {t('baht')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PromptPay QR Code Box */}
+                  <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center space-y-4 shadow-2xs">
+                    <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                       <ShieldCheck className="w-4 h-4" />
-                      <span>{t('verifySlipBtn')}</span>
-                    </>
-                  )}
-                </button>
+                      {t('scanPromptPay')}
+                    </div>
+
+                    {qrDataUrl ? (
+                      <div className="inline-block p-4 bg-white border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+                        <img
+                          src={qrDataUrl}
+                          alt="PromptPay QR Code"
+                          className="w-52 h-52 mx-auto"
+                        />
+                        <div className="text-slate-800 font-bold text-xs mt-2">
+                          {t('depositPrice')}: ฿{Number(booking.deposit_amount).toLocaleString()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-52 h-52 bg-slate-100 dark:bg-slate-800 rounded-2xl mx-auto flex items-center justify-center">
+                        <span className="text-xs text-slate-500">{t('loading')}</span>
+                      </div>
+                    )}
+
+                    {/* PromptPay Details */}
+                    {(() => {
+                      const activePromptPayId = booking.branch?.promptpay_id || merchant.promptpay_id
+                      const activePromptPayName = booking.branch?.promptpay_name || merchant.promptpay_name || merchant.name
+                      return (
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs max-w-sm mx-auto flex items-center justify-between">
+                          <div className="text-left">
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                              {t('promptpayNumber')} ({activePromptPayName})
+                            </div>
+                            <div className="font-mono font-bold text-slate-900 dark:text-white text-sm">{activePromptPayId}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (activePromptPayId) {
+                                navigator.clipboard.writeText(activePromptPayId)
+                                setCopiedPayId(true)
+                                setTimeout(() => setCopiedPayId(false), 2000)
+                              }
+                            }}
+                            className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition shadow-2xs active:scale-95 cursor-pointer"
+                          >
+                            {copiedPayId ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                <span>{t('copied')}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-slate-500" />
+                                <span>{t('copy')}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )
+                    })()}
+
+                    {qrDataUrl && (
+                      <a
+                        href={qrDataUrl}
+                        download={`promptpay-deposit-${booking.id.slice(0, 6)}.png`}
+                        className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        {t('saveQrImage')}
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Slip Upload & SlipOK Verification Section */}
+                  <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xs">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <UploadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        {t('attachSlipTitle')}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {t('attachSlipSubtitle')}
+                      </p>
+                    </div>
+
+                    {verifyError && (
+                      <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{verifyError}</span>
+                      </div>
+                    )}
+
+                    {/* Upload Input Zone */}
+                    <label className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-850 transition relative overflow-hidden">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+
+                      {slipPreview ? (
+                        <div className="space-y-2 text-center">
+                          <img
+                            src={slipPreview}
+                            alt="Slip Preview"
+                            className="max-h-44 rounded-lg mx-auto shadow-sm border border-slate-200 dark:border-slate-800"
+                          />
+                          <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold block">
+                            {t('changeSlipImage')}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-2">
+                          <div className="w-9 h-9 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto">
+                            <UploadCloud className="w-4 h-4" />
+                          </div>
+                          <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            {t('chooseSlipImage')}
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-500">
+                            {t('supportedFiles')}
+                          </div>
+                        </div>
+                      )}
+                    </label>
+
+                    <button
+                      type="button"
+                      disabled={!slipFile || verifying}
+                      onClick={handleVerifySlip}
+                      className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition disabled:opacity-40 active:scale-98"
+                    >
+                      {verifying ? (
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          {t('verifyingSlip')}
+                        </span>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>{t('verifySlipBtn')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </main>
+
+            {/* Powered by QFlow & Legal Links Footer */}
+            <div className="flex flex-col items-center justify-center gap-1.5 mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">
+              <span>Powered by <span className='font-bold'>QFlow</span></span>
+              <div className="flex items-center gap-2">
+                <Link href="/terms" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+                  {lang === 'th' ? 'เงื่อนไขบริการ' : 'Terms of Service'}
+                </Link>
+                <span>•</span>
+                <Link href="/privacy" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
+                  {lang === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
+                </Link>
               </div>
             </div>
-          )}
-        </main>
-
-        {/* Powered by QFlow & Legal Links Footer */}
-        <div className="flex flex-col items-center justify-center gap-1.5 mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">
-          <span>Powered by <span className='font-bold'>QFlow</span></span>
-          <div className="flex items-center gap-2">
-            <Link href="/terms" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
-              {lang === 'th' ? 'เงื่อนไขบริการ' : 'Terms of Service'}
-            </Link>
-            <span>•</span>
-            <Link href="/privacy" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition">
-              {lang === 'th' ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy'}
-            </Link>
           </div>
-        </div>
-        </div>
         </motion.div>
       </div>
     </div>
