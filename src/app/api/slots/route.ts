@@ -38,9 +38,9 @@ export async function GET(request: Request) {
     branch = bData
   }
 
-  // 2. Fetch existing bookings for that date
-  const startOfDay = `${dateStr}T00:00:00Z`
-  const endOfDay = `${dateStr}T23:59:59Z`
+  // 2. Fetch existing bookings for that date (in Bangkok UTC+7)
+  const startOfDay = `${dateStr}T00:00:00+07:00`
+  const endOfDay = `${dateStr}T23:59:59+07:00`
 
   let bookingsQuery = supabase
     .from('bookings')

@@ -23,6 +23,7 @@ import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/action
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import { QFlowLogo } from '@/components/QFlowLogo'
+import { formatBangkokDate, formatBangkokTime, formatBangkokDateTime } from '@/lib/date-utils'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -399,7 +400,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
             damping: 28,
             stiffness: 280,
           }}
-          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden will-change-transform z-10"
+          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[90vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden will-change-transform z-10"
         >
           {/* Mobile Pull Indicator / Drag Handle */}
           <div
@@ -492,7 +493,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                           {t('dateTime')}
                         </span>
                         <span className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5 block">
-                          {format(startTime, 'dd/MM/yyyy')}
+                          {formatBangkokDate(startTime)}
                         </span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400">
                           {format(startTime, 'EEEE')}
@@ -504,7 +505,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                           {t('selectTimeSlot')}
                         </span>
                         <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 tracking-tight mt-0.5 block">
-                          {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
+                          {formatBangkokTime(startTime)} - {formatBangkokTime(endTime)} น.
                         </span>
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                           <Clock className="w-3 h-3 text-slate-400" />
@@ -691,7 +692,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
-                    {format(startTime, 'dd/MM/yyyy HH:mm')} น.
+                    {formatBangkokDateTime(startTime)} น.
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -711,20 +712,19 @@ export default function BookingCheckingPage({ params }: PageProps) {
           ) : (
             /* 3. PENDING PAYMENT & SLIP UPLOAD WITH 10-MIN COUNTDOWN */
             <div className="space-y-4">
-              {/* 10-MINUTE COUNTDOWN URGENCY BANNER */}
-              <div className={`p-4 rounded-2xl border transition-colors flex items-center justify-between gap-3 shadow-2xs ${isUrgent
-                  ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
-                  : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-200'
-                }`}>
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isUrgent
-                      ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 animate-pulse'
-                      : 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400'
-                    }`}>
-                    <Clock className="w-5 h-5" />
+              {/* Payment Countdown Notice */}
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <Hourglass className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-pulse" />
                   </div>
-                  <div>
-                    <p className="text-xs font-bold">{t('payWithin10Min')}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {t('payWithin10Min')}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                      {t('expiredWarning')}
+                    </p>
                   </div>
                 </div>
 
@@ -745,7 +745,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                   <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                    {format(startTime, 'dd/MM/yyyy')} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.)
+                    {formatBangkokDate(startTime)} ({formatBangkokTime(startTime)} - {formatBangkokTime(endTime)} น.)
                   </span>
                 </div>
               </div>

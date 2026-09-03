@@ -24,6 +24,7 @@ import { verifyAndConfirmBookingAction, expireBookingAction } from '@/app/action
 import { useLanguage } from '@/context/LanguageContext'
 import { NavbarControls } from '@/components/NavbarControls'
 import { QFlowLogo } from '@/components/QFlowLogo'
+import { formatBangkokDate, formatBangkokTime, formatBangkokDateTime } from '@/lib/date-utils'
 import type { Booking, Merchant, Service } from '@/types/database'
 
 interface PageProps {
@@ -407,7 +408,7 @@ export default function BookingDetailPage({ params }: PageProps) {
             damping: 28,
             stiffness: 280,
           }}
-          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden will-change-transform z-10"
+          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[90vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden will-change-transform z-10"
         >
           {/* Mobile Pull Indicator / Drag Handle */}
           <div
@@ -500,7 +501,7 @@ export default function BookingDetailPage({ params }: PageProps) {
                               {t('dateTime')}
                             </span>
                             <span className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5 block">
-                              {format(startTime, 'dd/MM/yyyy')}
+                              {formatBangkokDate(startTime)}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400">
                               {format(startTime, 'EEEE')}
@@ -512,7 +513,7 @@ export default function BookingDetailPage({ params }: PageProps) {
                               {t('selectTimeSlot')}
                             </span>
                             <span className="text-lg font-black text-indigo-600 dark:text-indigo-400 tracking-tight mt-0.5 block">
-                              {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.
+                              {formatBangkokTime(startTime)} - {formatBangkokTime(endTime)} น.
                             </span>
                             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                               <Clock className="w-3 h-3 text-slate-400" />
@@ -699,7 +700,7 @@ export default function BookingDetailPage({ params }: PageProps) {
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {format(startTime, 'dd/MM/yyyy HH:mm')} น.
+                        {formatBangkokDateTime(startTime)} น.
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -774,7 +775,7 @@ export default function BookingDetailPage({ params }: PageProps) {
                       <div className="flex justify-between">
                         <span className="text-slate-500 dark:text-slate-400">{t('dateTime')}:</span>
                         <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                          {format(startTime, 'dd/MM/yyyy')} ({format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')} น.)
+                          {formatBangkokDate(startTime)} ({formatBangkokTime(startTime)} - {formatBangkokTime(endTime)} น.)
                         </span>
                       </div>
                       <div className="flex justify-between">

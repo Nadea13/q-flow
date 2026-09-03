@@ -1,5 +1,6 @@
-import { addMinutes, format, isBefore, parseISO } from 'date-fns'
+import { addMinutes, isBefore, parseISO } from 'date-fns'
 import type { Booking, Branch, Merchant, Slot, Staff, TimeSlotOption } from '@/types/database'
+import { createBangkokDate, formatBangkokTime } from './date-utils'
 
 interface ComputeSlotsParams {
   merchant: Merchant
@@ -29,21 +30,12 @@ export function computeAvailableSlots({
   const openTime = branch?.open_time || merchant.open_time
   const closeTime = branch?.close_time || merchant.close_time
 
-  const openTimeParts = openTime.split(':')
-  const closeTimeParts = closeTime.split(':')
-
-  const openHours = parseInt(openTimeParts[0], 10)
-  const openMinutes = parseInt(openTimeParts[1], 10)
-  const closeHours = parseInt(closeTimeParts[0], 10)
-  const closeMinutes = parseInt(closeTimeParts[1], 10)
-
   const intervalMin = merchant.slot_interval_min || 30
   const now = new Date()
 
-  // Base start and end times for the selected date
-  const [year, month, day] = dateStr.split('-').map(Number)
-  const selectedDateObj = new Date(year, month - 1, day)
-  const dayOfWeek = selectedDateObj.getDay()
+  // Base start and end times for the selected date (use Bangkok time for day of week)
+  const selectedDateBangkok = createBangkokDate(dateStr, '12:00:00')
+  const dayOfWeek = selectedDateBangkok.getDay()
 
   // Check weekly closed days (from branch if defined, else from merchant)
   const closedDays = branch?.closed_days?.length ? branch.closed_days : (merchant.closed_days || [])
@@ -51,8 +43,8 @@ export function computeAvailableSlots({
     return []
   }
 
-  let currentSlotStart = new Date(year, month - 1, day, openHours, openMinutes, 0)
-  const dayCloseTime = new Date(year, month - 1, day, closeHours, closeMinutes, 0)
+  let currentSlotStart = createBangkokDate(dateStr, openTime)
+  const dayCloseTime = createBangkokDate(dateStr, closeTime)
 
   // Determine active staff pool for this branch/shop
   const activeStaff = (staffList || []).filter((s) => {
@@ -133,10 +125,8 @@ export function computeAvailableSlots({
     const breakEndStr = branch?.break_end_time || merchant.break_end_time
 
     if (hasBreak && breakStartStr && breakEndStr) {
-      const bStartParts = breakStartStr.split(':').map(Number)
-      const bEndParts = breakEndStr.split(':').map(Number)
-      const breakStart = new Date(year, month - 1, day, bStartParts[0], bStartParts[1], 0)
-      const breakEnd = new Date(year, month - 1, day, bEndParts[0], bEndParts[1], 0)
+      const breakStart = createBangkokDate(dateStr, breakStartStr)
+      const breakEnd = createBangkokDate(dateStr, breakEndStr)
 
       if (currentSlotStart < breakEnd && currentSlotEnd > breakStart) {
         isDuringBreak = true
@@ -160,7 +150,7 @@ export function computeAvailableSlots({
     slots.push({
       startTime: startISO,
       endTime: endISO,
-      displayTime: `${format(currentSlotStart, 'HH:mm')} - ${format(currentSlotEnd, 'HH:mm')}`,
+      displayTime: `${formatBangkokTime(currentSlotStart)} - ${formatBangkokTime(currentSlotEnd)}`,
       isAvailable,
       reason,
       capacity: totalCapacity,

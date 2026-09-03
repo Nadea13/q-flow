@@ -1572,17 +1572,20 @@ export default function DashboardPage({ params }: PageProps) {
                 const availableCount = computedTimelineSlots.filter((s) => s.isAvailable).length
                 const bookedCount = computedTimelineSlots.filter((s) => (s.bookedCount || 0) > 0).length
 
-                // Group timeline slots into 4 distinct periods
-                const morningTimelineSlots = computedTimelineSlots.filter((s) => new Date(s.startTime).getHours() < 12)
+                // Group timeline slots into 4 distinct periods (parse hour from displayTime to be immune to timezone differences)
+                const getSlotHour = (s: { displayTime: string; startTime: string }) =>
+                  parseInt(s.displayTime.slice(0, 2), 10) || new Date(s.startTime).getHours()
+
+                const morningTimelineSlots = computedTimelineSlots.filter((s) => getSlotHour(s) < 12)
                 const afternoonTimelineSlots = computedTimelineSlots.filter((s) => {
-                  const h = new Date(s.startTime).getHours()
+                  const h = getSlotHour(s)
                   return h >= 12 && h < 16
                 })
                 const eveningTimelineSlots = computedTimelineSlots.filter((s) => {
-                  const h = new Date(s.startTime).getHours()
+                  const h = getSlotHour(s)
                   return h >= 16 && h < 19
                 })
-                const nightTimelineSlots = computedTimelineSlots.filter((s) => new Date(s.startTime).getHours() >= 19)
+                const nightTimelineSlots = computedTimelineSlots.filter((s) => getSlotHour(s) >= 19)
 
                 const morningAvail = morningTimelineSlots.filter((s) => s.isAvailable).length
                 const afternoonAvail = afternoonTimelineSlots.filter((s) => s.isAvailable).length

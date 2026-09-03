@@ -1,5 +1,5 @@
-import { format } from 'date-fns'
 import type { Booking, Merchant, Service } from '@/types/database'
+import { formatBangkokDate, formatBangkokTime, formatBangkokDateTime } from './date-utils'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
@@ -13,8 +13,8 @@ export function buildBookingSuccessFlex(
 ) {
   const startTime = new Date(booking.start_time)
   const endTime = new Date(booking.end_time)
-  const dateFormatted = format(startTime, 'dd/MM/yyyy')
-  const timeFormatted = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')} น.`
+  const dateFormatted = formatBangkokDate(startTime)
+  const timeFormatted = `${formatBangkokTime(startTime)} - ${formatBangkokTime(endTime)} น.`
 
   const bookingUrl = `${SITE_URL}/${merchant.slug}/booking/${booking.id}`
 
@@ -239,7 +239,7 @@ export function buildMerchantAlertFlex(
   service: Service
 ) {
   const startTime = new Date(booking.start_time)
-  const dateFormatted = `${format(startTime, 'dd/MM/yyyy HH:mm')} น.`
+  const dateFormatted = `${formatBangkokDateTime(startTime)} น.`
   const dashboardUrl = `${SITE_URL}/${merchant.slug}/dashboard`
 
   return {

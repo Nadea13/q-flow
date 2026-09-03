@@ -33,8 +33,9 @@ export function SegmentedTimeSlotPicker({
     const night: TimeSlotOption[] = []
 
     slots.forEach((slot) => {
-      const date = new Date(slot.startTime)
-      const hour = date.getHours()
+      // Parse hour directly from displayTime ("HH:mm - HH:mm") or fallback to startTime
+      // This ensures displayed slot time and grouping category are always 100% matched and timezone-immune
+      const hour = parseInt(slot.displayTime.slice(0, 2), 10) || new Date(slot.startTime).getHours()
 
       if (hour < 12) {
         morning.push(slot)

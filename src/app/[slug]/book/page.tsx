@@ -32,6 +32,7 @@ import { QFlowLogo } from '@/components/QFlowLogo'
 import { BookingCalendar } from '@/components/BookingCalendar'
 import { SegmentedTimeSlotPicker } from '@/components/SegmentedTimeSlotPicker'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { formatBangkokDate, formatBangkokDateTime } from '@/lib/date-utils'
 import type { Merchant, Service, TimeSlotOption, Branch, Staff, Booking } from '@/types/database'
 
 interface PageProps {
@@ -584,7 +585,7 @@ export default function BookingPage({ params }: PageProps) {
             damping: 28,
             stiffness: 280,
           }}
-          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[78vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden will-change-transform z-10"
+          className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200/90 dark:border-slate-800 rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl h-[90vh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden will-change-transform z-10"
         >
           {/* Mobile Pull Indicator / Drag Handle */}
           <div
@@ -662,7 +663,7 @@ export default function BookingPage({ params }: PageProps) {
                               {b.services?.title || 'บริการ'}
                             </div>
                             <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              📅 {format(startTime, 'dd/MM/yyyy HH:mm น.')}
+                              📅 {formatBangkokDateTime(startTime)} น.
                             </div>
                           </div>
 
@@ -1019,7 +1020,7 @@ export default function BookingPage({ params }: PageProps) {
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-600 dark:text-slate-400">{t('dateTime')}:</span>
                     <span className="font-bold text-indigo-600 dark:text-indigo-300">
-                      {format(new Date(selectedSlot.startTime), 'dd/MM/yyyy')} ({selectedSlot.displayTime} น.)
+                      {formatBangkokDate(selectedSlot.startTime)} ({selectedSlot.displayTime} น.)
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
