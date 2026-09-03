@@ -101,7 +101,14 @@ export default function BookingPage({ params }: PageProps) {
       return
     }
 
-    setSearchResults(res.bookings || [])
+    if (!res.bookings || res.bookings.length === 0) {
+      setSearchError('ไม่พบคิวที่ตรงกับข้อมูลนี้ กรุณาตรวจสอบเบอร์โทรศัพท์หรือรหัสคิวอีกครั้ง')
+      setSearchResults([])
+      return
+    }
+
+    // Navigate directly to the checking page of the found booking
+    router.push(`/${slug}/checking/${res.bookings[0].id}`)
   }
 
   // 1. Load Merchant, Branches, Staff & Services
