@@ -11,7 +11,6 @@ import {
   Store,
   Check,
   ShieldCheck,
-  MessageSquare,
   Clock,
   Hourglass,
   RefreshCw,
@@ -58,6 +57,16 @@ export default function BookingDetailPage({ params }: PageProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [savingTicket, setSavingTicket] = useState(false)
   const ticketRef = useRef<HTMLDivElement>(null)
+
+  // Scroll state for sticky navbar styling
+  const [isScrolled, setIsScrolled] = useState(false)
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   async function handleSaveTicketImage() {
     if (!ticketRef.current || savingTicket) return
@@ -304,8 +313,14 @@ export default function BookingDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
-      {/* 1. Top Navbar (Transparent, No Background) */}
-      <nav className="w-full sticky top-0 z-40 bg-transparent">
+      {/* 1. Top Navbar */}
+      <nav
+        className={`w-full sticky top-0 z-40 transition-all duration-200 ${
+          isScrolled
+            ? 'bg-primary/10 backdrop-blur-md border-b border-primary/20 shadow-xs'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">

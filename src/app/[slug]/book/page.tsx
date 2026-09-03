@@ -114,6 +114,16 @@ export default function BookingPage({ params }: PageProps) {
     router.push(`/${slug}/checking/${res.bookings[0].id}`)
   }
 
+  // Scroll state for sticky navbar styling
+  const [isScrolled, setIsScrolled] = useState(false)
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // 1. Load Merchant, Branches, Staff & Services
   useEffect(() => {
     async function loadShop() {
@@ -379,8 +389,14 @@ export default function BookingPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased">
-      {/* 1. Top Navbar (Transparent, No Background) */}
-      <nav className="w-full sticky top-0 z-40 bg-transparent">
+      {/* 1. Top Navbar */}
+      <nav
+        className={`w-full sticky top-0 z-40 transition-all duration-200 ${
+          isScrolled
+            ? 'bg-primary/10 backdrop-blur-md border-b border-primary/20 shadow-xs'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             {step > 1 ? (

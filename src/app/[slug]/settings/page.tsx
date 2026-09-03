@@ -161,6 +161,16 @@ export default function SettingsPage({ params }: PageProps) {
     branch_phone: '',
   })
 
+  // Scroll state for sticky navbar styling
+  const [isScrolled, setIsScrolled] = useState(false)
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Lock background scroll when any modal is open
   const isAnyModalOpen = Boolean(isBranchModalOpen || isNewShopModalOpen)
   useEffect(() => {
@@ -615,7 +625,13 @@ export default function SettingsPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-primary/10 text-slate-900 dark:text-slate-100 pb-16 sm:pb-6 transition-colors font-sans antialiased">
       {/* Top Navbar - Matching Dashboard and Book exactly */}
-      <header className="bg-transparent sticky top-0 z-40">
+      <header
+        className={`sticky top-0 z-40 transition-all duration-200 ${
+          isScrolled
+            ? 'bg-primary/10 backdrop-blur-md border-b border-primary/20 shadow-xs'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/" aria-label="กลับสู่หน้าแรก QFlow" className="w-9 h-9 text-primary shrink-0 transition-transform active:scale-95">
