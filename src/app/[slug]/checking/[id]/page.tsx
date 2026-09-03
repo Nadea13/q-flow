@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, use, useRef } from 'react'
 import Link from 'next/link'
@@ -156,7 +156,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
         async (payload: { new: Record<string, unknown> }) => {
           const updated = payload.new as { status?: string }
           if (updated && updated.status) {
-            setBooking((prev) => (prev ? { ...prev, ...payload.new } : null))
+            setBooking((prev) => (prev ? { ...prev, ...payload.new, staff: prev.staff, branch: prev.branch, shops: prev.shops, services: prev.services } : null))
 
             if (updated.status === 'confirmed') {
               try {
@@ -414,10 +414,10 @@ export default function BookingCheckingPage({ params }: PageProps) {
             >
               <div className="text-center">
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {isCompleted ? 'รับบริการเสร็จสิ้นแล้ว' : 'ยืนยันการจองคิวสำเร็จ'}
+                  {isCompleted ? 'รับบริการเสร็จสิ้นแล้ว' : t('bookingSuccessTitle')}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {isCompleted ? 'ขอบคุณที่เลือกใช้บริการของเรา' : 'ระบบได้รับและตรวจสอบยอดมัดจำเรียบร้อยแล้ว'}
+                  {isCompleted ? 'ขอบคุณที่เลือกใช้บริการของเรา' : t('bookingSuccessSubtitle')}
                 </p>
               </div>
 
@@ -516,7 +516,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
                         </span>
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          {isCompleted ? 'เสร็จสิ้น' : 'ยืนยันแล้ว'}
+                          {isCompleted ? 'เสร็จสิ้น' : 'ยืนยันเรียบร้อย'}
                         </span>
                       </div>
 
