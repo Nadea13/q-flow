@@ -151,13 +151,30 @@ export default function DashboardPage({ params }: PageProps) {
     router.replace(`/${slug}/dashboard?${params.toString()}`, { scroll: false })
   }
 
+  // View Mode for Bookings (grid/timeline vs list) synced with URL query (?tab=bookings&view=grid|list)
+  const viewParam = searchParams.get('view') || searchParams.get('viewMode')
+  const initialViewMode: 'timeline' | 'list' = viewParam === 'list' ? 'list' : 'timeline'
+  const [bookingsViewMode, setBookingsViewModeState] = useState<'timeline' | 'list'>(initialViewMode)
+
+  useEffect(() => {
+    if (viewParam === 'list' || viewParam === 'timeline' || viewParam === 'grid') {
+      setBookingsViewModeState(viewParam === 'list' ? 'list' : 'timeline')
+    }
+  }, [viewParam])
+
+  function setBookingsViewMode(mode: 'timeline' | 'list') {
+    setBookingsViewModeState(mode)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('view', mode === 'timeline' ? 'grid' : 'list')
+    router.replace(`/${slug}/dashboard?${params.toString()}`, { scroll: false })
+  }
+
   // Date Filter for Bookings
   const today = startOfToday()
   const [selectedDate, setSelectedDate] = useState<string>(format(today, 'yyyy-MM-dd'))
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all')
   const [selectedStaffFilter, setSelectedStaffFilter] = useState<string>('all')
-  const [bookingsViewMode, setBookingsViewMode] = useState<'timeline' | 'list'>('timeline')
   const [timelinePeriodFilter, setTimelinePeriodFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening' | 'night'>('all')
 
   function handleSelectBranch(branchId: string) {
