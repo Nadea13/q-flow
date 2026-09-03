@@ -310,7 +310,7 @@ export default function BookingCheckingPage({ params }: PageProps) {
       <nav
         className={`w-full sticky top-0 z-40 transition-all duration-200 ${
           isScrolled
-            ? 'bg-primary/10 backdrop-blur-md border-b border-primary/20 shadow-xs'
+            ? 'bg-primary/10 border-b border-primary/20 shadow-xs'
             : 'bg-transparent border-b border-transparent'
         }`}
       >
