@@ -409,3 +409,53 @@ export async function expireBookingAction(bookingId: string) {
 
   return { success: true }
 }
+
+export async function searchCustomerBookingsAction(merchantSlug: string, rawQuery: string) {
+  const supabase = await createClient()
+
+  // 1. Resolve Shop
+  const { data: shop, error: shopErr } = await supabase
+    .from('shops')
+    .select('id')
+    .eq('slug', merchantSlug)
+    .single()
+
+  if (shopErr || !shop) {
+    return { success: false, error: 'ไม่พบข้อมูลร้านค้านี้' }
+  }
+
+  const query = rawQuery.trim().replace(/^#/, '')
+  if (!query) {
+    return { success: false, error: 'กรุณากรอกเบอร์โทรศัพท์หรือรหัสคิว' }
+  }
+
+  // 2. Call RPC search_bookings
+  const { data: rawBookings, error: rpcErr } = await supabase
+    .rpc('search_bookings', {
+      p_shop_id: shop.id,
+      p_query: query
+    })
+
+  if (rpcErr) {
+    logger.error('search_bookings RPC error', { error: rpcErr.message, query })
+    return { success: false, error: 'เกิดข้อผิดพลาดในการค้นหาคิว' }
+  }
+
+  if (!rawBookings || rawBookings.length === 0) {
+    return { success: true, bookings: [] }
+  }
+
+  // 3. Hydrate relations (services, branches, staff)
+  const bookingIds = rawBookings.map((b: { id: string }) => b.id)
+  const { data: enrichedBookings, error: enrichErr } = await supabase
+    .from('bookings')
+    .select('*, services(*), branch:branches(*), staff:staff(*)')
+    .in('id', bookingIds)
+    .order('start_time', { ascending: false })
+
+  if (enrichErr) {
+    return { success: true, bookings: rawBookings }
+  }
+
+  return { success: true, bookings: enrichedBookings || [] }
+}
